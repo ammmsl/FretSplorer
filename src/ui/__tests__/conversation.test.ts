@@ -6,12 +6,25 @@
 
 import { describe, expect, it } from 'vitest';
 import type { ToolResult } from '../../mcp';
-import { feelingToOptions } from '../../mcp';
+import {
+  adviseSetupTool,
+  feelingToOptions,
+  neighbors,
+  translate,
+} from '../../mcp';
+import { checkGrounding, collectKbIds } from '../../grounding';
 import { TUNINGS } from '../fixtures';
 import { emptyGrip, placeFret, type Grip } from '../grip';
-import { buildTurnView, intentLabel, route, type OptionView } from '../conversation';
+import {
+  buildTurnView,
+  findTargetTuning,
+  intentLabel,
+  route,
+  type OptionView,
+} from '../conversation';
 
 const openG = TUNINGS.find((t) => t.id === 'open-g')!;
+const dadgad = TUNINGS.find((t) => t.id === 'dadgad')!;
 /** Open-G home grip (all six strings open) — the M-series gate grip. */
 const allOpen: Grip = openG.openStrings.map(() => ({ kind: 'open' as const }));
 
@@ -52,6 +65,39 @@ describe('route — the question intents', () => {
   });
   it('normalised text is preserved (trimmed, lower-cased)', () => {
     expect(route('  WHAT IS THIS?  ').normalized).toBe('what is this?');
+  });
+});
+
+describe('route — the three newly-routed intents', () => {
+  it('"where can this go?" -> neighbors (not function)', () => {
+    expect(route('where can this go?').kind).toBe('neighbors');
+    expect(route("what's nearby?").kind).toBe('neighbors');
+  });
+  it('"where does this go" / "resolve" stays function (resolution, not adjacency)', () => {
+    expect(route('where does this go').kind).toBe('function');
+    expect(route('how does this resolve?').kind).toBe('function');
+  });
+  it('"…in DADGAD?" -> translate with the target tuning id', () => {
+    const i = route('what about in DADGAD?');
+    expect(i.kind).toBe('translate');
+    expect(i.target).toBe('dadgad');
+  });
+  it('"same shape in open D" -> translate to open-d', () => {
+    expect(route('same shape in open D').target).toBe('open-d');
+  });
+  it('"will this feel floppy?" -> setup (physical tension)', () => {
+    expect(route('will this feel floppy?').kind).toBe('setup');
+    expect(route('what string gauge should I use?').kind).toBe('setup');
+  });
+});
+
+describe('findTargetTuning — most-specific-first', () => {
+  it('matches double drop D before drop D (substring guard)', () => {
+    expect(findTargetTuning('move it to double drop d')).toBe('double-drop-d');
+    expect(findTargetTuning('in drop d')).toBe('drop-d');
+  });
+  it('returns undefined when no tuning is named', () => {
+    expect(findTargetTuning('what is this?')).toBeUndefined();
   });
 });
 
@@ -143,6 +189,32 @@ describe('end to end — "make it dreamier" on the Open-G home grip', () => {
     expect(view.options.length).toBeGreaterThan(0);
     // each option's frets array is aligned to the 6 strings
     expect(view.options[0].frets).toHaveLength(6);
+  });
+});
+
+describe('end to end — the newly-routed tools produce grounded turns', () => {
+  const kbIds = collectKbIds();
+
+  it('neighbors("where can this go?") on the Open-G home grip is grounded', () => {
+    expect(route('where can this go?').kind).toBe('neighbors');
+    const result = neighbors(allOpen, openG);
+    expect(checkGrounding(result, kbIds).ok).toBe(true);
+    expect(buildTurnView(result).modelLine.length).toBeGreaterThan(0);
+  });
+
+  it('translate("…in DADGAD?") morphs the Open-G home grip onto DADGAD, grounded', () => {
+    const intent = route('what about in DADGAD?');
+    expect(intent.target).toBe('dadgad');
+    const result = translate(allOpen, openG, dadgad);
+    expect(checkGrounding(result, kbIds).ok).toBe(true);
+    expect(buildTurnView(result).traces.length).toBeGreaterThan(0);
+  });
+
+  it('adviseSetup("will this feel floppy?") on DADGAD is grounded', () => {
+    expect(route('will this feel floppy?').kind).toBe('setup');
+    const result = adviseSetupTool(dadgad);
+    expect(checkGrounding(result, kbIds).ok).toBe(true);
+    expect(buildTurnView(result).modelLine.length).toBeGreaterThan(0);
   });
 });
 

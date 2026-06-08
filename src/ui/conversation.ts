@@ -29,16 +29,21 @@ export type IntentKind =
   | 'identify' // what is this / what am I holding -> mcpIdentify
   | 'function' // what does this do -> functionOf
   | 'voicings' // easier way -> findVoicingsTool
+  | 'neighbors' // where can this go -> neighbors (adjacency / voice-leading)
+  | 'translate' // …in DADGAD? / morph -> translate (same pitches on another tuning)
+  | 'setup' // will this feel floppy? -> adviseSetupTool (physical tension)
   | 'unknown'; // no known intent matched
 
 /**
- * A parsed user turn. `vibe` is set only for the affective ('feeling') intent and is the
- * resolved KB vibe id (or the raw word, resolved against aliases by feelingToOptions).
+ * A parsed user turn. `vibe` is set only for the affective ('feeling') intent; `target` is
+ * the resolved destination tuning id for a 'translate' turn (e.g. "in dadgad" -> "dadgad").
  */
 export interface Intent {
   readonly kind: IntentKind;
   /** The affective vibe id/word for 'feeling' turns (e.g. "dreamier"), else undefined. */
   readonly vibe?: string;
+  /** The destination tuning id for 'translate' turns (e.g. "dadgad"), else undefined. */
+  readonly target?: string;
   /** The raw turn text, normalised (trimmed, lower-cased) — for echoing the user line. */
   readonly normalized: string;
 }
@@ -49,6 +54,31 @@ const VIBE_KEYWORDS: ReadonlyArray<{ readonly match: readonly string[]; readonly
   { match: ['darker', 'dark', 'moodier', 'moody', 'heavier', 'heavy'], id: 'darker' },
   { match: ['more open', 'opener', 'more-open', 'airier', 'airy', 'spacious'], id: 'more-open' },
 ];
+
+/**
+ * Tuning names the router recognises as a TRANSLATE target, mapped to the tuning id. Ordered
+ * most-specific-first so "double drop d" is matched before "drop d" (a substring of it) and
+ * "open d/e/c/g" before the bare letter. Kept local (not imported from fixtures) so route()
+ * stays a pure, self-contained parser.
+ */
+const TUNING_KEYWORDS: ReadonlyArray<{ readonly match: readonly string[]; readonly id: string }> = [
+  { match: ['double drop d', 'double-drop d', 'double drop', 'double-drop-d'], id: 'double-drop-d' },
+  { match: ['open g'], id: 'open-g' },
+  { match: ['open d'], id: 'open-d' },
+  { match: ['open e'], id: 'open-e' },
+  { match: ['open c'], id: 'open-c' },
+  { match: ['dadgad'], id: 'dadgad' },
+  { match: ['drop d', 'drop-d'], id: 'drop-d' },
+  { match: ['standard', 'eadgbe'], id: 'eadgbe' },
+];
+
+/** Find the first tuning name mentioned in the text (most-specific-first), or undefined. */
+export function findTargetTuning(normalized: string): string | undefined {
+  for (const t of TUNING_KEYWORDS) {
+    if (t.match.some((w) => normalized.includes(w))) return t.id;
+  }
+  return undefined;
+}
 
 /**
  * route(turnText) — the deterministic intent parser. Order matters: the affective
@@ -67,7 +97,60 @@ export function route(turnText: string): Intent {
     }
   }
 
-  // 2. "what does this do" / function — checked before identify ("what is this") because
+  // 2. Setup / physical tension — "will this feel floppy?", "too loose/tight", gauges. The
+  //    orthogonal PHYSICAL question (adviseSetup), checked early so "floppy/tension/gauge"
+  //    never falls through to a harmonic intent.
+  if (
+    normalized.includes('floppy') ||
+    normalized.includes('flabby') ||
+    normalized.includes('tension') ||
+    normalized.includes('gauge') ||
+    normalized.includes('setup') ||
+    normalized.includes('too loose') ||
+    normalized.includes('too tight') ||
+    normalized.includes('slinky') ||
+    normalized.includes('string break') ||
+    normalized.includes('break a string')
+  ) {
+    return { kind: 'setup', normalized };
+  }
+
+  // 3. Translate / morph — "…in DADGAD?", "same shape in open d", "translate", "morph". A
+  //    named target tuning + a move word triggers re-placing the SAME pitches on that tuning.
+  {
+    const target = findTargetTuning(normalized);
+    const moveWord =
+      normalized.includes('translate') ||
+      normalized.includes('morph') ||
+      normalized.includes('move to') ||
+      normalized.includes('move it to') ||
+      normalized.includes('same shape') ||
+      normalized.includes('what about') ||
+      normalized.includes(' in ') ||
+      normalized.startsWith('in ');
+    if (target && moveWord) {
+      return { kind: 'translate', target, normalized };
+    }
+  }
+
+  // 4. Neighbours / adjacency — "where can this go?", "what's nearby", small voice-leading
+  //    moves. Distinct from the function "where does this GO" (resolution) below.
+  if (
+    normalized.includes('where can this go') ||
+    normalized.includes('where can i go') ||
+    normalized.includes('where else') ||
+    normalized.includes('neighbour') ||
+    normalized.includes('neighbor') ||
+    normalized.includes('nearby') ||
+    normalized.includes("what's near") ||
+    normalized.includes('whats near') ||
+    normalized.includes('small move') ||
+    normalized.includes('one step')
+  ) {
+    return { kind: 'neighbors', normalized };
+  }
+
+  // 5. "what does this do" / function — checked before identify ("what is this") because
   //    both start with "what", and the function family is the more specific phrasing.
   if (
     normalized.includes('what does') ||
@@ -195,6 +278,12 @@ export function intentLabel(kind: IntentKind): string {
       return 'function';
     case 'voicings':
       return 'easier voicings';
+    case 'neighbors':
+      return 'where can it go';
+    case 'translate':
+      return 'translate / morph';
+    case 'setup':
+      return 'string tension';
     case 'unknown':
       return 'unrecognised';
   }

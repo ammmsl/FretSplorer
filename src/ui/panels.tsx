@@ -13,13 +13,16 @@ import { useRef, useState } from 'react';
 import type { Tuning } from '../core';
 import { spell, pitchClass } from '../core';
 import {
+  adviseSetupTool,
   feelingToOptions,
   findVoicingsTool,
   functionOf,
   grammarCardResource,
   mcpIdentify,
+  neighbors,
+  translate,
 } from '../mcp';
-import { tuningLabel } from './fixtures';
+import { TUNINGS, tuningLabel } from './fixtures';
 import type { Grip } from './grip';
 import { degreeStyle, droneStyle } from './palette';
 import type { ReadoutViewModel } from './readout';
@@ -294,6 +297,9 @@ const QUICK_ACTIONS: readonly { readonly text: string; readonly chip: string }[]
   { text: 'what is this?', chip: 'what is this?' },
   { text: 'what does this do?', chip: 'what does this do?' },
   { text: 'easier way?', chip: 'easier way?' },
+  { text: 'where can this go?', chip: 'where can this go?' },
+  { text: 'same shape in DADGAD?', chip: 'in DADGAD?' },
+  { text: 'will this feel floppy?', chip: 'will this feel floppy?' },
 ];
 
 /**
@@ -352,6 +358,33 @@ export function ConversationPanel({
       }
       case 'function': {
         view = buildTurnView(functionOf(grip, tuning));
+        break;
+      }
+      case 'neighbors': {
+        // "where can this go?" — small single-string voice-leading moves from here.
+        view = buildTurnView(neighbors(grip, tuning));
+        break;
+      }
+      case 'translate': {
+        // "…in DADGAD?" — re-place the SAME sounding pitches on the named target tuning.
+        const target = TUNINGS.find((t) => t.id === intent.target);
+        if (target) {
+          view = buildTurnView(translate(grip, tuning, target));
+        } else {
+          view = {
+            modelLine:
+              "I can move this shape to another tuning — tell me which (e.g. \"in DADGAD?\", \"same shape in open D\").",
+            reasoningChain: [],
+            traces: [],
+            options: [],
+            hasEditorial: false,
+          };
+        }
+        break;
+      }
+      case 'setup': {
+        // "will this feel floppy?" — orthogonal physical string-tension advice for the tuning.
+        view = buildTurnView(adviseSetupTool(tuning));
         break;
       }
       case 'voicings': {
