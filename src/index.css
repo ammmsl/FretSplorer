@@ -6,10 +6,10 @@
    This is the substrate for the UI overhaul. Two kinds of token live here:
 
    1. THEMED (colour) — defined in :root (light) and overridden in
-      :root[data-theme='dark']. Warm scheme: sand/cream/clay neutrals + a terracotta
-      accent, tuned to HARMONISE with the warm end of the functional degree palette
-      (amber/orange) without competing with the degree dots painted on the neck.
-      All text pairs meet WCAG AA on both themes.
+      :root[data-theme='dark']. "Brass on Graphite": cool slate-grey neutrals + an
+      antique-brass accent (light) / gold (dark), tuned to HARMONISE with the warm
+      (amber/orange) end of the functional degree palette without competing with the
+      degree dots painted on the neck. All text pairs meet WCAG AA on both themes.
 
    2. NON-THEMED (scales) — defined once in :root, inherited by dark unchanged:
       • --space-1..6 .... spacing ramp (2 4 8 12 16 24px) — the implicit grid, named.
@@ -25,24 +25,24 @@
    are tokenised. ──────────────────────────────────────────────────────────────── */
 
 :root {
-  /* — themed: warm light (sand/cream/clay + terracotta) — */
-  --bg: #f6f1ea;
-  --surface: #fffdf9;
-  --surface-2: #efe7db;
-  --text: #33291f;
-  --text-dim: #7a6b5a;
-  --border: #ddd0bf;
-  --accent: #b4502b;
-  --accent-soft: rgba(180, 80, 43, 0.12);
-  --accent-contrast: #fffaf4;
-  --focus-ring: #c2410c;
+  /* — themed: Brass on Graphite — cool graphite neutrals + antique-brass accent — */
+  --bg: #eceef1;
+  --surface: #fafbfc;
+  --surface-2: #dfe3e8;
+  --text: #1c2228;
+  --text-dim: #58616b;
+  --border: #c9cfd6;
+  --accent: #8a5d11;
+  --accent-soft: rgba(138, 93, 17, 0.12);
+  --accent-contrast: #fffdf8;
+  --focus-ring: #b07d1c;
   --origin: #c08a3e;
   --origin-soft: rgba(192, 138, 62, 0.18);
-  --neck-bg: #fbf7f0;
-  --string: #bdb2a3;
-  --fret: #ddd2c2;
-  --nut: #6f6151;
-  --inlay: #ccc0ae;
+  --neck-bg: #f6f8fa;
+  --string: #aeb6bf;
+  --fret: #d2d8de;
+  --nut: #5f6772;
+  --inlay: #c3cad1;
 
   /* — non-themed scales (inherited by dark) — */
   --space-1: 2px;
@@ -85,24 +85,24 @@
 }
 
 :root[data-theme='dark'] {
-  /* — themed: warm dark (espresso/charcoal + clay) — */
-  --bg: #1c1814;
-  --surface: #262019;
-  --surface-2: #2f2820;
-  --text: #f0e9df;
-  --text-dim: #b0a392;
-  --border: #3d342a;
-  --accent: #e89567;
-  --accent-soft: rgba(232, 149, 103, 0.16);
-  --accent-contrast: #2a1c12;
-  --focus-ring: #f59e5b;
+  /* — themed: graphite night + gold accent — */
+  --bg: #16191c;
+  --surface: #1f2329;
+  --surface-2: #2a2f36;
+  --text: #e7eaee;
+  --text-dim: #9aa3ad;
+  --border: #353c44;
+  --accent: #d9a441;
+  --accent-soft: rgba(217, 164, 65, 0.16);
+  --accent-contrast: #1c1605;
+  --focus-ring: #e6b454;
   --origin: #d6a04e;
   --origin-soft: rgba(214, 160, 78, 0.2);
-  --neck-bg: #211b14;
-  --string: #5a5044;
-  --fret: #403729;
-  --nut: #8f8270;
-  --inlay: #463c2d;
+  --neck-bg: #1b1f24;
+  --string: #4d545d;
+  --fret: #333a42;
+  --nut: #8b939d;
+  --inlay: #3a414a;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
@@ -115,13 +115,15 @@
 }
 
 html,
-body,
-#root {
+body {
   height: 100%;
   margin: 0;
+  /* clip (not hidden) so no horizontal scroll while position: sticky still works */
+  overflow-x: clip;
 }
 
 #root {
+  height: 100%;
   width: 100%;
 }
 
@@ -139,7 +141,14 @@ select {
   color: var(--text);
 }
 
-:where(button, select, [tabindex]):focus-visible {
+/* Disabled state for chrome controls (more specific rules may deepen it). */
+:where(button, select):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Focus ring covers inputs/textareas/links too — never animated (instant on focus). */
+:where(a, button, select, input, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }

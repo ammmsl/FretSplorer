@@ -51,16 +51,27 @@
 .control select:hover {
   border-color: var(--accent);
 }
+/* Pressed feedback for chrome buttons (instant; reduced-motion-safe). */
+.control-btn:active,
+.conv-send:active,
+.add-neck:active,
+.conv-chip:active,
+.collapse-btn:active,
+.conv-expand:active {
+  transform: translateY(1px);
+}
 
 /* ── Three-region body ───────────────────────────────────────────────────── */
 .shell-body {
   display: grid;
-  grid-template-columns: 240px 1fr 300px;
+  /* minmax(0, …) lets the wide neck SVG scroll INSIDE the center pane instead of
+     forcing the column (and the page) wider — see .center-region overflow + gate 50. */
+  grid-template-columns: 240px minmax(0, 1fr) 300px;
   flex: 1;
   min-height: 0;
 }
 .shell-body.left-collapsed {
-  grid-template-columns: 36px 1fr 300px;
+  grid-template-columns: 36px minmax(0, 1fr) 300px;
 }
 
 .panel {
@@ -201,7 +212,7 @@
   white-space: nowrap;
 }
 .conv-trace-badge.computed {
-  background: var(--border);
+  background: var(--surface-2);
   color: var(--text-dim);
 }
 .conv-trace-badge.kb {
@@ -256,6 +267,9 @@
   color: var(--accent-contrast);
   cursor: pointer;
   font-size: var(--text-md);
+}
+.conv-send:hover {
+  background: color-mix(in srgb, var(--accent) 90%, #000);
 }
 
 .collapse-btn {
@@ -398,10 +412,10 @@
   stroke: var(--fret);
   stroke-width: 1.5;
 }
-.nut-line {
+.nut-bar {
+  fill: var(--neck-bg);
   stroke: var(--nut);
-  stroke-width: 4;
-  stroke-linecap: round;
+  stroke-width: 1.6;
 }
 .string-line {
   stroke: var(--string);
@@ -459,8 +473,20 @@
 .nut-marker-hit {
   fill: transparent;
 }
+/* The "click to ring open" ring — invisible at rest (the chunky nut bar is the
+   affordance) and revealed in the accent on hover so clickability is unmistakable. */
+.nut-open-slot {
+  stroke: var(--accent);
+  stroke-width: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
 .nut-marker.clickable {
   cursor: pointer;
+}
+.nut-marker.clickable:hover .nut-open-slot {
+  opacity: 1;
 }
 .nut-marker.clickable:hover .nut-marker-hit {
   fill: var(--accent-soft, rgba(0, 0, 0, 0.08));
@@ -573,4 +599,34 @@
 .readout-score {
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Narrow viewports ──────────────────────────────────────────────────────────
+   Below 820px the three-region grid stacks into a single scrolling column so the
+   240px + 300px flanks stop forcing horizontal overflow (gate 34). The neck SVG
+   still scrolls within the center pane (min-width: 0 keeps the flex item shrinkable). */
+@media (max-width: 820px) {
+  .shell-body,
+  .shell-body.left-collapsed {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .left-panel,
+  .center-region,
+  .right-region {
+    min-width: 0;
+  }
+  .left-panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .right-region {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  /* Bound the conversation log so it doesn't collapse to zero when stacked. */
+  .conversation-log {
+    max-height: 50vh;
+  }
 }
