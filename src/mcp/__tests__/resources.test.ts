@@ -16,6 +16,22 @@ describe('grammarCardResource', () => {
     expect(grammarCardResource('open-g').card?.id).toBe('open-g');
     expect(grammarCardResource('no-such-tuning').card).toBeNull();
   });
+
+  it('loads every curated card the GrammarCardPanel renders', () => {
+    for (const id of ['open-d', 'open-e', 'open-c', 'dadgad', 'drop-d', 'double-drop-d']) {
+      const res = grammarCardResource(id);
+      expect(res.card?.id, `${id} card`).toBe(id);
+      // The panel renders these fields — they must be present and non-empty.
+      expect((res.card?.movableShapes ?? []).length).toBeGreaterThan(0);
+      expect(res.card?.capoBehavior?.length ?? 0).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns null (card-less) for standard + extended-range tunings', () => {
+    expect(grammarCardResource('eadgbe').card).toBeNull();
+    expect(grammarCardResource('standard-7').card).toBeNull();
+    expect(grammarCardResource('standard-8').card).toBeNull();
+  });
 });
 
 describe('board / neck-collection model', () => {

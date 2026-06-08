@@ -11,11 +11,12 @@
 
 import { useRef, useState } from 'react';
 import type { Tuning } from '../core';
-import { spell } from '../core';
+import { spell, pitchClass } from '../core';
 import {
   feelingToOptions,
   findVoicingsTool,
   functionOf,
+  grammarCardResource,
   mcpIdentify,
 } from '../mcp';
 import { tuningLabel } from './fixtures';
@@ -36,7 +37,18 @@ interface CollapsibleProps {
   readonly onToggle: () => void;
 }
 
-/** LEFT — grammar-card resource placeholder bound to the focused tuning. */
+/** Spell the open strings of a tuning, string 1 (high) -> N (low), in the tuning's key. */
+function spellOpenStrings(tuning: Tuning): string[] {
+  return tuning.openStrings.map((m) => spell(pitchClass(((m as number) % 12 + 12) % 12), { tonic: tuning.tonic }));
+}
+
+/**
+ * LEFT — the grammar-card RESOURCE for the focused tuning (M-card milestone). Replaces the
+ * M0 placeholder: loads the real card via grammarCardResource and renders the home chord,
+ * movable shapes (barre rule + slide functions), and capo behaviour. For a card-less tuning
+ * (standard EADGBE, the extended-range necks) it says so honestly and still shows the open
+ * strings + tonic — it never fakes a relational cheat-sheet (docs/08 f; ADR 0003).
+ */
 export function GrammarCardPanel({
   tuning,
   contextSummary,
@@ -44,6 +56,9 @@ export function GrammarCardPanel({
   onToggle,
 }: CollapsibleProps & { tuning: Tuning; contextSummary: string }) {
   const tonicName = spell(tuning.tonic, { tonic: tuning.tonic });
+  const { card } = grammarCardResource(tuning.id);
+  const openNotes = spellOpenStrings(tuning).join(' · ');
+
   return (
     <aside className={`panel left-panel${collapsed ? ' collapsed' : ''}`} aria-label="Grammar card">
       <button type="button" className="collapse-btn" onClick={onToggle} aria-expanded={!collapsed}>
@@ -51,25 +66,75 @@ export function GrammarCardPanel({
       </button>
       {!collapsed && (
         <div className="panel-body">
-          <h2>{tuningLabel(tuning.id)}</h2>
+          <h2>{card ? card.name : tuningLabel(tuning.id)}</h2>
+
           <p className="kv">
-            <span>tuning</span>
-            <code>{tuning.id}</code>
+            <span>open strings</span>
+            <code>{openNotes}</code>
           </p>
           <p className="kv">
             <span>tonic</span>
             <code>{tonicName}</code>
           </p>
           <p className="kv">
-            <span>home</span>
-            <code>{tonicName} (derived)</code>
-          </p>
-          <p className="kv">
             <span>context</span>
             <code>{contextSummary}</code>
           </p>
-          <p className="panel-note">Movable shapes, barre rule, capo behaviour, and the full
-            drone map load from the grammar card in a later milestone.</p>
+
+          {card ? (
+            <>
+              {card.movableShapes && card.movableShapes.length > 0 && (
+                <section className="card-shapes" aria-label="movable shapes">
+                  <h3>Movable shapes</h3>
+                  <ul>
+                    {card.movableShapes.map((s) => (
+                      <li key={s.id} className="card-shape">
+                        <strong>{s.label}</strong>
+                        <span className="card-shape-quality">{s.produces.quality}</span>
+                        {s.slideExamples && s.slideExamples.length > 0 && (
+                          <ul className="card-shape-slides">
+                            {s.slideExamples.map((ex, i) => (
+                              <li key={`${s.id}-slide-${i}`}>
+                                <code>fret {ex.anchorFret}</code> → {ex.function}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {card.capoBehavior && (
+                <section className="card-capo" aria-label="capo behaviour">
+                  <h3>Capo</h3>
+                  <p className="panel-prose">{card.capoBehavior}</p>
+                </section>
+              )}
+
+              {card.idiomaticProgressions && card.idiomaticProgressions.length > 0 && (
+                <section className="card-idioms" aria-label="idiomatic progressions">
+                  <h3>Idioms</h3>
+                  <ul className="card-idiom-list">
+                    {card.idiomaticProgressions.map((p, i) => (
+                      <li key={`idiom-${i}`}>{p}</li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              <p className="panel-note card-provenance">
+                {card.provenance.kind} · verified {card.provenance.verifiedBy ?? '—'}
+              </p>
+            </>
+          ) : (
+            <p className="panel-note">
+              No grammar card for this tuning — relational naming hands off to the absolute
+              (chord-symbol) reading, which is the correct behaviour here. Open strings + tonic above
+              are still live.
+            </p>
+          )}
         </div>
       )}
     </aside>
