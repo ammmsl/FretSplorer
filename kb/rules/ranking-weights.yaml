@@ -1,0 +1,26 @@
+schemaVersion: 1
+# Naming-ambiguity ranking weights (R5). The ranking ALGORITHM is engine code; these WEIGHTS are
+# tunable data, so R5's tuning loop (and future contributors) adjust ranking behaviour against an
+# empirical grip corpus without touching code. NOT a rule-set file -- a flat tunable config.
+# (Schema for this file is intentionally light; values are signed score adjustments.)
+
+weights:
+  keyContextBias: 3.0        # boost: candidate root is the tonic or diatonic to the home key (biggest factor)
+  bassIsRoot: 2.0            # boost: computed bass IS the candidate's root -> prefer root-position over inversion/slash
+  omit5thPenalty: -0.5      # LIGHT: guitarists omit the 5th constantly
+  omit3rdPenalty: -3.0      # HEAVY: dropping the 3rd changes identity
+  omitRootPenalty: -3.0     # HEAVY
+  parsimonyPenalty: -1.0    # per added/assumed tone not actually sounding
+  simplicityTiebreak: 0.25  # tiny nudge toward the simpler name when scores tie
+
+surfacePolicy:
+  primaryCount: 1           # always one headline candidate
+  alternateScoreGap: 1.5    # surface an alternate only if within this score gap of the primary
+  maxCandidates: 3          # hard cap on surfaced candidates -- no long tail of weak guesses
+
+provenance:
+  kind: editorial
+  reasoning: >
+    Candidate ranking is a subjective call rendered tunable: each factor is a curated starting weight
+    to be calibrated against a real grip corpus (R5). The guitar-aware omission penalties are the one
+    thing generic libraries (Tonal) get wrong, so they are the highest-value weights to own.

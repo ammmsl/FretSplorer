@@ -1,0 +1,107 @@
+schemaVersion: 1
+set: relational-vocabulary
+
+# The A-E relationship taxonomy as a keyed phrase lookup (Q11/Q12). The engine computes the keys
+# (frame, degree, modifier) from the pitch model, looks up the matching entry, fills {slots} with
+# COMPUTED values, and returns {term, phrase, provenance} as the explanation. The LLM may rephrase
+# but may not alter slot facts (ADR 0003). `category` maps to the A-E taxonomy.
+
+entries:
+  # --- A. Home-chord identity & transposition (frame) ---
+  - id: frame-home
+    category: frame
+    key: { frame: home }
+    term: "the home chord (I)"
+    phrase: "you're holding the home chord -- the I in {tonicName}"
+    provenance:
+      kind: theory
+      reasoning: "The grip's pitch-classes match the open-string sonority -> the tuning's home chord, the I."
+      sources: [tonal-function]
+
+  - id: frame-home-transposed
+    category: frame
+    key: { frame: home-transposed }
+    term: "the I, moved up"
+    phrase: "a flat barre at fret {fret} -- that's the home chord moved up to {chordRoot} ({romanNumeral})"
+    provenance:
+      kind: theory
+      reasoning: "A barre shifts every open pitch equally, transposing the home chord; foundational barre rule."
+      sources: [equal-temperament]
+
+  # --- B. Home-chord modification (frame) ---
+  - id: frame-sus
+    category: frame
+    key: { modifier: suspension }
+    term: "suspended"
+    phrase: "the 3rd is replaced by the {susDegree} -- it's a {chordRoot}sus{susDegree}, unresolved and open"
+    provenance:
+      kind: theory
+      reasoning: "Sus2/sus4: the 3rd (which decides major/minor) is replaced by the 2 or 4."
+      sources: [tonal-function]
+
+  - id: frame-added-tone
+    category: frame
+    key: { modifier: added-tone }
+    term: "added tone"
+    phrase: "the home chord with an added {addedDegree} -- {chordRoot}add{addedDegree}"
+    provenance:
+      kind: theory
+      reasoning: "An extension (9/11/13/6) sounded over the triad without stacking a 7th."
+      sources: [tonal-function]
+
+  # --- C. Functional re-interpretation (frame) ---
+  - id: frame-diatonic-function
+    category: frame
+    key: { frame: diatonic-function }
+    term: "diatonic function"
+    phrase: "over the {tonicName} drones this is the {romanNumeral} ({chordName})"
+    provenance:
+      kind: theory
+      reasoning: "The grip + drones spell another diatonic chord; named by its function relative to the tonic."
+      sources: [tonal-function]
+
+  # --- D. Drone roles ---
+  - id: drone-as-9th
+    category: drone-role
+    key: { droneDegree: 9 }
+    term: "added 9th"
+    phrase: "the open {droneNote} rings through as the 9th"
+    tension: color
+    provenance:
+      kind: theory
+      reasoning: "A ringing open string a 9th above the chord root reads as an added-9th colour (the classic open-tuning shimmer)."
+      sources: [tonal-function]
+
+  - id: drone-as-pedal-5th
+    category: drone-role
+    key: { droneDegree: 5 }
+    term: "pedal 5th"
+    phrase: "the open {droneNote} pedals under as the 5th"
+    tension: consonant
+    provenance:
+      kind: theory
+      reasoning: "A ringing open 5th is a consonant pedal; common bass drone in open tunings."
+      sources: [tonal-function]
+
+  # --- E. Tension-against-the-pedal (the textural payload) ---
+  - id: bite-against-drone
+    category: tension-vs-pedal
+    key: { tensionRank: bite }
+    term: "semitone bite"
+    phrase: "the fretted {note} bites a semitone against the open {droneNote} -- that's the texture, not a wrong note"
+    tension: bite
+    provenance:
+      kind: theory
+      reasoning: "Names dissonance-against-the-pedal as a first-class textural device (01/D, R2), not an error."
+      sources: [interval-consonance]
+
+  # --- Ambiguity phrasing (R5) ---
+  - id: ambiguity-two-candidates
+    category: ambiguity
+    key: { candidates: 2 }
+    term: "ambiguous"
+    phrase: "this reads most naturally as {primary}, but it's also a valid {alternate}"
+    provenance:
+      kind: theory
+      reasoning: "Honest, fact-first phrasing of a close-scored naming tie; never forces a single answer (03)."
+      sources: [tonal-function]

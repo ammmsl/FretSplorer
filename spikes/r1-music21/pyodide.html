@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>R1 — music21 under Pyodide (measurement harness)</title>
+  <!-- Pin a Pyodide version so the bundle-size number is reproducible. -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js"></script>
+</head>
+<body>
+  <h1>R1 — music21 / Pyodide spike</h1>
+  <p>Loads Pyodide, micropip-installs music21, runs the two Tier-3 calls on the
+     shared <code>chords.json</code> set, and measures cold-start + warm per-call
+     latency + downloaded bytes. Results land on <code>window.__R1__</code>
+     (and are printed below) for the Playwright harness to scrape.</p>
+  <pre id="log"></pre>
+
+  <script type="module">
+    const PYODIDE_VERSION = "0.27.2";
+    const logEl = document.getElementById("log");
+    const log = (m) => { logEl.textContent += m + "\n"; console.log(m); };
+    const now = () => performance.now();
+
+    // The two Tier-3 ops, identical in spirit to music21_ops.py (the backend
+    // shares the .py; here we inline the same logic so the harness is one file).
+    const PY_OPS = `
+from music21 import chord, key as m21key, roman
+
+def _ch(midi):
+    return chord.Chord([int(m) for m in midi])
+
+def roman_numeral(midi, k):
+    c = _ch(midi); kk = m21key.Key(k)
+    rn = roman.romanNumeralFromChord(c, kk)
+    return {"figure": rn.figure, "inversion": rn.inversion(), "scaleDegree": rn.scaleDegree}
+
+def voicing_anatomy(midi):
+    c = _ch(midi); root = c.root(); bass = c.bass()
+    pcc = {}
+    for p in c.pitches: pcc[p.name] = pcc.get(p.name, 0) + 1
+    doublings = {n: v for n, v in pcc.items() if v > 1}
+    omissions = [] if c.fifth is not None else ["5th"]
+    return {"root": root.nameWithOctave, "bass": bass.nameWithOctave,
+            "inversion": c.inversion(), "commonName": c.commonName,
+            "pitches": [p.nameWithOctave for p in c.pitches],
+            "doublings": doublings, "omissions": omissions}
+
+def analyze(case):
+    return {"id": case["id"], "roman": roman_numeral(case["midi"], case["key"]),
+            "anatomy": voicing_anatomy(case["midi"])}
+`;
+
+    async function run() {
+      const out = { engine: "Pyodide " + PYODIDE_VERSION + " + music21", phases: {} };
+      try {
+        const cases = await (await fetch("./chords.json")).json();
+
+        // --- cold start, phase 1: load the Pyodide runtime ------------------
+        let t = now();
+        const pyodide = await loadPyodide({
+          indexURL: `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`,
+        });
+        out.phases.loadPyodide_s = +((now() - t) / 1000).toFixed(3);
+        log(`loadPyodide: ${out.phases.loadPyodide_s}s`);
+
+        // --- cold start, phase 2: micropip-install music21 ------------------
+        t = now();
+        await pyodide.loadPackage("micropip");
+        const micropip = pyodide.pyimport("micropip");
+        await micropip.install("music21");
+        out.phases.installMusic21_s = +((now() - t) / 1000).toFixed(3);
+        log(`micropip install music21: ${out.phases.installMusic21_s}s`);
+
+        // --- cold start, phase 3: first import + first analysis -------------
+        t = now();
+        pyodide.runPython(PY_OPS);
+        const analyze = pyodide.globals.get("analyze");
+        pyodide.globals.set("_cases", pyodide.toPy(cases.cases));
+        const first = analyze(pyodide.toPy(cases.cases[0])).toJs({ dict_converter: Object.fromEntries });
+        out.phases.firstAnalysis_s = +((now() - t) / 1000).toFixed(3);
+        out.sample_output = first;
+        log(`first import+analysis: ${out.phases.firstAnalysis_s}s`);
+
+        out.total_cold_s = +(out.phases.loadPyodide_s + out.phases.installMusic21_s + out.phases.firstAnalysis_s).toFixed(3);
+
+        // --- warm per-call latency ------------------------------------------
+        const roman = pyodide.globals.get("roman_numeral");
+        const anat = pyodide.globals.get("voicing_anatomy");
+        const N = 30;
+        const rt = [], at = [];
+        for (let i = 0; i < N; i++) {
+          for (const c of cases.cases) {
+            const midi = pyodide.toPy(c.midi);
+            let s = now(); roman(midi, c.key); rt.push(now() - s);
+            s = now(); anat(midi); at.push(now() - s);
+          }
+        }
+        const med = (xs) => { const s = [...xs].sort((a, b) => a - b); return +s[Math.floor(s.length / 2)].toFixed(3); };
+        const p95 = (xs) => { const s = [...xs].sort((a, b) => a - b); return +s[Math.floor(s.length * 0.95)].toFixed(3); };
+        out.warm_per_call = {
+          romanNumeral: { median_ms: med(rt), p95_ms: p95(rt) },
+          voicingAnatomy: { median_ms: med(at), p95_ms: p95(at) },
+        };
+        log(`warm romanNumeral median: ${out.warm_per_call.romanNumeral.median_ms}ms`);
+        log(`warm voicingAnatomy median: ${out.warm_per_call.voicingAnatomy.median_ms}ms`);
+
+        // --- downloaded bytes (bundle size) ---------------------------------
+        const res = performance.getEntriesByType("resource");
+        let total = 0, pyTotal = 0;
+        for (const r of res) {
+          const sz = r.transferSize || r.encodedBodySize || 0;
+          total += sz;
+          if (r.name.includes("pyodide") || r.name.includes("music21") ||
+              r.name.includes("numpy") || r.name.includes(".whl") ||
+              r.name.includes(".zip") || r.name.includes("matplotlib")) pyTotal += sz;
+        }
+        out.download_bytes = { total, pyodide_and_packages: pyTotal,
+          total_mb: +(total / 1048576).toFixed(2), pkg_mb: +(pyTotal / 1048576).toFixed(2) };
+        log(`downloaded total: ${out.download_bytes.total_mb} MB (pkgs ${out.download_bytes.pkg_mb} MB)`);
+
+        out.status = "ok";
+      } catch (e) {
+        out.status = "error";
+        out.error = String(e && e.stack || e);
+        log("ERROR: " + out.error);
+      }
+      window.__R1__ = out;
+      log("\n__R1_DONE__\n" + JSON.stringify(out, null, 2));
+    }
+    run();
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "engine": "CPython + music21 (backend)",
+  "music21_version": "10.3.0",
+  "cold": {
+    "import_s": 0.524,
+    "first_analysis_s": 0.025,
+    "total_cold_s": 0.549
+  },
+  "warm_per_call": {
+    "romanNumeral": {
+      "median_ms": 6.436,
+      "p95_ms": 9.221,
+      "min_ms": 2.447
+    },
+    "voicingAnatomy": {
+      "median_ms": 5.328,
+      "p95_ms": 8.226,
+      "min_ms": 1.655
+    },
+    "both": {
+      "median_ms": 11.881,
+      "p95_ms": 16.822,
+      "min_ms": 4.198
+    }
+  },
+  "sample_output": {
+    "id": "openg-home-G-over-D",
+    "roman": {
+      "figure": "I64",
+      "romanNumeral": "I",
+      "scaleDegree": 1,
+      "inversion": 2,
+      "figuredBass": "64"
+    },
+    "anatomy": {
+      "root": "G2",
+      "rootPc": 7,
+      "bass": "D2",
+      "bassPc": 2,
+      "inversion": 2,
+      "commonName": "major triad",
+      "pitchedCommonName": "G-major triad",
+      "pitches": [
+        "D2",
+        "G2",
+        "D3",
+        "G3",
+        "B3",
+        "D4"
+      ],
+      "doublings": {
+        "D": 3,
+        "G": 2
+      },
+      "omissions": []
+    }
+  }
+}

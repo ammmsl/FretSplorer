@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fretsplorer/kb/schema/rule.schema.json",
+  "title": "Relational rule data",
+  "description": "Global, tuning-agnostic rule data under /kb/rules. The engine computes facts from a card's pitch model and JOINS to these rules by computed keys (no stored card<->rule pointers; see ADR 0002). Three rule files share this schema via the `set` discriminator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "set", "entries"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "set": {
+      "enum": ["tension-table", "relational-vocabulary", "function-tendencies"],
+      "description": "Which rule set this file holds."
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rule" }
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "reasoning"],
+      "properties": {
+        "kind": { "enum": ["definitional", "theory", "derived", "editorial"] },
+        "reasoning": { "type": "string", "minLength": 1 },
+        "sources": { "type": "array", "items": { "type": "string" } },
+        "verifiedBy": { "enum": ["computation", "reference", "both"] },
+        "verifiedNote": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "enum": ["definitional", "derived"] } } },
+          "then": { "required": ["verifiedBy"] }
+        }
+      ]
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "category", "key", "provenance"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Stable id. Tools cite this id as a trace so the grounding harness can verify it (ADR 0003)."
+        },
+        "category": {
+          "enum": [
+            "tension",
+            "frame",
+            "drone-role",
+            "tension-vs-pedal",
+            "ambiguity",
+            "function-tendency"
+          ],
+          "description": "A=frame (home/home-transposed/diatonic-function), B=frame modifications, C=frame (diatonic-function), D=drone-role, E=tension-vs-pedal; plus tension-table entries and ambiguity phrasing."
+        },
+        "key": {
+          "type": "object",
+          "description": "The computed facts the engine matches on (e.g. {intervalClass:1}, {droneDegree:9}, {tensionRank:'bite'}, {function:'IV'}). Open object: each rule set uses its own keys.",
+          "minProperties": 1
+        },
+        "term": {
+          "type": "string",
+          "description": "Canonical label (closed-vocabulary where possible), e.g. 'added 9th', 'semitone bite'."
+        },
+        "phrase": {
+          "type": "string",
+          "description": "Grounded baseline sentence with typed {slots}. The tool fills slots with COMPUTED values and returns this as the explanation; the LLM may rephrase but may not alter slot facts."
+        },
+        "tension": {
+          "enum": ["reinforce", "consonant", "color", "bite", "unstable"],
+          "description": "Link to the 5-level graded-tension scale (ADR 0004), where applicable."
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4,
+          "description": "Numeric tension rank 0..4 (reinforce..unstable). UI maps this to color/line intensity."
+        },
+        "proximity": {
+          "type": "boolean",
+          "description": "Optional modifier: true marks a literal-adjacent semitone (tightest bite) vs an octave-spread form. Refinement only; core scale is interval-class driven."
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+schemaVersion: 1
+
+# Shared bibliography, keyed by id. Cards and rules cite these ids in provenance.sources.
+# status: to-verify entries are plausible placeholders that MUST be confirmed at build (05
+# "verify-at-build"); no shipped V1 claim should rest on a to-verify source.
+
+sources:
+  - id: equal-temperament
+    title: "12-tone equal temperament: semitone = equal pitch shift across all strings"
+    note: "Foundational to the barre-as-transpose rule and the 12-TET pitch model. Standard music theory."
+    status: verified
+
+  - id: interval-consonance
+    title: "Interval consonance/dissonance ordering by interval class"
+    author: "(to source: e.g. Sethares, Tuning Timbre Spectrum Scale; or a standard harmony text)"
+    note: "Backs the 5-level graded-tension scale. Confirm a citable authority for the ic ordering."
+    status: to-verify
+
+  - id: tonal-function
+    title: "Diatonic function and chord identity (tonic/subdominant/dominant; added tones; suspensions)"
+    note: "Standard functional-harmony theory. Confirm a citable reference text."
+    status: to-verify
+
+  - id: open-tunings-ref
+    title: "Open/alternate tuning reference for seed-tuning pitches and home chords"
+    note: "Cross-check each seed card's open-string pitches against an authoritative tuning reference."
+    status: to-verify

@@ -96,13 +96,13 @@ This is what separates a tutor from a confident liar, and it matters most precis
 ## Suggested module boundaries (for the VS Code start)
 
 ```
-/core        invariant pitch model, intervals, scales, chords/voicings
-/projection  project(), identify(), capo virtual-tuning
-/naming      tier1-relational/, tier2-tonal/, tier3-music21/
-/tension     advise_setup() + gauge/unit-weight tables
-/kb          tunings/, rules/, affective/, provenance/   (declarative data)
-/board       neck collection model, focus pointer, morph
-/render      alphaTab adapter (model -> AlphaTex/Score), playback
-/mcp         resources + intent tools, grounding guardrails
-/ui          fretboard surface (build first), notation pane, chat
+src/core        invariant pitch model, intervals, scales, chords/voicings
+src/projection  project(), identify(), capo virtual-tuning
+src/naming      tier1-relational/, tier2-tonal/, tier3-music21/
+src/tension     advise_setup() + gauge/unit-weight tables
+kb/             schema/, tunings/, rules/, affective/, sources/   (declarative data; provenance inline)
+src/board       neck collection model, focus pointer, morph
+src/render      alphaTab adapter (model -> AlphaTex/Score), playback
+src/mcp         resources + intent tools, grounding guardrails
+src/ui          fretboard surface (build first), notation pane, chat
 ```

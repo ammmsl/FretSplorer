@@ -1,0 +1,36 @@
+schemaVersion: 1
+set: function-tendencies
+
+# Diatonic-function -> pull/resolution prose. The function label (I/IV/V/vi...) is COMPUTED from the
+# chord root relative to the tonic; this file supplies the pedagogical tendency, not the label.
+
+entries:
+  - id: tendency-I
+    category: function-tendency
+    key: { function: "I" }
+    term: "tonic"
+    phrase: "the I -- home, resolved; nothing is pulling"
+    provenance:
+      kind: theory
+      reasoning: "Tonic function: the point of rest the other functions pull toward."
+      sources: [tonal-function]
+
+  - id: tendency-IV
+    category: function-tendency
+    key: { function: "IV" }
+    term: "subdominant"
+    phrase: "the IV -- it leans, wanting to fall back home to the I or push on to the V"
+    provenance:
+      kind: theory
+      reasoning: "Subdominant function: motion away from tonic, resolving to I or to V."
+      sources: [tonal-function]
+
+  - id: tendency-V
+    category: function-tendency
+    key: { function: "V" }
+    term: "dominant"
+    phrase: "the V -- the strongest pull; it wants to resolve home to the I"
+    provenance:
+      kind: theory
+      reasoning: "Dominant function: maximal pull to the tonic, driven by the leading tone."
+      sources: [tonal-function]

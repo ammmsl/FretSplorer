@@ -1,0 +1,41 @@
+{
+  "_comment": "Representative Tier-3 inputs for Fretsplorer. Pitches are MIDI integers (the /core universal coordinate, see src/core/pitch-model.ts) as a MULTISET ordered low->high; octaves/doublings preserved (docs/03, R10). `key` is the home-chord-derived key context music21 needs for romanNumeralFromChord (Tier-1 supplies it, docs/01 D-Tier3).",
+  "cases": [
+    {
+      "id": "openg-home-G-over-D",
+      "desc": "Open G home chord, low-D drone: G/D, root tripled, doublings - the canonical Tier-3 sentence from docs/01",
+      "midi": [38, 43, 50, 55, 59, 62],
+      "key": "G"
+    },
+    {
+      "id": "openg-barre5-Cadd9-over-D",
+      "desc": "Open G barre 5 over open low-D drone: Cadd9/D, open D as the 9th (from open-g.yaml slideExamples)",
+      "midi": [38, 48, 55, 60, 64, 67],
+      "key": "G"
+    },
+    {
+      "id": "C-major-root",
+      "desc": "Plain C major triad, root position - baseline I",
+      "midi": [60, 64, 67],
+      "key": "C"
+    },
+    {
+      "id": "C-major-first-inv",
+      "desc": "C major first inversion C/E - figured-bass inversion check (I6)",
+      "midi": [64, 67, 72],
+      "key": "C"
+    },
+    {
+      "id": "G7-dominant",
+      "desc": "G dominant 7th in C - functional V7",
+      "midi": [55, 59, 62, 65],
+      "key": "C"
+    },
+    {
+      "id": "Dm7-ii",
+      "desc": "D minor 7th in C - ii7, a 7th chord with a non-root bass test",
+      "midi": [50, 53, 57, 60],
+      "key": "C"
+    }
+  ]
+}

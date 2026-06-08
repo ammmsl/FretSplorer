@@ -22,6 +22,18 @@ dist-ssr
 .vite
 coverage
 
+# Scratch research artifacts + browser-automation output (orthogonal-lane spike)
+.research
+.playwright-mcp
+
+# R1 spike: the results/*.json measurements ARE committed (they are the empirical
+# evidence cited by docs/adr/0008). Only the transient server log is ignored —
+# covered by the *.log rule above (spikes/r1-music21/results/uvicorn.log).
+
+# alphaTab assets auto-copied from node_modules by @coderline/alphatab-vite (derived)
+public/font
+public/soundfont
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

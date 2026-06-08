@@ -1,0 +1,7 @@
+{
+  "localhost_roundtrip_ms": {
+    "median": 12.47,
+    "p95": 15.57,
+    "min": 10.96
+  }
+}

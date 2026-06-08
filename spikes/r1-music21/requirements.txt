@@ -1,0 +1,5 @@
+# R1 spike — backend side only. The Pyodide side has NO install step (music21 is
+# fetched at runtime via micropip from PyPI; see pyodide.html).
+music21>=10,<11
+fastapi>=0.110
+uvicorn[standard]>=0.29

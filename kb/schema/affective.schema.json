@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fretsplorer/kb/schema/affective.schema.json",
+  "title": "Affective -> mechanism dictionary",
+  "description": "PROVISIONAL (V1). Maps a vibe word to an ordered list of executable theory operations. The mapping is EDITORIAL (taste), so provenance.kind must be 'editorial' and the namer must hedge it. Applying the ops still yields grounded output (find_voicings computes real pitches). Flagged for post-build review on whether it earns its place.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "vibes"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "vibes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/vibe" }
+    }
+  },
+  "$defs": {
+    "vibe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "operations", "provenance"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+        "label": { "type": "string" },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "type": {
+          "enum": ["mood", "artist"],
+          "default": "mood",
+          "description": "'artist' entries map e.g. 'the Nick Drake thing' to ops (+ maybe a suggested tuning). Naming artists is informational, not reproduction."
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Ordered theory operations over a CLOSED enum -- the contract with the engine (feeling_to_options -> find_voicings executes them).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op"],
+            "properties": {
+              "op": {
+                "enum": [
+                  "add-tone",
+                  "omit",
+                  "suspend",
+                  "let-ring",
+                  "widen-spacing",
+                  "add-low-drone",
+                  "mode-shift",
+                  "extend"
+                ]
+              },
+              "degree": { "type": "integer", "description": "For add-tone/omit/extend, e.g. 9, 11, 13, 3." },
+              "value": { "type": ["string", "integer"], "description": "For suspend (2|4), mode-shift (toward: phrygian|lydian|...), let-ring (target)." },
+              "target": { "type": "string", "description": "e.g. 'opens' for let-ring." }
+            }
+          }
+        },
+        "suggestedTuning": { "type": "string", "description": "Optional card id, mainly for artist vibes." },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "reasoning"],
+          "properties": {
+            "kind": {
+              "const": "editorial",
+              "description": "Affective mappings are taste, not fact -> always editorial -> the namer must hedge ('usually', 'often')."
+            },
+            "reasoning": { "type": "string", "minLength": 1 },
+            "sources": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

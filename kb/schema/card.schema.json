@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fretsplorer/kb/schema/card.schema.json",
+  "title": "Grammar card",
+  "description": "Declarative per-tuning KB record. Stores authorial intent + raw pitch data only; everything computable (home chord, drone map, barre rule, bass, shape function) is DERIVED, never stored. Also the future community-contribution format.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "name", "strings", "tonic", "provenance"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Forward-compat for the contribution format."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Stable kebab-case slug, e.g. 'open-g'."
+    },
+    "name": { "type": "string", "description": "Display name, e.g. 'Open G'." },
+    "aliases": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Other names, e.g. 'Spanish tuning'."
+    },
+    "strings": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "integer", "minimum": 0, "maximum": 127 },
+      "description": "Open-string target pitches as MIDI integers, ordered string 1 -> string N (string 1 = thinnest/highest in standard). ARRAY INDEX CARRIES NO PITCH-ORDER MEANING: re-entrant tunings are allowed (non-monotonic) and bass is always computed from the lowest pitch, never from index."
+    },
+    "tonic": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 11,
+      "description": "Pitch class (0=C..11=B) of the tuning's key center / drone root. The one authorial anchor; everything else derives. The home chord (open-string sonority) is DERIVED from strings + tonic, not stored."
+    },
+    "movableShapes": {
+      "type": "array",
+      "description": "Hand-authored for V1 (R3 derivation deferred). The future R3 algorithm emits into this same structure.",
+      "items": { "$ref": "#/$defs/movableShape" }
+    },
+    "capoBehavior": {
+      "type": "string",
+      "description": "Optional pedagogical prose about how this tuning responds to a capo. NOT structural: a capo is a runtime per-string shift vector, never stored card state."
+    },
+    "idiomaticProgressions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional curated 'the classic move in this tuning is...' pedagogy. The only tuning-specific naming-adjacent data stored on a card."
+    },
+    "references": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional representative artists/songs (informational, not reproduced) for the affective layer."
+    },
+    "overrides": {
+      "type": "array",
+      "description": "RESERVED SEAM, ships empty in V1. A card MAY later shadow a global rule's Tier-1 relational PHRASING only -- never the computed pitch facts or the absolute (T2/T3) identity. See ADR 0002.",
+      "items": { "type": "object" },
+      "maxItems": 0
+    },
+    "provenance": { "$ref": "#/$defs/provenance" }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "reasoning"],
+      "properties": {
+        "kind": {
+          "enum": ["definitional", "theory", "derived", "editorial"],
+          "description": "definitional=authored tuning fact; theory=universal rule; derived=checkable by computing pitches; editorial=aesthetic/taste (must be hedged when spoken)."
+        },
+        "reasoning": { "type": "string", "minLength": 1 },
+        "sources": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Ids into /kb/sources/references.yaml."
+        },
+        "verifiedBy": {
+          "enum": ["computation", "reference", "both"],
+          "description": "How the claim was verified. REQUIRED for kind definitional|derived."
+        },
+        "verifiedNote": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "enum": ["definitional", "derived"] } } },
+          "then": { "required": ["verifiedBy"] }
+        }
+      ]
+    },
+    "movableShape": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "strings", "produces", "provenance"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+        "label": { "type": "string" },
+        "strings": {
+          "type": "array",
+          "description": "Per-string template, ordered string 1 -> string N (same indexing as the card's `strings`).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["play"],
+            "properties": {
+              "play": { "enum": ["open", "mute", "fret"] },
+              "offset": {
+                "type": "integer",
+                "description": "Required when play=fret. Semitone offset relative to the shape's anchor (barre) fret; the shape slides as a rigid block. `open` = absolute fret 0 (a drone, does not slide)."
+              }
+            },
+            "allOf": [
+              {
+                "if": { "properties": { "play": { "const": "fret" } } },
+                "then": { "required": ["offset"] }
+              }
+            ]
+          }
+        },
+        "produces": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["quality"],
+          "properties": {
+            "quality": {
+              "type": "string",
+              "description": "The INVARIANT the shape generates (e.g. 'major triad on the upper five strings'). A checkable claim -> provenance.kind must be 'derived' and verified by computing the pitches."
+            }
+          }
+        },
+        "slideExamples": {
+          "type": "array",
+          "description": "Optional pedagogy. The function is DERIVED from anchor vs tonic, not authoritative.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["anchorFret", "function"],
+            "properties": {
+              "anchorFret": { "type": "integer", "minimum": 0 },
+              "function": { "type": "string" }
+            }
+          }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+schemaVersion: 1
+set: tension-table
+
+# The 5-level graded-tension scale (ADR 0004). Tension between an active (fretted) note and a
+# ringing drone is computed PAIRWISE and keyed on interval class (0-6). The engine reduces the
+# interval to its class, looks up the rank here, and fills the phrase slots with computed values.
+# Held SEPARATE from a note's degree/function.
+
+entries:
+  - id: tension-ic0
+    category: tension
+    key: { intervalClass: 0 }
+    term: "reinforce"
+    tension: reinforce
+    rank: 0
+    phrase: "the {note} doubles the open {droneNote} -- it reinforces the drone"
+    provenance:
+      kind: theory
+      reasoning: "Unison/octave: maximal consonance; the note thickens rather than colors the drone."
+      sources: [interval-consonance]
+
+  - id: tension-ic5
+    category: tension
+    key: { intervalClass: 5 }
+    term: "consonant"
+    tension: consonant
+    rank: 1
+    phrase: "the {note} sits a {interval} off the open {droneNote} -- a stable, consonant fit"
+    provenance:
+      kind: theory
+      reasoning: "Perfect 4th/5th (ic 5): strong consonance; the note rests inside the harmony."
+      sources: [interval-consonance]
+
+  - id: tension-ic3-4
+    category: tension
+    key: { intervalClass: [3, 4] }
+    term: "consonant"
+    tension: consonant
+    rank: 1
+    phrase: "the {note} is a {interval} against the open {droneNote} -- consonant, defines the colour"
+    provenance:
+      kind: theory
+      reasoning: "Thirds and sixths (ic 3,4): imperfect consonance; stable but they decide major/minor character."
+      sources: [interval-consonance]
+
+  - id: tension-ic2
+    category: tension
+    key: { intervalClass: 2 }
+    term: "whole-tone colour"
+    tension: color
+    rank: 2
+    phrase: "the {note} is a whole tone off the open {droneNote} -- gentle colour, the open shimmer"
+    provenance:
+      kind: theory
+      reasoning: "Major 2nd / minor 7th (ic 2): mild tension; the add9-style openness."
+      sources: [interval-consonance]
+
+  - id: tension-ic1
+    category: tension
+    key: { intervalClass: 1 }
+    term: "semitone bite"
+    tension: bite
+    rank: 3
+    phrase: "the {note} sits a semitone off the open {droneNote} -- that's the bite"
+    proximity: true
+    provenance:
+      kind: theory
+      reasoning: "Minor 2nd / major 7th (ic 1): strong tension; the textural clash the project is built around. proximity:true marks a literal adjacent semitone (tightest form)."
+      sources: [interval-consonance]
+
+  - id: tension-ic6
+    category: tension
+    key: { intervalClass: 6 }
+    term: "tritone"
+    tension: unstable
+    rank: 4
+    phrase: "the {note} is a tritone from the open {droneNote} -- the strongest tension, it wants to resolve"
+    provenance:
+      kind: theory
+      reasoning: "Tritone (ic 6): maximal instability; ranked strongest, matching the UI drone-map intensity (08 decision d)."
+      sources: [interval-consonance]

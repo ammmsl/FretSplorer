@@ -1,0 +1,29 @@
+{
+  "engine": "Pyodide 0.27.2 + music21 10.x",
+  "measured_in": "real browser (Chromium via Playwright), cold cache, jsdelivr CDN",
+  "phases": {
+    "loadPyodide_s": 1.59,
+    "installMusic21_s": 4.83,
+    "firstAnalysis_s": 1.821
+  },
+  "total_cold_s": 8.241,
+  "warm_per_call": {
+    "romanNumeral": { "median_ms": 11.2, "p95_ms": 15.4 },
+    "voicingAnatomy": { "median_ms": 8.5, "p95_ms": 13.1 }
+  },
+  "download_bytes": {
+    "total": 16688934,
+    "total_mb": 15.92,
+    "note": "Pyodide runtime + micropip + music21 + numpy, measured via performance.getEntriesByType('resource'). Excludes the music21 corpus (lazy, untouched by our two calls). Cached on disk after first visit -> repeat-visit cold start is init-only (~3.4s = loadPyodide+install-from-cache+firstAnalysis), no re-download."
+  },
+  "sample_output": {
+    "id": "openg-home-G-over-D",
+    "roman": { "figure": "I64", "inversion": 2, "scaleDegree": 1 },
+    "anatomy": {
+      "root": "G2", "bass": "D2", "inversion": 2, "commonName": "major triad",
+      "pitches": ["D2", "G2", "D3", "G3", "B3", "D4"],
+      "doublings": { "D": 3, "G": 2 }, "omissions": []
+    }
+  },
+  "cross_check": "Byte-identical analysis to results/backend.json (same figure I64, same root/bass/inversion/doublings) -> the analysis code is delivery-invariant; the spike isolates delivery cost only."
+}

@@ -1,0 +1,99 @@
+schemaVersion: 1
+id: open-g
+name: Open G
+aliases: ["Spanish tuning"]
+
+# Open strings, string 1 (high) -> string 6 (low):  D4 B3 G3 D3 G2 D2
+# MIDI:  D4=62  B3=59  G3=55  D3=50  G2=43  D2=38
+# (verified: C4=60; D4 = 60+2 = 62; standard low E2=40, low D2 = 40-2 = 38)
+# Array index carries NO pitch-order meaning; bass is computed from lowest pitch.
+strings: [62, 59, 55, 50, 43, 38]
+
+# Key center = G. Pitch class 7.
+# Home chord is DERIVED (not stored): pcs of the open strings = {D=2, B=11, G=7} = G major triad,
+# rooted on the tonic G -> "G major". All three open pitch-classes are chord tones, which is why
+# Open G is a clean open-major tuning.
+tonic: 7
+
+movableShapes:
+  - id: og-major-barre
+    label: "movable major (full barre)"
+    # Full six-string barre. Slides as a rigid block: barre at fret N = the home chord up N semitones.
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: fret, offset: 0 }   # string 6
+    produces:
+      quality: "major triad (the home chord transposed)"
+    slideExamples:
+      - { anchorFret: 0, function: "I (G major)" }
+      - { anchorFret: 5, function: "IV (C major)" }
+      - { anchorFret: 7, function: "V (D major)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        A flat barre transposes every open pitch equally, so the sounding pitch-class set is the
+        open-string set shifted by N -- i.e. the home chord (G major) moved up N semitones. This is
+        the foundational barre-as-transpose rule, stated rather than rediscovered.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: open pcs {G,B,D} = G major. anchor 5: opens+5 = [67,64,60,55,48,43] -> pcs {C,E,G}
+        = C major (IV). anchor 7: opens+7 = [69,66,62,57,50,45] -> pcs {D,F#,A} = D major (V). Confirmed.
+
+  - id: og-major-over-d-drone
+    label: "major over the low-D drone"
+    # Barre the upper five strings; leave the low D (string 6) ringing open as a pedal.
+    # Demonstrates the core Tier-1 idea: the barred strings carry an INVARIANT quality (a major triad),
+    # while the open drone's RELATIONSHIP to it (and thus the chord's function/name) changes with anchor.
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: open }              # string 6 = open low D drone (does not slide)
+    produces:
+      quality: "major triad on the upper five strings, over the open low-D pedal"
+    slideExamples:
+      - { anchorFret: 0, function: "I with the low D as a pedal 5th (G/D)" }
+      - { anchorFret: 5, function: "IV with the open D ringing as its 9th (Cadd9/D)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        The barred upper five strings make a major triad (same as the full barre); the open low D is a
+        fixed pedal whose degree relative to that triad's root changes as the shape slides -- the 5th of
+        G at anchor 0, the 9th of C at anchor 5. This is the schema's key proof: invariant quality +
+        position-dependent drone function.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: strings1-5 open [62,59,55,50,43] -> pcs {G,B,D} = G major; + open D2(38), bass = D2 ->
+        G/D, D = 5th. anchor 5: strings1-5 +5 = [67,64,60,55,48] -> pcs {C,E,G} = C major; + open D2(38),
+        bass = D2 -> C/D, D = 9th of C. Confirmed.
+
+capoBehavior: >
+  A capo (or partial capo) is a uniform/per-string pitch shift applied at runtime, not stored here.
+  Open G capo 2 is "in A" with byte-identical native logic: every relationship to the drones is
+  preserved, only the absolute pitches transpose. Rendered at absolute frets, never renumbered.
+
+idiomaticProgressions:
+  - "I-IV-V by barre: open (I=G) -> barre 5 (IV=C) -> barre 7 (V=D), drones ringing throughout."
+
+references:
+  - "Open G is associated with slide blues and with Keith Richards' five-string work (informational)."
+
+provenance:
+  kind: definitional
+  reasoning: >
+    Open G is the well-documented major-third-and-fifth open tuning D-G-D-G-B-D (low to high). The
+    pitches are the tuning's definition; the tonic G is the conventional, authorial key center (the
+    open strings sound a G major triad).
+  sources: [open-tunings-ref]
+  verifiedBy: both
+  verifiedNote: >
+    Pitches cross-computed from note+octave to MIDI and confirmed against an open-tunings reference;
+    open-string pc-set {G,B,D} confirms tonic G and a clean G-major home chord.

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fretsplorer — Build Dependency Map</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#8b949e; --line:#30363d;
+    --spine:#ff7849; --spine-bg:#2a1812;
+    --gate:#f5c451; --gate-bg:#2a2410;
+    --decide:#b083f0; --decide-bg:#221a30;
+    --design:#38c0a8; --design-bg:#0f2622;
+    --par:#5aa9f0; --par-bg:#0f2030;
+    --ortho:#5fd07a; --ortho-bg:#0f2618;
+    --defer:#6b7280; --defer-bg:#1a1d22;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  header.page{padding:22px 28px 8px;max-width:1200px;margin:0 auto;}
+  header.page h1{margin:0 0 4px;font-size:22px;letter-spacing:.2px;}
+  header.page p{margin:4px 0;color:var(--muted);font-size:13.5px;line-height:1.5;}
+  .hint{color:var(--gate);font-weight:600;}
+  .wrap{padding:6px 28px 40px;}
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#0a0e13;
+    padding:0;position:relative;}
+  #stage{position:relative;}
+  .band{position:absolute;left:0;border-radius:0;}
+  .lanelabel{position:absolute;left:10px;font-size:11px;font-weight:700;letter-spacing:.6px;
+    text-transform:uppercase;color:var(--muted);width:150px;line-height:1.3;}
+  .colhead{position:absolute;font-size:11px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.5px;width:205px;text-align:left;line-height:1.35;}
+  .node{position:absolute;width:205px;min-height:70px;border-radius:10px;padding:9px 11px;
+    border:1px solid var(--line);border-left-width:5px;background:var(--panel);cursor:pointer;
+    transition:opacity .15s,transform .1s,box-shadow .15s;z-index:3;}
+  .node:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.45);}
+  .node .t{font-size:13px;font-weight:650;line-height:1.25;}
+  .node .s{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.3;}
+  .node .tags{margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;}
+  .tag{font-size:9.5px;font-weight:700;letter-spacing:.4px;padding:2px 6px;border-radius:20px;
+    background:#0a0e13;border:1px solid var(--line);color:var(--muted);}
+  .tag.r{color:var(--gate);border-color:#3a3417;}
+  .tag.now{color:#7ee787;border-color:#1f3a24;background:#0d1f12;}
+  .tag.ms{color:#0d1117;background:var(--gate);border-color:var(--gate);}
+  .tag.dec{color:var(--decide);border-color:#33285a;}
+  .tag.defer{color:var(--defer);}
+  /* tier colors */
+  .spine{border-left-color:var(--spine);background:linear-gradient(180deg,var(--spine-bg),var(--panel));}
+  .gate{border-left-color:var(--gate);}
+  .decide{border-left-color:var(--decide);background:linear-gradient(180deg,var(--decide-bg),var(--panel));}
+  .design{border-left-color:var(--design);}
+  .par{border-left-color:var(--par);}
+  .ortho{border-left-color:var(--ortho);}
+  .defer{border-left-color:var(--defer);opacity:.82;border-style:dashed;}
+  svg#edges{position:absolute;top:0;left:0;z-index:2;pointer-events:none;}
+  .dim{opacity:.12 !important;}
+  path.edge{fill:none;}
+  path.crit{stroke:var(--spine);stroke-width:3.4;}
+  path.dep{stroke:#586172;stroke-width:1.7;}
+  path.defer{stroke:var(--defer);stroke-width:1.5;stroke-dasharray:5 5;}
+  .legend{max-width:1200px;margin:18px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .legend .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+  .legend h3{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);}
+  .lgrow{display:flex;align-items:center;gap:9px;font-size:12.5px;margin:6px 0;line-height:1.3;}
+  .sw{width:26px;height:14px;border-radius:4px;border:1px solid var(--line);border-left-width:4px;flex:none;}
+  .swline{width:30px;height:0;border-top-width:3px;border-top-style:solid;flex:none;}
+  .ms-defs{max-width:1200px;margin:18px auto 0;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:14px 18px;}
+  .ms-defs h3{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);}
+  .ms-defs table{border-collapse:collapse;width:100%;font-size:13px;}
+  .ms-defs td{padding:6px 10px;border-top:1px solid var(--line);vertical-align:top;line-height:1.4;}
+  .ms-defs td:first-child{white-space:nowrap;font-weight:700;color:var(--gate);}
+  footer{max-width:1200px;margin:20px auto 0;color:var(--muted);font-size:12px;line-height:1.5;}
+  code{background:#0a0e13;padding:1px 5px;border-radius:5px;border:1px solid var(--line);font-size:12px;}
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Fretsplorer — Build Dependency Map</h1>
+  <p><span class="hint">Read it like this:</span> horizontal position = <b>dependency depth, not time</b>.
+     Arrows mean “must finish before.” Two nodes in the same column with <b>no</b> arrow between them can be built <b>at the same time</b>.
+     The thick orange chain is the <b>critical path</b> — the serial spine that sets your minimum time-to-functional. Everything else hangs off it.</p>
+  <p>Click any task to isolate its dependencies &amp; dependents. Click empty space to reset.</p>
+</header>
+
+<div class="wrap">
+  <div class="scroll" id="scroll">
+    <div id="stage">
+      <svg id="edges"></svg>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="box">
+      <h3>Task type (left border colour)</h3>
+      <div class="lgrow"><span class="sw" style="border-left-color:var(--spine);background:var(--spine-bg)"></span> <b>Critical spine</b> — serial, blocks everything downstream</div>
+      <div class="lgrow"><span class="sw" style="border-left-color:var(--decide);background:var(--decide-bg)"></span> <b>Decision / prototype</b> — resolve to unblock structure</div>
+      <div class="lgrow"><span class="sw" style="border-left-color:var(--gate)"></span> <b>Differentiator-gating</b> — gates the M2 thesis (KB &amp; naming)</div>
+      <div class="lgrow"><span class="sw" style="border-left-color:var(--design)"></span> <b>Design</b> — UX/visual spec for the surface</div>
+      <div class="lgrow"><span class="sw" style="border-left-color:var(--par)"></span> <b>Parallel (after core)</b> — needs the model, not the UI</div>
+      <div class="lgrow"><span class="sw" style="border-left-color:var(--ortho)"></span> <b>Orthogonal</b> — blocks nothing, fully concurrent</div>
+      <div class="lgrow"><span class="sw" style="border-left-color:var(--defer);border-style:dashed"></span> <b>Deferred</b> — hand-stub for V1, build later</div>
+    </div>
+    <div class="box">
+      <h3>Edges &amp; badges</h3>
+      <div class="lgrow"><span class="swline" style="border-top-color:var(--spine)"></span> Critical path (must finish before, on the spine)</div>
+      <div class="lgrow"><span class="swline" style="border-top-color:#586172"></span> Dependency (must finish before)</div>
+      <div class="lgrow"><span class="swline" style="border-top-color:var(--defer);border-top-style:dashed"></span> Deferred dependency</div>
+      <div class="lgrow"><span class="tag now">▶ NOW</span> Can start today — zero code dependency</div>
+      <div class="lgrow"><span class="tag ms">M0</span> Milestone reached at this node</div>
+      <div class="lgrow"><span class="tag r">R#</span> Maps to a question in <code>06-research-directive.md</code></div>
+    </div>
+  </div>
+
+  <div class="ms-defs">
+    <h3>Milestone ladder — “functional” is a rung, not a point</h3>
+    <table>
+      <tr><td>M0 · Skeleton</td><td>Static site, one tuning, fretboard renders; pick scale/chord → degree-coloured overlay; switch tuning → re-projects. Proves the invariant→projection→render spine.</td></tr>
+      <tr><td>M1 · Trace-back</td><td>Tap a grip → <code>identify()</code> → name + bass + degree-vs-drone (Tier 2). The #1 user cure works.</td></tr>
+      <tr><td>M2 · Differentiator</td><td>Tier 1 relational naming + drone map + ≥1 verified grammar card + T1↔T2 handoff. <b>The honest definition of “functional” — the thesis is demonstrable.</b></td></tr>
+      <tr><td>M3 · Product</td><td>MCP conversational layer + grounding discipline + affective dictionary. “Vibes in → verified theory out.”</td></tr>
+    </table>
+  </div>
+
+  <footer>
+    <b>The leverage move:</b> the five <span style="color:#7ee787">▶ NOW</span> tasks (UX design, Tier-1 vocabulary spec R2, grammar-card schema R11, the music21 Pyodide-vs-backend prototype R1, and tension-data sourcing R7) have <b>no code dependency</b> — they can all run before a single line of the spine compiles. Your worst unknowns are deliberately <b>off</b> the code critical path. The music21 prototype (R1) is the one decision that can force structural rework if deferred, because it decides static-vs-backend for the whole app.
+  </footer>
+</div>
+
+<script>
+// ---- data --------------------------------------------------------------
+// lane order (top->bottom); col = dependency depth (0..6)
+const LANES = [
+  "Decisions",
+  "Design",
+  "★ Critical spine",
+  "Knowledge / Data",
+  "Naming tiers",
+  "Voicing search",
+  "Orthogonal (blocks nothing)"
+];
+const COLS = [
+  "① Start now\nno code dependency",
+  "② Foundation",
+  "③ Forward projection",
+  "④ Fretboard surface",
+  "⑤ Reverse / identify",
+  "⑥ Relational naming",
+  "⑦ Conversational"
+];
+
+const N = [
+  // id, col, lane, title, sub, cls, tags
+  {id:"d_pitch", col:0, lane:0, t:"Decide pitch-model rep", s:"MIDI/pc-sets · spelling-in-context · chord-vs-voicing multiset", cls:"decide", tags:["dec","now"]},
+  {id:"d_music21", col:0, lane:0, t:"PROTOTYPE music21 delivery", s:"Pyodide vs backend → static-or-not. Biggest infra fork.", cls:"decide", tags:["dec","now","R1"]},
+  {id:"d_render", col:2, lane:0, t:"Decide render + state", s:"SVG fretboard · ephemeral state (no persistence)", cls:"decide", tags:["dec"]},
+
+  {id:"ux", col:0, lane:1, t:"UX / visual design of surface", s:"Layout, interaction, multi-neck, degree-dot language. None exists yet.", cls:"design", tags:["now"]},
+
+  {id:"core", col:1, lane:2, t:"Invariant pitch model /core", s:"intervals · scales · chords · voicings (lean on Tonal dicts)", cls:"spine", tags:[]},
+  {id:"project", col:2, lane:2, t:"project() — forward", s:"entity → (string,fret,degree). Math trivial; the contract is the work.", cls:"spine", tags:[]},
+  {id:"fretboard", col:3, lane:2, t:"Fretboard surface /ui", s:"degree-coloured overlays · tuning switch · multiple necks", cls:"spine", tags:["ms:M0"]},
+  {id:"identify", col:4, lane:2, t:"identify() — reverse", s:"ranked candidates · bass-from-lowest-pitch · re-entrant/capo", cls:"spine", tags:["ms:M1","R5","R10"]},
+  {id:"tier1", col:5, lane:2, t:"Tier 1 relational namer", s:"drone decomposition · home-relative role · tension-vs-pedal", cls:"spine", tags:["ms:M2"]},
+  {id:"mcp", col:6, lane:2, t:"MCP layer + grounding", s:"intent tools · resources · eval harness", cls:"spine", tags:["ms:M3","R9"]},
+
+  {id:"gschema", col:0, lane:3, t:"Grammar-card schema", s:"pitches · home chord · shapes · drone map · barre rule · provenance", cls:"gate", tags:["now","R11"]},
+  {id:"t1vocab", col:0, lane:3, t:"Tier 1 vocabulary spec", s:"graded tension-vs-drone · added tones · alterations. Hardest unknown.", cls:"gate", tags:["now","R2"]},
+  {id:"gcard", col:1, lane:3, t:"Author Open-G card", s:"one fully hand-verified card unblocks M2", cls:"gate", tags:[]},
+  {id:"affect", col:5, lane:3, t:"Affective dictionary seed", s:"vibe-word → theory ops (dreamier, darker, more open)", cls:"gate", tags:[]},
+
+  {id:"tonal", col:3, lane:4, t:"Tier 2 (Tonal) wrapper", s:"chord symbol + slash bass · candidate arrays", cls:"par", tags:[]},
+  {id:"handoff", col:5, lane:4, t:"T1↔T2 handoff rule", s:"default threshold now, tune on grip corpus later", cls:"gate", tags:["R4"]},
+  {id:"t3", col:5, lane:4, t:"Tier 3 (music21) anatomy", s:"root/bass/inversion · doublings · Roman numeral", cls:"gate", tags:[]},
+
+  {id:"voicings", col:4, lane:5, t:"find_voicings + playability", s:"combinatorial search · pruning · tunable scoring", cls:"par", tags:["R6"]},
+
+  {id:"tdata", col:0, lane:6, t:"Source + validate tension data", s:"D'Addario unit-weights · formula constant. Bad data = broken string.", cls:"ortho", tags:["now","R7"]},
+  {id:"tension", col:1, lane:6, t:"advise_setup() module", s:"per-string tension + gauge rec. Fully standalone.", cls:"ortho", tags:[]},
+  {id:"alphatab", col:3, lane:6, t:"alphaTab adapter + soundfont", s:"model → AlphaTex · let-ring playback · out of hot loop", cls:"ortho", tags:["R12","R8"]},
+  {id:"shapes", col:5, lane:6, t:"Emergent movable-shapes", s:"algorithm deferred — hand-author shapes in card for V1", cls:"defer", tags:["defer","R3"]},
+];
+
+const E = [
+  // critical spine
+  {f:"core", t:"project", k:"crit"},
+  {f:"project", t:"fretboard", k:"crit"},
+  {f:"fretboard", t:"identify", k:"crit"},
+  {f:"identify", t:"tier1", k:"crit"},
+  {f:"tier1", t:"mcp", k:"crit"},
+  // feed-ins
+  {f:"d_pitch", t:"core", k:"dep"},
+  {f:"d_render", t:"fretboard", k:"dep"},
+  {f:"ux", t:"fretboard", k:"dep"},
+  {f:"gschema", t:"gcard", k:"dep"},
+  {f:"gcard", t:"tier1", k:"dep"},
+  {f:"t1vocab", t:"tier1", k:"dep"},
+  {f:"core", t:"tonal", k:"dep"},
+  {f:"tonal", t:"identify", k:"dep"},
+  {f:"tonal", t:"handoff", k:"dep"},
+  {f:"tier1", t:"handoff", k:"dep"},
+  {f:"handoff", t:"mcp", k:"dep"},
+  {f:"core", t:"voicings", k:"dep"},
+  {f:"voicings", t:"mcp", k:"dep"},
+  {f:"d_music21", t:"t3", k:"dep"},
+  {f:"identify", t:"t3", k:"dep"},
+  {f:"t3", t:"mcp", k:"dep"},
+  {f:"affect", t:"mcp", k:"dep"},
+  {f:"core", t:"tension", k:"dep"},
+  {f:"tdata", t:"tension", k:"dep"},
+  {f:"core", t:"alphatab", k:"dep"},
+  {f:"gcard", t:"shapes", k:"defer"},
+];
+
+// ---- layout ------------------------------------------------------------
+const NODE_W=205, NODE_H=70, STACK_H=86, LANE_PAD=30;
+const LEFT=170, COL_GAP=250, HEAD_H=72, TOP=HEAD_H+14;
+const colX = c => LEFT + c*COL_GAP;
+
+// stacking: index within (lane,col)
+const cellCount={}, cellIdx={};
+N.forEach(n=>{const key=n.lane+"_"+n.col; cellCount[key]=(cellCount[key]||0)+1;});
+// max stack per lane
+const laneMaxStack={};
+N.forEach(n=>{const key=n.lane+"_"+n.col; laneMaxStack[n.lane]=Math.max(laneMaxStack[n.lane]||1,cellCount[key]);});
+// lane tops
+const laneTop={}, laneH={};
+let acc=TOP;
+LANES.forEach((_,l)=>{ const h=(laneMaxStack[l]||1)*STACK_H + LANE_PAD; laneTop[l]=acc; laneH[l]=h; acc+=h; });
+const STAGE_H=acc+10, STAGE_W=colX(COLS.length-1)+NODE_W+40;
+
+// assign positions
+const seen={};
+const pos={};
+N.forEach(n=>{
+  const key=n.lane+"_"+n.col; const i=(seen[key]=(seen[key]||0)); seen[key]++;
+  const stack=cellCount[key];
+  const cellTopPad = (laneH[n.lane]-LANE_PAD - stack*STACK_H)/2;
+  const x=colX(n.col);
+  const y=laneTop[n.lane]+LANE_PAD/2+cellTopPad+i*STACK_H;
+  pos[n.id]={x,y};
+});
+
+// ---- render ------------------------------------------------------------
+const stage=document.getElementById("stage");
+stage.style.width=STAGE_W+"px"; stage.style.height=STAGE_H+"px";
+const svg=document.getElementById("edges");
+svg.setAttribute("width",STAGE_W); svg.setAttribute("height",STAGE_H);
+
+// lane bands + labels
+LANES.forEach((name,l)=>{
+  const band=document.createElement("div");
+  band.className="band";
+  band.style.top=laneTop[l]+"px"; band.style.height=laneH[l]+"px";
+  band.style.width=STAGE_W+"px";
+  band.style.background = (l%2===0) ? "rgba(255,255,255,0.012)" : "transparent";
+  band.style.borderTop="1px solid rgba(48,54,61,0.5)";
+  band.style.zIndex=1;
+  stage.appendChild(band);
+  const lab=document.createElement("div");
+  lab.className="lanelabel";
+  lab.style.top=(laneTop[l]+laneH[l]/2-14)+"px";
+  if(l===2){lab.style.color="var(--spine)";}
+  lab.textContent=name;
+  lab.style.zIndex=4;
+  stage.appendChild(lab);
+});
+// column heads
+COLS.forEach((name,c)=>{
+  const h=document.createElement("div");
+  h.className="colhead";
+  h.style.left=colX(c)+"px"; h.style.top="16px";
+  h.innerHTML=name.replace(/\n/g,"<br>");
+  stage.appendChild(h);
+});
+
+// arrowhead defs
+svg.innerHTML=`<defs>
+  <marker id="ah-crit" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#ff7849"/></marker>
+  <marker id="ah-dep" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#586172"/></marker>
+  <marker id="ah-defer" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#6b7280"/></marker>
+</defs>`;
+
+const edgeEls=[];
+E.forEach((e,i)=>{
+  const a=pos[e.f], b=pos[e.t];
+  const sx=a.x+NODE_W, sy=a.y+NODE_H/2;
+  const ex=b.x, ey=b.y+NODE_H/2;
+  const cp=Math.max(45,(ex-sx)*0.45);
+  const d=`M${sx},${sy} C${sx+cp},${sy} ${ex-cp},${ey} ${ex},${ey}`;
+  const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+  p.setAttribute("d",d);
+  p.setAttribute("class","edge "+e.k);
+  p.setAttribute("marker-end",`url(#ah-${e.k})`);
+  svg.appendChild(p);
+  edgeEls.push({el:p,f:e.f,t:e.t});
+});
+
+// nodes
+const nodeEls={};
+N.forEach(n=>{
+  const d=document.createElement("div");
+  d.className="node "+n.cls;
+  d.style.left=pos[n.id].x+"px"; d.style.top=pos[n.id].y+"px";
+  let tags="";
+  n.tags.forEach(tg=>{
+    if(tg==="now") tags+=`<span class="tag now">▶ NOW</span>`;
+    else if(tg==="dec") tags+=`<span class="tag dec">DECISION</span>`;
+    else if(tg==="defer") tags+=`<span class="tag defer">DEFERRED</span>`;
+    else if(tg.startsWith("ms:")) tags+=`<span class="tag ms">${tg.slice(3)}</span>`;
+    else if(tg.startsWith("R")) tags+=`<span class="tag r">${tg}</span>`;
+  });
+  d.innerHTML=`<div class="t">${n.t}</div><div class="s">${n.s}</div><div class="tags">${tags}</div>`;
+  d.addEventListener("click",ev=>{ev.stopPropagation();focus(n.id);});
+  stage.appendChild(d);
+  nodeEls[n.id]=d;
+});
+
+// focus / highlight
+function focus(id){
+  const keep=new Set([id]);
+  const keepEdge=new Set();
+  edgeEls.forEach((e,i)=>{ if(e.f===id||e.t===id){keep.add(e.f);keep.add(e.t);keepEdge.add(i);} });
+  N.forEach(n=> nodeEls[n.id].classList.toggle("dim",!keep.has(n.id)));
+  edgeEls.forEach((e,i)=> e.el.classList.toggle("dim",!keepEdge.has(i)));
+}
+function reset(){
+  N.forEach(n=> nodeEls[n.id].classList.remove("dim"));
+  edgeEls.forEach(e=> e.el.classList.remove("dim"));
+}
+document.getElementById("scroll").addEventListener("click",reset);
+stage.addEventListener("click",reset);
+</script>
+</body>
+</html>

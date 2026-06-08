@@ -1,0 +1,42 @@
+schemaVersion: 1
+
+# PROVISIONAL (V1) -- the affective layer is highly subjective and is implemented as a RECOMMENDED
+# seed only. Flagged for post-build review: keep it only if it proves worthwhile once seen in action.
+# Every entry's provenance.kind is `editorial`, so the namer MUST hedge ("usually", "often"); the
+# *consequences* (the voicings find_voicings returns) are still fully grounded/computed.
+
+vibes:
+  - id: dreamier
+    label: dreamier
+    aliases: [dreamy, ethereal, hazy]
+    type: mood
+    operations:
+      - { op: add-tone, degree: 9 }
+      - { op: let-ring, target: opens }
+      - { op: omit, degree: 3 }
+    provenance:
+      kind: editorial
+      reasoning: "9ths + ringing opens + an undecided 3rd read as floating/dreamy. Taste, not fact."
+
+  - id: darker
+    label: darker
+    aliases: [moodier, heavier]
+    type: mood
+    operations:
+      - { op: mode-shift, value: phrygian }   # flatten toward b2/b6
+      - { op: add-low-drone }
+    provenance:
+      kind: editorial
+      reasoning: "Flattening toward Phrygian (b2/b6) and weighting the low register reads darker. Taste, not fact."
+
+  - id: more-open
+    label: more open
+    aliases: [airier, spacious]
+    type: mood
+    operations:
+      - { op: widen-spacing }
+      - { op: add-low-drone }
+      - { op: omit, degree: 5 }   # thin the inner voices
+    provenance:
+      kind: editorial
+      reasoning: "Wider spacing + drones + thinned inner voices read as open/airy. Taste, not fact."

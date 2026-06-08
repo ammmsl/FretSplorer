@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fretsplorer/kb/schema/sources.schema.json",
+  "title": "Sources bibliography",
+  "description": "Shared, reusable citations keyed by id. Cards and rules reference these ids in provenance.sources (DRY citations without divorcing the 'why' from the claim). The ONLY cross-reference target shared between cards and rules.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sources"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "status"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "title": { "type": "string" },
+          "author": { "type": "string" },
+          "url": { "type": "string" },
+          "note": { "type": "string" },
+          "status": {
+            "enum": ["verified", "to-verify"],
+            "description": "'to-verify' = a plausible citation placeholder that MUST be confirmed at build (see 05 'verify-at-build'). No claim should rely on a to-verify source in shipped V1."
+          }
+        }
+      }
+    }
+  }
+}
