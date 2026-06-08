@@ -65,6 +65,9 @@ export interface NeckProps {
 const g = DEFAULT_GEOMETRY;
 const DOT_R = 9;
 const GRIP_R = 10;
+const NUT_W = 15; // width of the nut bar (a chunky bone-nut look)
+const NUT_MARGIN_Y = 6; // gap from the top/bottom of the neck to the nut bar's ends
+const NUT_SLOT_R = 11; // radius of the per-string open-string hit + hover ring
 
 export function Neck({
   tuning,
@@ -139,13 +142,17 @@ export function Neck({
           ))}
       </g>
 
-      {/* The nut. */}
-      <line
-        x1={nutX(g)}
-        y1={stringY(g, 0)}
-        x2={nutX(g)}
-        y2={stringY(g, strings - 1)}
-        className="nut-line"
+      {/* The nut — a chunky rounded BAR (like a real bone nut) spanning the full neck
+          height, not a thin line, so it reads as a physical element and, when
+          interactive, as a strip you can click to ring strings open (docs/09 UI#4).
+          Open notes land ON this bar (noteX(fret 0) === nutX). */}
+      <rect
+        x={nutX(g) - NUT_W / 2}
+        y={NUT_MARGIN_Y}
+        width={NUT_W}
+        height={h - NUT_MARGIN_Y * 2}
+        rx={NUT_W / 2}
+        className="nut-bar"
         aria-hidden="true"
       />
 
@@ -280,48 +287,10 @@ export function Neck({
         </text>
       )}
 
-      {/* Per-string NUT markers — open(O) / mute(X) glyphs at the nut, clickable to
-          cycle open -> muted -> off. Shown whenever interactive OR a grip is present. */}
-      {(grip || interactive) && (
-        <g className="neck-nut-markers">
-          {tuning.openStrings.map((_, s) => {
-            const sg = grip?.[s];
-            const cx = nutX(g) - 16;
-            const cy = stringY(g, s);
-            const glyph = sg?.kind === 'open' ? 'O' : sg?.kind === 'muted' ? 'X' : '';
-            return (
-              <g
-                key={`nut-${s}`}
-                className={`nut-marker${onNutClick ? ' clickable' : ''}`}
-                onClick={onNutClick ? () => onNutClick(s) : undefined}
-                role={onNutClick ? 'button' : undefined}
-                aria-label={
-                  onNutClick
-                    ? `string ${s + 1} marker: ${
-                        glyph === 'O' ? 'open' : glyph === 'X' ? 'muted' : 'off'
-                      } (click to cycle)`
-                    : undefined
-                }
-              >
-                {onNutClick && (
-                  <circle cx={cx} cy={cy} r={9} className="nut-marker-hit" />
-                )}
-                {glyph && (
-                  <text x={cx} y={cy} className="nut-marker-glyph" textAnchor="middle">
-                    {glyph}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-        </g>
-      )}
-
       {/* Interactive fret-cell hit layer — transparent rects over every FRETTED cell
-          (fret 1..fretCount). Topmost so clicks land here; a click places a note on an
-          empty cell or removes the note already on that string's cell. The OPEN position
-          is owned by the nut marker (open/mute cycle), so it is NOT a fret cell here —
-          this keeps the nut markers clickable and avoids an overlap conflict. */}
+          (fret 1..fretCount). A click places a note on an empty cell or removes the note
+          already on that string's cell. The OPEN position is owned by the nut markers
+          (drawn ABOVE this layer so they win the overlap zone right at the nut). */}
       {onFretClick && (
         <g className="neck-fret-cells">
           {tuning.openStrings.map((_, s) =>
@@ -343,6 +312,55 @@ export function Neck({
               );
             }),
           )}
+        </g>
+      )}
+
+      {/* Per-string NUT markers — sit ON the nut bar (cx === nutX), exactly where an
+          open note's grip disc lands, so the control and its result are co-located.
+          Rendered ABOVE the fret-cell layer so a click right at the nut rings the string
+          open (cycle open -> muted -> off) rather than landing on fret 1. Visual states:
+            - open  : shown by the solid grip disc on the nut (drawn above).
+            - muted : an X glyph on the nut.
+            - off   : no persistent mark — the chunky nut bar is the affordance; a soft
+                      accent ring appears on hover to confirm the string is clickable.
+          Shown whenever interactive OR a grip is present. */}
+      {(grip || interactive) && (
+        <g className="neck-nut-markers">
+          {tuning.openStrings.map((_, s) => {
+            const sg = grip?.[s];
+            const cx = nutX(g);
+            const cy = stringY(g, s);
+            const isOpen = sg?.kind === 'open';
+            const isMuted = sg?.kind === 'muted';
+            return (
+              <g
+                key={`nut-${s}`}
+                className={`nut-marker${onNutClick ? ' clickable' : ''}`}
+                onClick={onNutClick ? () => onNutClick(s) : undefined}
+                role={onNutClick ? 'button' : undefined}
+                aria-label={
+                  onNutClick
+                    ? `string ${s + 1} nut: ${
+                        isOpen ? 'open' : isMuted ? 'muted' : 'off'
+                      } (click to ring open)`
+                    : undefined
+                }
+              >
+                {onNutClick && (
+                  <circle cx={cx} cy={cy} r={NUT_SLOT_R} className="nut-marker-hit" />
+                )}
+                {/* Hover-only ring — invisible at rest, accent on hover. */}
+                {onNutClick && !isOpen && !isMuted && (
+                  <circle cx={cx} cy={cy} r={NUT_SLOT_R - 2} className="nut-open-slot" fill="none" />
+                )}
+                {isMuted && (
+                  <text x={cx} y={cy} className="nut-marker-glyph" textAnchor="middle">
+                    X
+                  </text>
+                )}
+              </g>
+            );
+          })}
         </g>
       )}
     </svg>
