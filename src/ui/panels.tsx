@@ -12,6 +12,8 @@
 import type { Tuning } from '../core';
 import { spell } from '../core';
 import { tuningLabel } from './fixtures';
+import { degreeStyle, droneStyle } from './palette';
+import type { ReadoutViewModel } from './readout';
 
 interface CollapsibleProps {
   readonly collapsed: boolean;
@@ -58,15 +60,104 @@ export function GrammarCardPanel({
   );
 }
 
-/** RIGHT-top — the always-live Readout panel placeholder. Live identify() is M1. */
-export function ReadoutPanel({ contextSummary }: { contextSummary: string }) {
+/**
+ * RIGHT-top — the always-live "What you're holding" Readout (M1). Bound to the focused
+ * neck's grip via the assembled ReadoutViewModel (docs/08 decision f; docs/09 UI#4).
+ * Tiered disclosure: T1 relational (placeholder until M2) -> T2 absolute symbol+bass ->
+ * per-note degree-vs-drone -> ranked candidates. Degree colour and drone tension are
+ * SEPARATE visual channels here, mirroring the neck (docs/01 §B).
+ */
+export function ReadoutPanel({
+  readout,
+  contextSummary,
+}: {
+  readout: ReadoutViewModel;
+  contextSummary: string;
+}) {
+  if (readout.empty) {
+    return (
+      <section className="panel readout-panel" aria-label="Readout: what you're holding">
+        <h2>What you're holding</h2>
+        <p className="readout-idle">Nothing yet — place notes on the focused neck.</p>
+        {contextSummary !== 'nothing yet' && (
+          <p className="panel-note">Overlay context: {contextSummary}</p>
+        )}
+      </section>
+    );
+  }
+
+  const t2 = readout.symbol
+    ? readout.symbol + (readout.slashBass ? `/${readout.slashBass}` : '')
+    : '—';
+
   return (
     <section className="panel readout-panel" aria-label="Readout: what you're holding">
       <h2>What you're holding</h2>
-      <p className="readout-headline">{contextSummary}</p>
-      <p className="panel-note">
-        Live note-by-note identification (the tiered relational readout) is wired in M1.
+
+      {/* T1 relational — PLACEHOLDER slot (no faked name; arrives in M2). */}
+      <p className="readout-relational" aria-label="relational reading (coming in M2)">
+        relational naming arrives in M2
       </p>
+
+      {/* T2 absolute symbol + slash bass. */}
+      <p className="readout-symbol">{t2}</p>
+
+      {/* Bass — the spelled LOWEST PITCH with octave (argmin, R10). */}
+      <p className="kv">
+        <span>bass</span>
+        <code>{readout.bass ?? '—'}</code>
+      </p>
+
+      {/* Per-note degree-vs-drone. Two distinct channels: a degree chip (colour by
+          degree, shape by structure) and, for open strings, a drone chip (colour+dash). */}
+      <ul className="readout-notes">
+        {readout.notes.map((n) => {
+          const ds = n.degree ? degreeStyle(n.degree) : null;
+          const dr = n.drone ? droneStyle(n.drone) : null;
+          return (
+            <li key={`note-${n.string}`} className="readout-note">
+              <span className="readout-note-name">
+                {n.name}
+                {n.isBass && <span className="readout-bass-badge" title="bass">B</span>}
+                {n.isOpen && <span className="readout-open-badge" title="open string">○</span>}
+              </span>
+              {n.degree && ds && (
+                <span
+                  className={`readout-degree-chip${ds.shape === 'root' ? ' root' : ''}`}
+                  style={{ background: ds.fill, color: ds.text }}
+                  title={`degree ${n.degree.label}`}
+                >
+                  {n.degree.label}
+                </span>
+              )}
+              {dr && (
+                <span
+                  className="readout-drone-chip"
+                  style={{ borderColor: dr.color, color: dr.color }}
+                  title={`drone tension: ${n.drone}`}
+                >
+                  {n.drone}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* Ranked candidates — the ambiguity view (only when identify gave >1). */}
+      {readout.candidates.length > 0 && (
+        <div className="readout-candidates">
+          <h3>Other readings</h3>
+          <ol>
+            {readout.candidates.map((c, i) => (
+              <li key={`cand-${i}`}>
+                <code>{c.symbol}</code>
+                <span className="readout-score">{c.score.toFixed(2)}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
     </section>
   );
 }

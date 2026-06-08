@@ -10,6 +10,7 @@ import type { ProjectedPosition, Tuning } from '../core';
 import type { OpenStringDrone } from '../projection';
 import { Neck } from './Neck';
 import type { LabelMode } from './labels';
+import type { Grip } from './grip';
 import { tuningLabel } from './fixtures';
 
 /** One neck instance in the stack. */
@@ -30,18 +31,31 @@ export interface NeckStackProps {
   readonly necks: readonly NeckInstance[];
   readonly focusedId: string;
   readonly labelMode: LabelMode;
+  /** The FOCUSED neck's grip (rendered + interactive); other necks stay presentational. */
+  readonly focusedGrip?: Grip;
+  /** Bass (lowest-pitch) string+fret to call out on the focused neck; null = none. */
+  readonly bassString?: number | null;
+  readonly bassFret?: number | null;
   readonly onFocus: (id: string) => void;
   readonly onClose: (id: string) => void;
   readonly onAddNeck: () => void;
+  /** Grip interaction on the focused neck (place/remove a fret; cycle the nut marker). */
+  readonly onFretClick?: (string: number, fret: number) => void;
+  readonly onNutClick?: (string: number) => void;
 }
 
 export function NeckStack({
   necks,
   focusedId,
   labelMode,
+  focusedGrip,
+  bassString,
+  bassFret,
   onFocus,
   onClose,
   onAddNeck,
+  onFretClick,
+  onNutClick,
 }: NeckStackProps) {
   return (
     <div className="neck-stack">
@@ -91,6 +105,11 @@ export function NeckStack({
               positions={n.positions}
               drones={n.drones}
               labelMode={labelMode}
+              grip={focused ? focusedGrip : undefined}
+              bassString={focused ? bassString : null}
+              bassFret={focused ? bassFret : null}
+              onFretClick={focused ? onFretClick : undefined}
+              onNutClick={focused ? onNutClick : undefined}
             />
           </section>
         );

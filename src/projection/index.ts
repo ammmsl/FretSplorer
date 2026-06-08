@@ -4,14 +4,21 @@
 // the pinned `Project` contract (src/core/pitch-model.ts §8) — see the assertion below.
 // droneMap(): the SEPARATE graded drone-tension channel per open string (ADR 0004).
 
-import type { Project } from '../core';
+import type { Identify, Project } from '../core';
 import { project } from './project';
+import { identify } from './identify';
 
 // Compile-time guard: `project` MUST be assignable to the pinned 2-arg `Project`
 // contract (the optional 3rd `maxFret` arg does not break this). Erases at runtime.
 const _projectIsAProject: Project = project;
 void _projectIsAProject;
 
+// Compile-time guard: `identify` MUST be assignable to the pinned `Identify`
+// contract (src/core/pitch-model.ts §8). Erases at runtime.
+const _identifyIsAnIdentify: Identify = identify;
+void _identifyIsAnIdentify;
+
 export { project } from './project';
+export { identify } from './identify';
 export { droneMap } from './droneMap';
 export type { OpenStringDrone } from './droneMap';

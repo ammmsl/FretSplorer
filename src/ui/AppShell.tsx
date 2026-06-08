@@ -3,8 +3,10 @@
 // dots paint on every neck; switch a neck's tuning -> re-project (overlay moves);
 // the drone channel lights when a context is set; Clear removes the overlay.
 //
-// STATE is ephemeral (no persistence, docs/02). No per-note selection state (deixis
-// is an MCP concern, docs/09 UI#3). identify()/Readout-live wiring is OUT of scope (M1).
+// STATE is ephemeral (no persistence, docs/02). The shell now ALSO owns a GRIP for
+// the focused neck (docs/08 decision e) and runs the M1 hot loop: on any grip change
+// it derives PlacedPosition[] and the live Readout view-model (docs/09 UI#4). Only
+// alphaTab stays out of the hot loop.
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectableEntity, Tuning } from '../core';
@@ -21,6 +23,14 @@ import {
 import { CHORDS, SCALES, TUNINGS } from './fixtures';
 import { DEFAULT_LABEL_MODE, type LabelMode } from './labels';
 import { DEFAULT_THEME, nextTheme, type Theme } from './theme';
+import {
+  cycleNutMarker,
+  emptyGrip,
+  placeFret,
+  removeNote,
+  type Grip,
+} from './grip';
+import { buildReadout } from './readout';
 
 /** Build the active ProjectableEntity from a selection, or null if none. */
 function buildEntity(sel: ContextSelection | null): ProjectableEntity | null {
@@ -63,6 +73,9 @@ export function AppShell() {
   ]);
   const [focusedId, setFocusedId] = useState('neck-0');
 
+  // Per-neck GRIP (the held notes). Keyed by neck id; a neck with no entry is empty.
+  const [grips, setGrips] = useState<Readonly<Record<string, Grip>>>({});
+
   // Apply the theme to the document root so CSS can theme-switch.
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -102,11 +115,71 @@ export function AppShell() {
   const focusedTuning = tuningById.get(focusedNeck.tuningId) ?? TUNINGS[0];
   const contextSummary = selectionLabel(selection);
 
+  // The focused neck's grip (default empty for its string count).
+  const focusedGrip: Grip =
+    grips[focusedNeck.id] ?? emptyGrip(focusedTuning.openStrings.length);
+
+  // Drone readings for the focused neck (the open-string drone channel, when a context
+  // is selected) — fed to the Readout so OPEN strings report their drone tension.
+  const focusedDrones: readonly OpenStringDrone[] | undefined = useMemo(
+    () => (entity ? droneMap(entity, focusedTuning) : undefined),
+    [entity, focusedTuning],
+  );
+
+  // ── M1 HOT LOOP ── derive the live Readout from (grip, tuning) synchronously. Also
+  // expose the bass (lowest-pitch) string+fret so the neck can draw its bass marker.
+  const readout = useMemo(
+    () => buildReadout(focusedGrip, focusedTuning, focusedDrones),
+    [focusedGrip, focusedTuning, focusedDrones],
+  );
+
+  // Locate the bass note's string+fret in the grip (the lowest sounding pitch) so the
+  // neck marker sits on the right cell. Mirrors identify()'s argmin-pitch bass (R10).
+  const bass = useMemo(() => {
+    let best: { string: number; fret: number; pitch: number } | null = null;
+    focusedGrip.forEach((sg, s) => {
+      if (sg.kind !== 'open' && sg.kind !== 'fret') return;
+      const fret = sg.kind === 'open' ? 0 : sg.fret;
+      const pitch = (focusedTuning.openStrings[s] as number) + fret;
+      if (!best || pitch < best.pitch) best = { string: s, fret, pitch };
+    });
+    return best as { string: number; fret: number; pitch: number } | null;
+  }, [focusedGrip, focusedTuning]);
+
   // Tuning selector retunes the FOCUSED neck (re-projection follows from useMemo).
+  // Retuning clears that neck's grip — the held frets mean different pitches now.
   function handleTuningChange(id: string) {
     setNecks((prev) =>
       prev.map((n) => (n.id === focusedId ? { ...n, tuningId: id } : n)),
     );
+    setGrips((prev) => {
+      if (!prev[focusedId]) return prev;
+      const next = { ...prev };
+      delete next[focusedId];
+      return next;
+    });
+  }
+
+  // ── Grip mutations (the focused neck only) ──
+  /** Click a fret cell: remove if that string already holds THIS exact fret, else place. */
+  function handleFretClick(string: number, fret: number) {
+    setGrips((prev) => {
+      const cur = prev[focusedId] ?? emptyGrip(focusedTuning.openStrings.length);
+      const sg = cur[string];
+      const holdsThis =
+        (fret === 0 && sg?.kind === 'open') ||
+        (fret > 0 && sg?.kind === 'fret' && sg.fret === fret);
+      const next = holdsThis ? removeNote(cur, string) : placeFret(cur, string, fret);
+      return { ...prev, [focusedId]: next };
+    });
+  }
+
+  /** Click the nut marker: cycle open -> muted -> off. */
+  function handleNutClick(string: number) {
+    setGrips((prev) => {
+      const cur = prev[focusedId] ?? emptyGrip(focusedTuning.openStrings.length);
+      return { ...prev, [focusedId]: cycleNutMarker(cur, string) };
+    });
   }
 
   function handleAddNeck() {
@@ -159,9 +232,14 @@ export function AppShell() {
             necks={neckInstances}
             focusedId={focusedId}
             labelMode={labelMode}
+            focusedGrip={focusedGrip}
+            bassString={bass ? bass.string : null}
+            bassFret={bass ? bass.fret : null}
             onFocus={setFocusedId}
             onClose={handleClose}
             onAddNeck={handleAddNeck}
+            onFretClick={handleFretClick}
+            onNutClick={handleNutClick}
           />
           <NotationPane
             collapsed={notationCollapsed}
@@ -170,7 +248,7 @@ export function AppShell() {
         </main>
 
         <div className="right-region">
-          <ReadoutPanel contextSummary={contextSummary} />
+          <ReadoutPanel readout={readout} contextSummary={contextSummary} />
           <ConversationPanel />
         </div>
       </div>

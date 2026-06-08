@@ -256,3 +256,147 @@
 .drone-halo {
   opacity: 0.85;
 }
+
+/* ── GRIP: held notes, nut markers, bass callout, fret-cell hit layer ───────── */
+/* A placed grip note: a SOLID disc + ring, deliberately unlike the degree dot
+   (filled hue/diamond) and the drone line — so the held grip reads as foreground. */
+.grip-disc {
+  fill: var(--text, #111);
+  stroke: var(--neck-bg, #fff);
+  stroke-width: 2.5;
+}
+.grip-bass-ring {
+  stroke: var(--accent, #c0392b);
+  stroke-width: 2.5;
+}
+.grip-bass-label {
+  font-size: 9px;
+  font-weight: 700;
+  fill: var(--neck-bg, #fff);
+  dominant-baseline: central;
+  pointer-events: none;
+}
+/* Per-string open(O)/mute(X) glyph at the nut. */
+.nut-marker-glyph {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--text, #111);
+  dominant-baseline: central;
+  pointer-events: none;
+}
+.nut-marker-hit {
+  fill: transparent;
+}
+.nut-marker.clickable {
+  cursor: pointer;
+}
+.nut-marker.clickable:hover .nut-marker-hit {
+  fill: var(--accent-soft, rgba(0, 0, 0, 0.08));
+}
+/* Transparent, topmost fret-cell click targets. */
+.fret-cell {
+  fill: transparent;
+  cursor: pointer;
+}
+.fret-cell:hover {
+  fill: var(--accent-soft, rgba(0, 0, 0, 0.06));
+}
+
+/* ── Readout panel (live "What you're holding") ─────────────────────────────── */
+.readout-idle {
+  color: var(--text-dim);
+  font-size: 14px;
+  margin: 8px 0;
+}
+.readout-relational {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-dim);
+  margin: 4px 0;
+}
+.readout-symbol {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 2px 0 8px;
+}
+.readout-notes {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.readout-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.readout-note-name {
+  min-width: 52px;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.readout-bass-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+.readout-open-badge {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+/* Degree chip — colour fill encodes the degree (a separate channel from drone). */
+.readout-degree-chip {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 9px;
+  padding: 1px 7px;
+  min-width: 18px;
+  text-align: center;
+}
+.readout-degree-chip.root {
+  outline: 2px solid var(--text);
+  outline-offset: -2px;
+}
+/* Drone chip — outlined (colour + word), never filled like the degree chip. */
+.readout-drone-chip {
+  font-size: 10px;
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+  padding: 0 5px;
+  letter-spacing: 0.2px;
+}
+.readout-candidates {
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.readout-candidates h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-dim);
+  margin: 0 0 4px;
+}
+.readout-candidates ol {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+.readout-candidates li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.readout-score {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}

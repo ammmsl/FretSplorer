@@ -10,9 +10,16 @@
 //   - drone map: rides the open-string LINE + a nut HALO (never the dot fill);
 //     dormant until a harmonic context is selected.
 //
-// Pure presentational component: it receives the already-projected positions and the
-// drone readings (computed by /projection in the shell) and the label mode + key
-// context. No per-note selection state (deixis is an MCP concern, docs/09 UI#3).
+// MOSTLY presentational: it receives the already-projected positions + drone readings
+// (computed by /projection in the shell) and the label mode. It ALSO renders an
+// optional GRIP (the held notes, docs/08 decision e) and, when the interaction props
+// are supplied, becomes INTERACTIVE — clicking fret cells / nut markers calls back to
+// the shell which owns the grip state (docs/09 UI#4). With no interaction props it is
+// purely presentational, so existing tests/usage are unaffected.
+//
+// Grip markers are a DISTINCT third visual: a SOLID filled disc with a ring (placed
+// note) + open(O)/mute(X) glyphs at the nut + a bass callout — deliberately not the
+// degree dot fill and not the drone line, so the held grip never reads as an overlay.
 
 import type {
   KeyContext,
@@ -33,6 +40,7 @@ import {
 } from './geometry';
 import { degreeStyle, droneStyle } from './palette';
 import { dotLabel, type LabelMode } from './labels';
+import type { Grip } from './grip';
 
 export interface NeckProps {
   readonly tuning: Tuning;
@@ -41,16 +49,39 @@ export interface NeckProps {
   /** Per-open-string drone readings; undefined = no context selected (dormant). */
   readonly drones?: readonly OpenStringDrone[];
   readonly labelMode: LabelMode;
+  // ── Optional interaction (the focused neck only). Omit all to stay presentational. ──
+  /** The held grip to render (solid placed-note markers + nut O/X glyphs). */
+  readonly grip?: Grip;
+  /** String index of the BASS (lowest pitch) note to call out; null = none. */
+  readonly bassString?: number | null;
+  /** Fret of the bass note (so the marker sits on the right cell; 0 = open). */
+  readonly bassFret?: number | null;
+  /** Click an empty fret cell -> place; click a placed note -> remove (toggle). */
+  readonly onFretClick?: (string: number, fret: number) => void;
+  /** Click the per-string nut marker -> cycle open/mute/off. */
+  readonly onNutClick?: (string: number) => void;
 }
 
 const g = DEFAULT_GEOMETRY;
 const DOT_R = 9;
+const GRIP_R = 10;
 
-export function Neck({ tuning, positions, drones, labelMode }: NeckProps) {
+export function Neck({
+  tuning,
+  positions,
+  drones,
+  labelMode,
+  grip,
+  bassString,
+  bassFret,
+  onFretClick,
+  onNutClick,
+}: NeckProps) {
   const w = neckWidth(g);
   const h = neckHeight(g);
   const ctx: KeyContext = { tonic: tuning.tonic };
   const strings = tuning.openStrings.length;
+  const interactive = Boolean(onFretClick || onNutClick);
 
   return (
     <svg
@@ -206,6 +237,114 @@ export function Neck({ tuning, positions, drones, labelMode }: NeckProps) {
           );
         })}
       </g>
+
+      {/* GRIP placed notes — a SOLID disc + ring, visually distinct from the degree
+          dot fill and the drone line (docs/08 decision e). Rendered above the overlay
+          so the held grip reads as the foreground subject. */}
+      {grip && (
+        <g className="neck-grip">
+          {grip.map((sg, s) => {
+            if (sg.kind !== 'open' && sg.kind !== 'fret') return null;
+            const fret = sg.kind === 'open' ? 0 : sg.fret;
+            const cx = noteX(g, fret);
+            const cy = stringY(g, s);
+            const isBass = bassString === s && (bassFret ?? 0) === fret;
+            return (
+              <g
+                key={`grip-${s}`}
+                className={`grip-note${isBass ? ' grip-bass' : ''}`}
+                role="img"
+                aria-label={`held note on string ${s + 1} ${
+                  fret === 0 ? 'open' : `fret ${fret}`
+                }${isBass ? ' (bass)' : ''}`}
+              >
+                <circle className="grip-disc" cx={cx} cy={cy} r={GRIP_R} />
+                {isBass && (
+                  <circle className="grip-bass-ring" cx={cx} cy={cy} r={GRIP_R + 4} fill="none" />
+                )}
+              </g>
+            );
+          })}
+        </g>
+      )}
+
+      {/* BASS marker label — a small "B" badge calling out the computed lowest pitch. */}
+      {grip && bassString != null && (
+        <text
+          className="grip-bass-label"
+          x={noteX(g, bassFret ?? 0)}
+          y={stringY(g, bassString)}
+          textAnchor="middle"
+        >
+          B
+        </text>
+      )}
+
+      {/* Per-string NUT markers — open(O) / mute(X) glyphs at the nut, clickable to
+          cycle open -> muted -> off. Shown whenever interactive OR a grip is present. */}
+      {(grip || interactive) && (
+        <g className="neck-nut-markers">
+          {tuning.openStrings.map((_, s) => {
+            const sg = grip?.[s];
+            const cx = nutX(g) - 16;
+            const cy = stringY(g, s);
+            const glyph = sg?.kind === 'open' ? 'O' : sg?.kind === 'muted' ? 'X' : '';
+            return (
+              <g
+                key={`nut-${s}`}
+                className={`nut-marker${onNutClick ? ' clickable' : ''}`}
+                onClick={onNutClick ? () => onNutClick(s) : undefined}
+                role={onNutClick ? 'button' : undefined}
+                aria-label={
+                  onNutClick
+                    ? `string ${s + 1} marker: ${
+                        glyph === 'O' ? 'open' : glyph === 'X' ? 'muted' : 'off'
+                      } (click to cycle)`
+                    : undefined
+                }
+              >
+                {onNutClick && (
+                  <circle cx={cx} cy={cy} r={9} className="nut-marker-hit" />
+                )}
+                {glyph && (
+                  <text x={cx} y={cy} className="nut-marker-glyph" textAnchor="middle">
+                    {glyph}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </g>
+      )}
+
+      {/* Interactive fret-cell hit layer — transparent rects over every FRETTED cell
+          (fret 1..fretCount). Topmost so clicks land here; a click places a note on an
+          empty cell or removes the note already on that string's cell. The OPEN position
+          is owned by the nut marker (open/mute cycle), so it is NOT a fret cell here —
+          this keeps the nut markers clickable and avoids an overlap conflict. */}
+      {onFretClick && (
+        <g className="neck-fret-cells">
+          {tuning.openStrings.map((_, s) =>
+            Array.from({ length: g.fretCount }, (_, i) => {
+              const fret = i + 1;
+              const cy = stringY(g, s);
+              return (
+                <rect
+                  key={`cell-${s}-${fret}`}
+                  className="fret-cell"
+                  x={fretLineX(g, fret - 1)}
+                  y={cy - g.stringSpacing / 2}
+                  width={g.fretSpacing}
+                  height={g.stringSpacing}
+                  onClick={() => onFretClick(s, fret)}
+                  role="button"
+                  aria-label={`string ${s + 1} fret ${fret}`}
+                />
+              );
+            }),
+          )}
+        </g>
+      )}
     </svg>
   );
 }

@@ -50,3 +50,18 @@ export type { LabelMode } from './labels';
 
 export { DEFAULT_THEME, nextTheme } from './theme';
 export type { Theme } from './theme';
+
+export {
+  emptyGrip,
+  isGripEmpty,
+  placeFret,
+  removeNote,
+  cycleNutMarker,
+  isSounding,
+  gripToPlaced,
+  soundingPitch,
+} from './grip';
+export type { Grip, StringGrip } from './grip';
+
+export { buildReadout, spellWithOctave } from './readout';
+export type { ReadoutViewModel, ReadoutNote, ReadoutCandidate } from './readout';
