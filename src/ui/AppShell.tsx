@@ -237,6 +237,12 @@ export function AppShell() {
     });
   }
 
+  // Preview a movable shape (from the Lab's shape discovery) on the FOCUSED neck. Like any
+  // grip mutation it replaces the focused neck's held grip; the readout re-derives for free.
+  function handlePreviewGrip(grip: Grip) {
+    setGrips((prev) => ({ ...prev, [focusedId]: grip }));
+  }
+
   function handleAddNeck() {
     setNecks((prev) => {
       const tag = TAGS[prev.length % TAGS.length];
@@ -341,6 +347,7 @@ export function AppShell() {
         focusedTuning={focusedTuning}
         baseTuning={focusedBaseTuning}
         onCapoChange={handleCapoChange}
+        onPreviewGrip={handlePreviewGrip}
       />
     </div>
   );
