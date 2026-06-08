@@ -38,6 +38,7 @@ export type { DegreeStyle, DroneStyle, DotShape } from './palette';
 
 export {
   DEFAULT_GEOMETRY,
+  geometryForStringCount,
   nutX,
   fretLineX,
   noteX,

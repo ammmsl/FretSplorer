@@ -19,6 +19,7 @@ import { loadGrammarCard } from '../../kb';
 import type { Grip, StringGrip } from '../../ui';
 import { buildReadout } from '../../ui';
 import { tuning as makeTuning, type Tuning } from '../../core';
+import { TUNINGS } from '../../ui';
 import { mcpIdentify, functionOf } from '../../mcp';
 import { nameTier1 } from '../../naming/tier1-relational';
 import { loadRules } from '../../kb';
@@ -112,6 +113,15 @@ describe.each(CARDS)('grammar card $name ($id)', (expected) => {
 
   it('(A) is schema-valid', () => {
     expectSchemaValid(card!);
+  });
+
+  it('the /ui fixture tuning agrees with the card (the readout join invariant)', () => {
+    // buildReadout loads the card by tuning.id then compares open-string pitch-classes;
+    // a fixture/card mismatch would silently break relational naming in the live app.
+    const fix = TUNINGS.find((t) => t.id === expected.id);
+    expect(fix, `${expected.id} must exist in /ui fixtures`).toBeDefined();
+    expect(fix!.openStrings.map((m) => m as number)).toEqual(expected.strings);
+    expect(fix!.tonic as number).toBe(expected.tonic);
   });
 
   it('(A) home pc-set matches the authored home chord (verifiedNote arithmetic)', () => {

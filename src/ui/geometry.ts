@@ -40,6 +40,18 @@ export const DEFAULT_GEOMETRY: NeckGeometry = {
   stringSpacing: 26,
 };
 
+/**
+ * geometryForStringCount(n) — the neck layout for an n-string instrument. EXTENDED RANGE
+ * (7-/8-string) support: every constant is inherited from DEFAULT_GEOMETRY except
+ * `stringCount`, so only the row count (and thus neckHeight) changes; the horizontal
+ * fret math is identical. By construction `geometryForStringCount(6)` is deep-equal to
+ * DEFAULT_GEOMETRY, so 6-string output is byte-for-byte unchanged (the charter invariant).
+ * Never hardcode 6 — derive the count from `tuning.openStrings.length`.
+ */
+export function geometryForStringCount(stringCount: number): NeckGeometry {
+  return { ...DEFAULT_GEOMETRY, stringCount };
+}
+
 /** X of the NUT line (fret 0 sits here). */
 export function nutX(g: NeckGeometry): number {
   return g.padLeft;

@@ -28,10 +28,10 @@ import type {
 } from '../core';
 import type { OpenStringDrone } from '../projection';
 import {
-  DEFAULT_GEOMETRY,
   DOUBLE_INLAY_FRETS,
   SINGLE_INLAY_FRETS,
   fretLineX,
+  geometryForStringCount,
   neckHeight,
   neckWidth,
   noteX,
@@ -62,7 +62,6 @@ export interface NeckProps {
   readonly onNutClick?: (string: number) => void;
 }
 
-const g = DEFAULT_GEOMETRY;
 const DOT_R = 9;
 const GRIP_R = 10;
 const NUT_W = 15; // width of the nut bar (a chunky bone-nut look)
@@ -80,10 +79,13 @@ export function Neck({
   onFretClick,
   onNutClick,
 }: NeckProps) {
+  // Geometry is DERIVED from the tuning's string count (7-/8-string necks size correctly);
+  // 6-string necks are byte-for-byte identical to the old DEFAULT_GEOMETRY (never hardcode 6).
+  const strings = tuning.openStrings.length;
+  const g = geometryForStringCount(strings);
   const w = neckWidth(g);
   const h = neckHeight(g);
   const ctx: KeyContext = { tonic: tuning.tonic };
-  const strings = tuning.openStrings.length;
   const interactive = Boolean(onFretClick || onNutClick);
 
   return (
