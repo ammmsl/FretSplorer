@@ -573,16 +573,3 @@ export function ConversationPanel({
   );
 }
 
-/** CENTER-bottom — docked, collapsible notation/audio pane placeholder. */
-export function NotationPane({ collapsed, onToggle }: CollapsibleProps) {
-  return (
-    <section className={`panel notation-pane${collapsed ? ' collapsed' : ''}`} aria-label="Notation">
-      <button type="button" className="collapse-btn" onClick={onToggle} aria-expanded={!collapsed}>
-        {collapsed ? '♪ Notation ›' : '‹ Notation'}
-      </button>
-      {!collapsed && (
-        <p className="panel-note">alphaTab notation / audio pane lands in a later milestone.</p>
-      )}
-    </section>
-  );
-}

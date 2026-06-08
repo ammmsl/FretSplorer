@@ -817,6 +817,36 @@
   margin-top: 0.4rem;
 }
 
+/* ── Notation pane (lazy alphaTab) ────────────────────────────────────────────── */
+.notation-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.4rem 0;
+}
+.notation-play,
+.notation-stop {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  font-size: var(--text-xs);
+}
+.notation-play:disabled,
+.notation-stop:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.notation-status {
+  margin: 0;
+}
+.notation-surface {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
 /* ── Narrow viewports ──────────────────────────────────────────────────────────
    Below 820px the three-region grid stacks into a single scrolling column so the
    240px + 300px flanks stop forcing horizontal overflow (gate 34). The neck SVG

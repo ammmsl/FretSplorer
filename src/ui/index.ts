@@ -17,9 +17,9 @@ export {
   GrammarCardPanel,
   ReadoutPanel,
   ConversationPanel,
-  NotationPane,
 } from './panels';
 export type { SpawnOption } from './panels';
+export { NotationPane } from './NotationPane';
 
 export { route, buildTurnView, intentLabel } from './conversation';
 export type {

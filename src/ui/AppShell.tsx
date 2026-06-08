@@ -19,9 +19,9 @@ import {
   GrammarCardPanel,
   ReadoutPanel,
   ConversationPanel,
-  NotationPane,
   type SpawnOption,
 } from './panels';
+import { NotationPane } from './NotationPane';
 import { Lab } from './Lab';
 import { CHORDS, SCALES, TUNINGS } from './fixtures';
 import { DEFAULT_LABEL_MODE, type LabelMode } from './labels';
@@ -320,6 +320,8 @@ export function AppShell() {
           <NotationPane
             collapsed={notationCollapsed}
             onToggle={() => setNotationCollapsed((c) => !c)}
+            tuning={focusedTuning}
+            grip={focusedGrip}
           />
         </main>
 
