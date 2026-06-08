@@ -15,14 +15,21 @@
       • --space-1..6 .... spacing ramp (2 4 8 12 16 24px) — the implicit grid, named.
       • --radius-sm/md/lg  corner radii (4 6 10px).
       • --text-2xs..2xl    type scale (10 11 12 13 15 18 22px); --text-lg (15px) is base.
-      • --font-weight-*    normal / medium / bold (400 / 600 / 700).
+      • --font-weight-*    weight ladder 300→900 (light…black). Nunito Sans is a VARIABLE
+                           font (200–1000 axis, one woff2), so we carry hierarchy on
+                           WEIGHT rather than a second family: body 400, micro-labels 600,
+                           section headings 800, the readout figure 900.
+      • --tracking-*       letter-spacing — tight (negative) for heavy display so the same
+                           font reads as a distinct "display" register; label (open) for
+                           uppercase micro-labels.
       • --line-tight/base  line-heights (1.2 / 1.45).
-      • --shadow-sm/md     elevation (warm-tinted; defined for later passes).
+      • --shadow-sm/md     elevation (defined for later passes).
+      • --ease-* / --dur-* motion easings (no bounce) + durations.
       • --font-sans        Nunito Sans Variable, self-hosted via @fontsource-variable.
 
-   Off-scale one-offs (9px SVG glyph sizes, 5/6/10/14px fine-tuning) are kept literal
-   where tokenising them would shift glyph geometry or layout; the common values above
-   are tokenised. ──────────────────────────────────────────────────────────────── */
+   Tiny optical one-offs (9px SVG glyph sizes, sub-4px chip padding, the 52/18px chip
+   min-widths) are kept literal where tokenising them would shift glyph geometry; the
+   layout-level values are all tokenised. ─────────────────────────────────────────── */
 
 :root {
   /* — themed: Brass on Graphite — cool graphite neutrals + antique-brass accent — */
@@ -64,15 +71,27 @@
   --text-xl: 18px;
   --text-2xl: 22px;
 
+  /* Weight ladder off the variable wght axis — hierarchy without a second font. */
+  --font-weight-light: 300;
   --font-weight-normal: 400;
-  --font-weight-medium: 600;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
   --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
 
   --line-tight: 1.2;
   --line-base: 1.45;
+  --tracking-tight: -0.01em; /* heavy display type */
+  --tracking-label: 0.04em; /* uppercase micro-labels */
 
-  --shadow-sm: 0 1px 2px rgba(40, 28, 18, 0.08);
-  --shadow-md: 0 4px 12px rgba(40, 28, 18, 0.12);
+  --shadow-sm: 0 1px 2px rgba(20, 24, 30, 0.08);
+  --shadow-md: 0 4px 12px rgba(20, 24, 30, 0.12);
+
+  --dur-fast: 100ms;
+  --dur-base: 150ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
   --font-sans: 'Nunito Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
     sans-serif;
@@ -131,7 +150,8 @@ h1,
 h2,
 h3 {
   color: var(--text);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: var(--tracking-tight);
   margin: 0 0 var(--space-3);
 }
 
