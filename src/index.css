@@ -1,24 +1,83 @@
-/* Fretsplorer base styles + theme tokens (docs/08 §1j; ADR 0005).
+/* Fretsplorer base styles + design tokens (docs/08 §1j; ADR 0005).
    Light-first; dark via [data-theme="dark"] on <html>. The degree palette itself is
-   computed in /ui/palette.ts (CVD-safe); these tokens are the SHELL chrome only. */
+   computed in /ui/palette.ts (CVD-safe); these tokens are the SHELL chrome only.
+
+   ── DESIGN TOKENS ─────────────────────────────────────────────────────────────
+   This is the substrate for the UI overhaul. Two kinds of token live here:
+
+   1. THEMED (colour) — defined in :root (light) and overridden in
+      :root[data-theme='dark']. Warm scheme: sand/cream/clay neutrals + a terracotta
+      accent, tuned to HARMONISE with the warm end of the functional degree palette
+      (amber/orange) without competing with the degree dots painted on the neck.
+      All text pairs meet WCAG AA on both themes.
+
+   2. NON-THEMED (scales) — defined once in :root, inherited by dark unchanged:
+      • --space-1..6 .... spacing ramp (2 4 8 12 16 24px) — the implicit grid, named.
+      • --radius-sm/md/lg  corner radii (4 6 10px).
+      • --text-2xs..2xl    type scale (10 11 12 13 15 18 22px); --text-lg (15px) is base.
+      • --font-weight-*    normal / medium / bold (400 / 600 / 700).
+      • --line-tight/base  line-heights (1.2 / 1.45).
+      • --shadow-sm/md     elevation (warm-tinted; defined for later passes).
+      • --font-sans        Nunito Sans Variable, self-hosted via @fontsource-variable.
+
+   Off-scale one-offs (9px SVG glyph sizes, 5/6/10/14px fine-tuning) are kept literal
+   where tokenising them would shift glyph geometry or layout; the common values above
+   are tokenised. ──────────────────────────────────────────────────────────────── */
 
 :root {
-  --bg: #f7f7f5;
-  --surface: #ffffff;
-  --surface-2: #f1f1ee;
-  --text: #2b2730;
-  --text-dim: #6b6375;
-  --border: #dcdbd8;
-  --accent: #1f3a8a;
-  --accent-soft: rgba(31, 58, 138, 0.12);
-  --focus-ring: #2563c9;
-  --neck-bg: #fbfbf9;
-  --string: #b8b6b0;
-  --fret: #d9d8d3;
-  --nut: #6b6760;
-  --inlay: #c9c8c2;
+  /* — themed: warm light (sand/cream/clay + terracotta) — */
+  --bg: #f6f1ea;
+  --surface: #fffdf9;
+  --surface-2: #efe7db;
+  --text: #33291f;
+  --text-dim: #7a6b5a;
+  --border: #ddd0bf;
+  --accent: #b4502b;
+  --accent-soft: rgba(180, 80, 43, 0.12);
+  --accent-contrast: #fffaf4;
+  --focus-ring: #c2410c;
+  --origin: #c08a3e;
+  --origin-soft: rgba(192, 138, 62, 0.18);
+  --neck-bg: #fbf7f0;
+  --string: #bdb2a3;
+  --fret: #ddd2c2;
+  --nut: #6f6151;
+  --inlay: #ccc0ae;
 
-  font: 15px/1.45 system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* — non-themed scales (inherited by dark) — */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 24px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 15px; /* document base */
+  --text-xl: 18px;
+  --text-2xl: 22px;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 600;
+  --font-weight-bold: 700;
+
+  --line-tight: 1.2;
+  --line-base: 1.45;
+
+  --shadow-sm: 0 1px 2px rgba(40, 28, 18, 0.08);
+  --shadow-md: 0 4px 12px rgba(40, 28, 18, 0.12);
+
+  --font-sans: 'Nunito Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+
+  font: var(--text-lg) / var(--line-base) var(--font-sans);
   color: var(--text);
   background: var(--bg);
   color-scheme: light;
@@ -26,20 +85,28 @@
 }
 
 :root[data-theme='dark'] {
-  --bg: #14151a;
-  --surface: #1d1f26;
-  --surface-2: #24262f;
-  --text: #e8e7ea;
-  --text-dim: #a0a0ab;
-  --border: #33353f;
-  --accent: #9db4ff;
-  --accent-soft: rgba(157, 180, 255, 0.16);
-  --focus-ring: #6f9bff;
-  --neck-bg: #1a1c22;
-  --string: #555862;
-  --fret: #3a3d47;
-  --nut: #8a8d97;
-  --inlay: #41444e;
+  /* — themed: warm dark (espresso/charcoal + clay) — */
+  --bg: #1c1814;
+  --surface: #262019;
+  --surface-2: #2f2820;
+  --text: #f0e9df;
+  --text-dim: #b0a392;
+  --border: #3d342a;
+  --accent: #e89567;
+  --accent-soft: rgba(232, 149, 103, 0.16);
+  --accent-contrast: #2a1c12;
+  --focus-ring: #f59e5b;
+  --origin: #d6a04e;
+  --origin-soft: rgba(214, 160, 78, 0.2);
+  --neck-bg: #211b14;
+  --string: #5a5044;
+  --fret: #403729;
+  --nut: #8f8270;
+  --inlay: #463c2d;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+
   color-scheme: dark;
 }
 
@@ -62,8 +129,8 @@ h1,
 h2,
 h3 {
   color: var(--text);
-  font-weight: 600;
-  margin: 0 0 8px;
+  font-weight: var(--font-weight-medium);
+  margin: 0 0 var(--space-3);
 }
 
 button,

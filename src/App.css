@@ -1,5 +1,6 @@
 /* Fretsplorer shell + fretboard surface styles (docs/08; ADR 0005/0006).
-   Three-region collapsible shell; flanks collapse so the neck goes near-full-width. */
+   Three-region collapsible shell; flanks collapse so the neck goes near-full-width.
+   Spacing/radii/type/colour all consume the design tokens defined in index.css. */
 
 .app-shell {
   display: flex;
@@ -12,25 +13,25 @@
 .control-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 8px 16px;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-5);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
 }
 .control-bar .brand {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--accent);
   letter-spacing: 0.2px;
-  margin-right: 8px;
+  margin-right: var(--space-3);
 }
 .control {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
 }
 .control-label {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -39,7 +40,7 @@
 .control-btn {
   padding: 5px 10px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--surface-2);
   cursor: pointer;
 }
@@ -68,10 +69,10 @@
 }
 .left-panel {
   border-right: 1px solid var(--border);
-  padding: 8px;
+  padding: var(--space-3);
 }
 .left-panel.collapsed {
-  padding: 8px 4px;
+  padding: var(--space-3) var(--space-2);
 }
 .right-region {
   display: flex;
@@ -80,11 +81,11 @@
   min-height: 0;
 }
 .readout-panel {
-  padding: 12px;
+  padding: var(--space-4);
   border-bottom: 1px solid var(--border);
 }
 .conversation-panel {
-  padding: 12px;
+  padding: var(--space-4);
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -94,109 +95,109 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  margin: 8px 0;
+  margin: var(--space-3) 0;
 }
 .conv-turn {
-  margin-bottom: 12px;
-  font-size: 13px;
+  margin-bottom: var(--space-4);
+  font-size: var(--text-md);
 }
 .conv-role {
   display: inline-block;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-dim);
-  margin-right: 6px;
+  margin-right: var(--space-2);
 }
 .conv-user {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-2);
 }
 .conv-intent {
-  margin-left: 6px;
-  font-size: 10px;
+  margin-left: var(--space-2);
+  font-size: var(--text-2xs);
   color: var(--text-dim);
   border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
 }
 .conv-model {
   border-left: 2px solid var(--accent);
-  padding-left: 8px;
+  padding-left: var(--space-3);
 }
 .conv-model.editorial {
-  border-left-color: #c08a3e;
+  border-left-color: var(--origin);
 }
 .conv-line {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-2);
 }
 .conv-taste-flag {
-  margin: 2px 0 6px;
-  font-size: 11px;
+  margin: var(--space-1) 0 var(--space-3);
+  font-size: var(--text-xs);
   font-style: italic;
-  color: #c08a3e;
+  color: var(--origin);
 }
 .conv-options {
   list-style: none;
   padding: 0;
-  margin: 4px 0;
+  margin: var(--space-2) 0;
 }
 .conv-options li {
   display: flex;
-  gap: 8px;
+  gap: var(--space-3);
   align-items: center;
-  font-size: 12px;
-  margin: 2px 0;
+  font-size: var(--text-sm);
+  margin: var(--space-1) 0;
 }
 .conv-option-frets {
   font-family: monospace;
   color: var(--text-dim);
 }
 .conv-option-play {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
 }
 .conv-expand {
   background: none;
   border: none;
   color: var(--accent);
   cursor: pointer;
-  font-size: 11px;
-  padding: 2px 0;
+  font-size: var(--text-xs);
+  padding: var(--space-1) 0;
 }
 .conv-grounding {
-  margin: 4px 0;
+  margin: var(--space-2) 0;
   border-top: 1px dashed var(--border);
-  padding-top: 4px;
+  padding-top: var(--space-2);
 }
 .conv-chain {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-dim);
-  margin: 4px 0;
-  padding-left: 16px;
+  margin: var(--space-2) 0;
+  padding-left: var(--space-5);
 }
 .conv-traces {
   list-style: none;
   padding: 0;
-  margin: 4px 0;
+  margin: var(--space-2) 0;
 }
 .conv-trace {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-3);
   align-items: baseline;
-  font-size: 11px;
+  font-size: var(--text-xs);
   margin: 3px 0;
 }
 .conv-trace-text {
   flex: 1;
 }
 .conv-trace-badge {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-family: monospace;
-  border-radius: 3px;
-  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
   white-space: nowrap;
 }
 .conv-trace-badge.computed {
@@ -204,12 +205,12 @@
   color: var(--text-dim);
 }
 .conv-trace-badge.kb {
-  background: rgba(80, 140, 200, 0.18);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 .conv-trace.editorial .conv-trace-badge {
-  background: rgba(192, 138, 62, 0.18);
-  color: #c08a3e;
+  background: var(--origin-soft);
+  color: var(--origin);
 }
 .conv-trace.editorial .conv-trace-text {
   font-style: italic;
@@ -217,15 +218,15 @@
 .conv-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin: 4px 0;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
 }
 .conv-chip {
-  font-size: 11px;
+  font-size: var(--text-xs);
   background: none;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 2px 8px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-1) var(--space-3);
   color: var(--text);
   cursor: pointer;
 }
@@ -235,26 +236,26 @@
 }
 .conv-form {
   display: flex;
-  gap: 4px;
-  margin-top: 4px;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 .conv-input {
   flex: 1;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--text-md);
 }
 .conv-send {
   background: var(--accent);
   border: none;
-  border-radius: 4px;
-  padding: 4px 12px;
-  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  color: var(--accent-contrast);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-md);
 }
 
 .collapse-btn {
@@ -262,27 +263,27 @@
   border: none;
   color: var(--text-dim);
   cursor: pointer;
-  padding: 2px 4px;
-  font-size: 12px;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
 }
 .collapse-btn:hover {
   color: var(--accent);
 }
 
 .panel-body {
-  margin-top: 8px;
+  margin-top: var(--space-3);
 }
 .panel-note {
-  margin-top: 12px;
-  font-size: 12px;
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
   color: var(--text-dim);
 }
 .kv {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 4px 0;
-  font-size: 13px;
+  margin: var(--space-2) 0;
+  font-size: var(--text-md);
 }
 .kv span {
   color: var(--text-dim);
@@ -290,13 +291,13 @@
 .kv code {
   background: var(--surface-2);
   padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
 }
 .readout-headline {
-  font-size: 16px;
+  font-size: var(--text-xl);
   color: var(--text);
-  margin: 4px 0;
+  margin: var(--space-2) 0;
 }
 
 /* ── Center region: neck stack + notation ────────────────────────────────── */
@@ -305,8 +306,8 @@
   flex-direction: column;
   min-height: 0;
   overflow: auto;
-  padding: 12px;
-  gap: 12px;
+  padding: var(--space-4);
+  gap: var(--space-4);
 }
 .neck-stack {
   display: flex;
@@ -317,7 +318,7 @@
   align-self: flex-start;
   padding: 6px 14px;
   border: 1px dashed var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-dim);
   cursor: pointer;
@@ -329,16 +330,16 @@
 
 .notation-pane {
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  padding: 10px var(--space-4);
 }
 
 /* ── A single neck panel ─────────────────────────────────────────────────── */
 .neck-panel {
   border: 2px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--neck-bg);
-  padding: 8px 10px 4px;
+  padding: var(--space-3) 10px var(--space-2);
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -349,37 +350,37 @@
 .neck-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 2px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-1);
 }
 .neck-tag {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--accent);
   background: var(--accent-soft);
-  border-radius: 5px;
-  padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  padding: 1px var(--space-3);
 }
 .neck-caption {
-  font-size: 13px;
+  font-size: var(--text-md);
   color: var(--text-dim);
   flex: 1;
 }
 .neck-origin {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-style: italic;
   color: var(--text-dim);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0 8px;
+  border-radius: var(--radius-lg);
+  padding: 0 var(--space-3);
 }
 .neck-close {
   border: none;
   background: none;
-  font-size: 18px;
+  font-size: var(--text-xl);
   line-height: 1;
   color: var(--text-dim);
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0 var(--space-2);
 }
 .neck-close:hover:not(:disabled) {
   color: var(--accent);
@@ -412,10 +413,12 @@
 .fret-number {
   fill: var(--text-dim);
   font-size: 9px;
+  font-variant-numeric: tabular-nums;
 }
 .dot-label {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
   dominant-baseline: central;
   pointer-events: none;
 }
@@ -440,7 +443,7 @@
 }
 .grip-bass-label {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   fill: var(--neck-bg, #fff);
   dominant-baseline: central;
   pointer-events: none;
@@ -448,7 +451,7 @@
 /* Per-string open(O)/mute(X) glyph at the nut. */
 .nut-marker-glyph {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   fill: var(--text, #111);
   dominant-baseline: central;
   pointer-events: none;
@@ -474,34 +477,35 @@
 /* ── Readout panel (live "What you're holding") ─────────────────────────────── */
 .readout-idle {
   color: var(--text-dim);
-  font-size: 14px;
-  margin: 8px 0;
+  font-size: var(--text-lg);
+  margin: var(--space-3) 0;
 }
 .readout-relational {
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-style: italic;
   color: var(--text-dim);
-  margin: 4px 0;
+  margin: var(--space-2) 0;
 }
 .readout-symbol {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
   color: var(--text);
-  margin: 2px 0 8px;
+  margin: var(--space-1) 0 var(--space-3);
 }
 .readout-notes {
   list-style: none;
-  margin: 8px 0;
+  margin: var(--space-3) 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-2);
 }
 .readout-note {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: var(--space-3);
+  font-size: var(--text-md);
 }
 .readout-note-name {
   min-width: 52px;
@@ -511,22 +515,23 @@
   gap: 3px;
 }
 .readout-bass-badge {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-bold);
   color: var(--accent);
   border: 1px solid var(--accent);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0 3px;
 }
 .readout-open-badge {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-dim);
 }
 /* Degree chip — colour fill encodes the degree (a separate channel from drone). */
 .readout-degree-chip {
-  font-size: 11px;
-  font-weight: 700;
-  border-radius: 9px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-lg);
   padding: 1px 7px;
   min-width: 18px;
   text-align: center;
@@ -537,33 +542,33 @@
 }
 /* Drone chip — outlined (colour + word), never filled like the degree chip. */
 .readout-drone-chip {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   border: 1.5px solid currentColor;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 0 5px;
   letter-spacing: 0.2px;
 }
 .readout-candidates {
   margin-top: 10px;
   border-top: 1px solid var(--border);
-  padding-top: 8px;
+  padding-top: var(--space-3);
 }
 .readout-candidates h3 {
-  font-size: 12px;
+  font-size: var(--text-sm);
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--text-dim);
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-2);
 }
 .readout-candidates ol {
   margin: 0;
-  padding-left: 18px;
-  font-size: 13px;
+  padding-left: var(--space-5);
+  font-size: var(--text-md);
 }
 .readout-candidates li {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-3);
 }
 .readout-score {
   color: var(--text-dim);
