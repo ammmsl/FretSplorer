@@ -63,5 +63,20 @@ export {
 } from './grip';
 export type { Grip, StringGrip } from './grip';
 
-export { buildReadout, spellWithOctave } from './readout';
-export type { ReadoutViewModel, ReadoutNote, ReadoutCandidate } from './readout';
+export {
+  buildReadout,
+  spellWithOctave,
+  buildTier1View,
+  tonicToKeyString,
+  getGrammarCard,
+  getRules,
+} from './readout';
+export type {
+  ReadoutViewModel,
+  ReadoutNote,
+  ReadoutCandidate,
+  RelationalView,
+} from './readout';
+
+export { Tier3Anatomy } from './Tier3Anatomy';
+export type { Tier3AnatomyProps } from './Tier3Anatomy';

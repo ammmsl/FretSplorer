@@ -14,6 +14,7 @@ import { spell } from '../core';
 import { tuningLabel } from './fixtures';
 import { degreeStyle, droneStyle } from './palette';
 import type { ReadoutViewModel } from './readout';
+import { Tier3Anatomy } from './Tier3Anatomy';
 
 interface CollapsibleProps {
   readonly collapsed: boolean;
@@ -63,9 +64,10 @@ export function GrammarCardPanel({
 /**
  * RIGHT-top — the always-live "What you're holding" Readout (M1). Bound to the focused
  * neck's grip via the assembled ReadoutViewModel (docs/08 decision f; docs/09 UI#4).
- * Tiered disclosure: T1 relational (placeholder until M2) -> T2 absolute symbol+bass ->
- * per-note degree-vs-drone -> ranked candidates. Degree colour and drone tension are
- * SEPARATE visual channels here, mirroring the neck (docs/01 §B).
+ * Tiered disclosure: T1 relational HEADLINE (the relational sentence is the headline; the
+ * T2 absolute symbol is the subline — docs/08 f) -> bass -> per-note degree-vs-drone ->
+ * ranked candidates -> the expandable, LAZY Tier-3 anatomy. Degree colour and drone
+ * tension are SEPARATE visual channels here, mirroring the neck (docs/01 §B).
  */
 export function ReadoutPanel({
   readout,
@@ -89,17 +91,41 @@ export function ReadoutPanel({
   const t2 = readout.symbol
     ? readout.symbol + (readout.slashBass ? `/${readout.slashBass}` : '')
     : '—';
+  const rel = readout.relational;
 
   return (
     <section className="panel readout-panel" aria-label="Readout: what you're holding">
       <h2>What you're holding</h2>
 
-      {/* T1 relational — PLACEHOLDER slot (no faked name; arrives in M2). */}
-      <p className="readout-relational" aria-label="relational reading (coming in M2)">
-        relational naming arrives in M2
-      </p>
+      {/* T1 relational — the HEADLINE (the relational sentence leads; the T2 symbol is the
+          subline). On a Tier-1 handoff the symbol leads honestly; with no card we show a
+          small note rather than fake a relational name (docs/08 f). */}
+      {rel?.kind === 'relational' && (
+        <div className="readout-relational" aria-label="relational reading">
+          <p className="readout-headline">{rel.sentence}</p>
+          {rel.detail.length > 0 && (
+            <ul className="readout-relational-detail">
+              {rel.detail.map((d, i) => (
+                <li key={`reldetail-${i}`}>{d}</li>
+              ))}
+            </ul>
+          )}
+          {rel.tension && <p className="readout-relational-tension">{rel.tension}</p>}
+        </div>
+      )}
+      {rel?.kind === 'handoff' && (
+        <p className="readout-relational handoff" aria-label="relational reading">
+          {rel.note}
+        </p>
+      )}
+      {rel?.kind === 'no-card' && (
+        <p className="panel-note readout-relational no-card" aria-label="relational reading">
+          {rel.note}
+        </p>
+      )}
 
-      {/* T2 absolute symbol + slash bass. */}
+      {/* T2 absolute symbol + slash bass — the headline when relational leads, else the
+          lead (handoff / no-card). */}
       <p className="readout-symbol">{t2}</p>
 
       {/* Bass — the spelled LOWEST PITCH with octave (argmin, R10). */}
@@ -158,6 +184,9 @@ export function ReadoutPanel({
           </ol>
         </div>
       )}
+
+      {/* T3 voicing anatomy — expandable + LAZY (Pyodide loads only on expand; ADR 0008). */}
+      <Tier3Anatomy voicing={readout.primaryVoicing} keyString={readout.keyString} />
     </section>
   );
 }

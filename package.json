@@ -15,7 +15,8 @@
     "@coderline/alphatab": "^1.8.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "tonal": "^6.4.3"
+    "tonal": "^6.4.3",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@coderline/alphatab-vite": "^1.8.3",
