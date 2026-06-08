@@ -9,8 +9,11 @@
 import { useState } from 'react';
 import type { CapoShift, Tuning } from '../core';
 import { CapoControl } from './CapoControl';
+import { TensionPanel } from './TensionPanel';
 
 export interface LabProps {
+  /** The focused neck's EFFECTIVE tuning (after any capo) — tension reads this. */
+  readonly focusedTuning: Tuning;
   /** The focused neck's BASE tuning (before capo) — capo operates on this. */
   readonly baseTuning: Tuning;
   /** Emit a CapoShift for the focused neck (the shell applies it via applyCapo). */
@@ -43,7 +46,7 @@ export function LabSection({
   );
 }
 
-export function Lab({ baseTuning, onCapoChange }: LabProps) {
+export function Lab({ focusedTuning, baseTuning, onCapoChange }: LabProps) {
   return (
     <section className="lab-region" aria-label="Lab (provisional)">
       <header className="lab-header">
@@ -61,6 +64,10 @@ export function Lab({ baseTuning, onCapoChange }: LabProps) {
             stringCount={baseTuning.openStrings.length}
             onChange={onCapoChange}
           />
+        </LabSection>
+
+        <LabSection title="String tension / setup">
+          <TensionPanel tuning={focusedTuning} />
         </LabSection>
       </div>
     </section>

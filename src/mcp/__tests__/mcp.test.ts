@@ -183,4 +183,18 @@ describe('adviseSetupTool', () => {
     expect(result.truth.advice.strings.length).toBe(dadgad.openStrings.length);
     for (const c of result.claims) expect(c.trace).toBe('computed');
   });
+
+  it('surfaces a per-string flag the TensionPanel renders, across string counts', () => {
+    // The Lab tension panel reads noteName/tension.lb/band/flag per string.
+    for (const id of ['open-c', 'standard-7', 'standard-8']) {
+      const t = TUNINGS.find((x) => x.id === id)!;
+      const advice = adviseSetupTool(t).truth.advice;
+      expect(advice.strings.length).toBe(t.openStrings.length);
+      for (const s of advice.strings) {
+        expect(['floppy', 'fine', 'break-risk']).toContain(s.flag);
+        expect(s.tension.lb).toBeGreaterThan(0);
+        expect(s.noteName.length).toBeGreaterThan(0);
+      }
+    }
+  });
 });

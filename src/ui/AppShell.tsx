@@ -335,7 +335,11 @@ export function AppShell() {
 
       {/* PROVISIONAL — built-but-unplaced surfaces, mounted in a clearly-labelled lab strip
           below the shell. Not final placement (overnight build charter: "reach, don't place"). */}
-      <Lab baseTuning={focusedBaseTuning} onCapoChange={handleCapoChange} />
+      <Lab
+        focusedTuning={focusedTuning}
+        baseTuning={focusedBaseTuning}
+        onCapoChange={handleCapoChange}
+      />
     </div>
   );
 }
