@@ -889,6 +889,51 @@
   color: var(--accent);
 }
 
+/* ── Morph / translate view ───────────────────────────────────────────────────── */
+.morph-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.morph-target {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+.morph-retune {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--text-2xs);
+}
+.morph-side {
+  display: flex;
+  flex-direction: column;
+}
+.morph-side em {
+  color: var(--text-dim);
+  font-style: normal;
+}
+.morph-arrow {
+  color: var(--accent);
+}
+.morph-notes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.morph-note {
+  display: grid;
+  grid-template-columns: 5ch 1fr;
+  gap: 0.5rem;
+  font-size: var(--text-2xs);
+}
+.morph-note.unreachable .morph-landing {
+  color: #c0492d;
+}
+
 /* ── Narrow viewports ──────────────────────────────────────────────────────────
    Below 820px the three-region grid stacks into a single scrolling column so the
    240px + 300px flanks stop forcing horizontal overflow (gate 34). The neck SVG

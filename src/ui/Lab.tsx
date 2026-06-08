@@ -11,13 +11,18 @@ import type { CapoShift, Tuning } from '../core';
 import { CapoControl } from './CapoControl';
 import { TensionPanel } from './TensionPanel';
 import { ShapeDiscovery } from './ShapeDiscovery';
+import { MorphView } from './MorphView';
 import type { Grip } from './grip';
 
 export interface LabProps {
-  /** The focused neck's EFFECTIVE tuning (after any capo) — tension reads this. */
+  /** The focused neck's EFFECTIVE tuning (after any capo) — tension + morph read this. */
   readonly focusedTuning: Tuning;
   /** The focused neck's BASE tuning (before capo) — capo + shapes operate on this. */
   readonly baseTuning: Tuning;
+  /** The focused neck's held grip — morph translates its sounding pitches. */
+  readonly focusedGrip: Grip;
+  /** Other tunings to offer as morph targets. */
+  readonly morphTargets: readonly Tuning[];
   /** Emit a CapoShift for the focused neck (the shell applies it via applyCapo). */
   readonly onCapoChange: (capo: CapoShift) => void;
   /** Preview a movable-shape grip on the focused neck (shape discovery). */
@@ -53,6 +58,8 @@ export function LabSection({
 export function Lab({
   focusedTuning,
   baseTuning,
+  focusedGrip,
+  morphTargets,
   onCapoChange,
   onPreviewGrip,
 }: LabProps) {
@@ -81,6 +88,10 @@ export function Lab({
 
         <LabSection title="Shape discovery (movable shapes)">
           <ShapeDiscovery tuning={baseTuning} onPreviewGrip={onPreviewGrip} />
+        </LabSection>
+
+        <LabSection title="Morph / translate to another tuning">
+          <MorphView grip={focusedGrip} fromTuning={focusedTuning} targets={morphTargets} />
         </LabSection>
       </div>
     </section>

@@ -346,6 +346,8 @@ export function AppShell() {
       <Lab
         focusedTuning={focusedTuning}
         baseTuning={focusedBaseTuning}
+        focusedGrip={focusedGrip}
+        morphTargets={TUNINGS}
         onCapoChange={handleCapoChange}
         onPreviewGrip={handlePreviewGrip}
       />

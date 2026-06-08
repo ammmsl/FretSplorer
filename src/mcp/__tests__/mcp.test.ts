@@ -143,6 +143,18 @@ describe('translate — flags a note below the open string', () => {
     );
     expect(claim).toBeDefined();
   });
+
+  it('reachable notes expose toString/toFret (the fields MorphView renders)', () => {
+    // Open-G -> DADGAD: the upper voices re-place; every reachable note carries a landing.
+    const result = translate(allOpenGrip, openG, dadgad);
+    const reachable = result.truth.notes.filter((n) => !n.belowOpenString && !n.offNeck);
+    expect(reachable.length).toBeGreaterThan(0);
+    for (const n of reachable) {
+      expect(n.toString).not.toBeNull();
+      expect(n.toFret).not.toBeNull();
+      expect(n.toFret as number).toBeGreaterThanOrEqual(0);
+    }
+  });
 });
 
 describe('feelingToOptions — the editorial honesty seam', () => {
