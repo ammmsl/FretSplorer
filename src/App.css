@@ -607,6 +607,146 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Grammar-card panel: movable shapes + prose ───────────────────────────────── */
+.card-shapes h3,
+.card-capo h3,
+.card-idioms h3 {
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin: 0.75rem 0 0.3rem;
+}
+.card-shapes ul,
+.card-idiom-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.card-shape {
+  border-left: 2px solid var(--accent);
+  padding-left: 0.5rem;
+  font-size: var(--text-xs);
+}
+.card-shape strong {
+  display: block;
+}
+.card-shape-quality {
+  color: var(--text-dim);
+}
+.card-shape-slides {
+  list-style: none;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  font-size: var(--text-2xs);
+  color: var(--text-dim);
+}
+.panel-prose {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+.card-provenance {
+  margin-top: 0.6rem;
+  font-variant: small-caps;
+}
+
+/* ── Lab — clearly-labelled PROVISIONAL surfaces (not final placement) ─────────── */
+.lab-region {
+  border-top: 2px dashed var(--accent);
+  background: var(--surface);
+  padding: 0.6rem 1rem 1rem;
+}
+.lab-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.lab-badge {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+}
+.lab-note {
+  font-size: var(--text-2xs);
+  color: var(--text-dim);
+}
+.lab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.6rem;
+}
+.lab-section {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.lab-section-head {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font-size: var(--text-xs);
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+}
+.lab-section.open .lab-section-head {
+  border-bottom: 1px solid var(--border);
+}
+.lab-section-body {
+  padding: 0.6rem;
+}
+
+/* ── Capo control ─────────────────────────────────────────────────────────────── */
+.capo-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.capo-fret-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+.capo-fret-label input[type='range'] {
+  flex: 1;
+}
+.capo-fret-value {
+  min-width: 2ch;
+  text-align: right;
+}
+.capo-strings {
+  display: flex;
+  gap: 0.3rem;
+}
+.capo-string-toggle {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  border-radius: 4px;
+  padding: 0.3rem 0;
+  font-size: var(--text-2xs);
+  cursor: pointer;
+}
+.capo-string-toggle.on {
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+}
+
 /* ── Narrow viewports ──────────────────────────────────────────────────────────
    Below 820px the three-region grid stacks into a single scrolling column so the
    240px + 300px flanks stop forcing horizontal overflow (gate 34). The neck SVG

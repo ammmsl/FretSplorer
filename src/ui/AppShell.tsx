@@ -8,8 +8,9 @@
 // it derives PlacedPosition[] and the live Readout view-model (docs/09 UI#4). Only
 // alphaTab stays out of the hot loop.
 
-import { useEffect, useMemo, useState } from 'react';
-import type { ProjectableEntity, Tuning } from '../core';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { CapoShift, ProjectableEntity, Tuning } from '../core';
+import { applyCapo } from '../core';
 import { project, droneMap } from '../projection';
 import type { OpenStringDrone } from '../projection';
 import { ControlBar, type ContextSelection } from './ControlBar';
@@ -21,6 +22,7 @@ import {
   NotationPane,
   type SpawnOption,
 } from './panels';
+import { Lab } from './Lab';
 import { CHORDS, SCALES, TUNINGS } from './fixtures';
 import { DEFAULT_LABEL_MODE, type LabelMode } from './labels';
 import { DEFAULT_THEME, nextTheme, type Theme } from './theme';
@@ -50,6 +52,20 @@ function selectionLabel(sel: ContextSelection | null): string {
       ? SCALES.find((s) => s.key === sel.key)
       : CHORDS.find((c) => c.key === sel.key);
   return opt ? opt.label : 'nothing yet';
+}
+
+/**
+ * The EFFECTIVE tuning for a neck = its base tuning with any capo applied. applyCapo shifts
+ * the open-string pitches (so the overlay + readout re-project) while PRESERVING the tonic
+ * (the capo's pedagogical anchor — core/tuning.ts). We deliberately keep the BASE id on the
+ * result so the grammar card still resolves under a capo (capo preserves the grammar, only
+ * absolute pitches transpose). A no-op capo (absent / all-zero / wrong length) returns base.
+ */
+function effectiveTuning(base: Tuning, capo: CapoShift | undefined): Tuning {
+  if (!capo || capo.length !== base.openStrings.length || capo.every((c) => c === 0)) {
+    return base;
+  }
+  return { ...applyCapo(base, capo), id: base.id };
 }
 
 /** A voicing's per-string frets (fret, 0 = open, null = muted) -> a renderable Grip. */
@@ -92,6 +108,9 @@ export function AppShell() {
   // Per-neck GRIP (the held notes). Keyed by neck id; a neck with no entry is empty.
   const [grips, setGrips] = useState<Readonly<Record<string, Grip>>>({});
 
+  // Per-neck CAPO shift (provisional; set from the Lab). Keyed by neck id; no entry = uncapoed.
+  const [capos, setCapos] = useState<Readonly<Record<string, CapoShift>>>({});
+
   // Apply the theme to the document root so CSS can theme-switch.
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -110,7 +129,8 @@ export function AppShell() {
   // tuning change -> the overlay moves (the M0 DoD).
   const neckInstances: NeckInstance[] = useMemo(() => {
     return necks.map((n) => {
-      const tuning = tuningById.get(n.tuningId) ?? TUNINGS[0];
+      const base = tuningById.get(n.tuningId) ?? TUNINGS[0];
+      const tuning = effectiveTuning(base, capos[n.id]);
       const positions = entity ? project(entity, tuning) : [];
       const drones: readonly OpenStringDrone[] | undefined = entity
         ? droneMap(entity, tuning)
@@ -126,10 +146,11 @@ export function AppShell() {
         grip: n.pinnedGrip,
       };
     });
-  }, [necks, entity, selection, tuningById]);
+  }, [necks, entity, selection, tuningById, capos]);
 
   const focusedNeck = necks.find((n) => n.id === focusedId) ?? necks[0];
-  const focusedTuning = tuningById.get(focusedNeck.tuningId) ?? TUNINGS[0];
+  const focusedBaseTuning = tuningById.get(focusedNeck.tuningId) ?? TUNINGS[0];
+  const focusedTuning = effectiveTuning(focusedBaseTuning, capos[focusedNeck.id]);
   const contextSummary = selectionLabel(selection);
 
   // The focused neck's grip (default empty for its string count).
@@ -175,7 +196,24 @@ export function AppShell() {
       delete next[focusedId];
       return next;
     });
+    // A retune also clears the capo: the shift vector was sized for the old string count.
+    setCapos((prev) => {
+      if (!prev[focusedId]) return prev;
+      const next = { ...prev };
+      delete next[focusedId];
+      return next;
+    });
   }
+
+  // Capo for the focused neck (provisional; from the Lab). applyCapo runs in effectiveTuning,
+  // so setting a capo re-projects the overlay + re-derives the readout for free. useCallback
+  // keeps the identity stable for the CapoControl's reporting effect.
+  const handleCapoChange = useCallback(
+    (capo: CapoShift) => {
+      setCapos((prev) => ({ ...prev, [focusedId]: capo }));
+    },
+    [focusedId],
+  );
 
   // ── Grip mutations (the focused neck only) ──
   /** Click a fret cell: remove if that string already holds THIS exact fret, else place. */
@@ -294,6 +332,10 @@ export function AppShell() {
           />
         </div>
       </div>
+
+      {/* PROVISIONAL — built-but-unplaced surfaces, mounted in a clearly-labelled lab strip
+          below the shell. Not final placement (overnight build charter: "reach, don't place"). */}
+      <Lab baseTuning={focusedBaseTuning} onCapoChange={handleCapoChange} />
     </div>
   );
 }
