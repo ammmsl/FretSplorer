@@ -25,6 +25,10 @@ export interface NeckInstance {
   readonly caption: string;
   /** True for the origin ("yours") neck — a persistent subtle marker. */
   readonly isOrigin: boolean;
+  /** A pinned grip to render on a NON-focused neck (e.g. a spawned comparison option).
+   *  The focused neck draws the live `focusedGrip` instead; this lets a spawned option
+   *  neck show its concrete voicing without being focused (docs/04 flow 2). */
+  readonly grip?: Grip;
 }
 
 export interface NeckStackProps {
@@ -105,7 +109,7 @@ export function NeckStack({
               positions={n.positions}
               drones={n.drones}
               labelMode={labelMode}
-              grip={focused ? focusedGrip : undefined}
+              grip={focused ? focusedGrip : n.grip}
               bassString={focused ? bassString : null}
               bassFret={focused ? bassFret : null}
               onFretClick={focused ? onFretClick : undefined}

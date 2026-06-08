@@ -5,9 +5,13 @@
 //   loadGrammarCard(id): GrammarCard | null   — parse kb/tunings/<id>.yaml (only "open-g" today).
 //   loadRules(): RuleBundle                    — the three global rule sets + weights + sources.
 
-export { loadGrammarCard, loadRules } from './load';
+export { loadGrammarCard, loadRules, loadAffective } from './load';
 
 export type {
+  AffectiveDictionary,
+  AffectiveVibe,
+  AffectiveOperation,
+  AffectiveOp,
   GrammarCard,
   MovableShape,
   ShapeString,

@@ -118,6 +118,53 @@ export interface RankingWeights {
   readonly provenance?: Provenance;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Affective dictionary (affective.schema.json) — PROVISIONAL (V1)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The CLOSED set of executable theory operations a vibe maps to (affective.schema.json).
+ *  feeling_to_options -> find_voicings executes these against the home chord. */
+export type AffectiveOp =
+  | 'add-tone'
+  | 'omit'
+  | 'suspend'
+  | 'let-ring'
+  | 'widen-spacing'
+  | 'add-low-drone'
+  | 'mode-shift'
+  | 'extend';
+
+/** One ordered theory operation in a vibe's mapping. The optional fields are op-specific
+ *  (degree for add-tone/omit/extend; value for suspend/mode-shift; target for let-ring). */
+export interface AffectiveOperation {
+  readonly op: AffectiveOp;
+  readonly degree?: number;
+  readonly value?: string | number;
+  readonly target?: string;
+}
+
+/** A vibe word mapped to an ordered op list. The mapping is EDITORIAL (taste) — its
+ *  provenance.kind is always 'editorial', so any spoken claim about it MUST be hedged
+ *  ("usually", "often"). The op RESULTS (computed voicings) are still grounded (ADR 0003). */
+export interface AffectiveVibe {
+  /** Stable KB id (a valid trace target), e.g. "dreamier". */
+  readonly id: string;
+  readonly label: string;
+  readonly aliases?: readonly string[];
+  readonly type?: 'mood' | 'artist';
+  readonly operations: readonly AffectiveOperation[];
+  /** Optional suggested tuning card id (mainly for artist vibes). */
+  readonly suggestedTuning?: string;
+  /** Always editorial (the schema fixes provenance.kind = 'editorial'). */
+  readonly provenance: Provenance;
+}
+
+/** The loaded affective dictionary (kb/affective/dictionary.yaml). PROVISIONAL. */
+export interface AffectiveDictionary {
+  readonly schemaVersion: number;
+  readonly vibes: readonly AffectiveVibe[];
+}
+
 /** A loaded source bibliography entry (kb/sources/references.yaml). */
 export interface SourceEntry {
   readonly id: string;

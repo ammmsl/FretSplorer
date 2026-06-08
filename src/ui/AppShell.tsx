@@ -19,6 +19,7 @@ import {
   ReadoutPanel,
   ConversationPanel,
   NotationPane,
+  type SpawnOption,
 } from './panels';
 import { CHORDS, SCALES, TUNINGS } from './fixtures';
 import { DEFAULT_LABEL_MODE, type LabelMode } from './labels';
@@ -51,12 +52,27 @@ function selectionLabel(sel: ContextSelection | null): string {
   return opt ? opt.label : 'nothing yet';
 }
 
+/** A voicing's per-string frets (fret, 0 = open, null = muted) -> a renderable Grip. */
+function fretsToGrip(frets: readonly (number | null)[]): Grip {
+  return frets.map((f) =>
+    f === null
+      ? ({ kind: 'muted' as const })
+      : f === 0
+        ? ({ kind: 'open' as const })
+        : ({ kind: 'fret' as const, fret: f }),
+  );
+}
+
 /** Per-neck state: identity + which tuning it projects onto. */
 interface NeckState {
   readonly id: string;
   readonly tuningId: string;
   readonly tag: string;
   readonly isOrigin: boolean;
+  /** Caption override (e.g. a spawned comparison option's chord symbol). */
+  readonly caption?: string;
+  /** A pinned grip for a spawned comparison neck (rendered without being focused). */
+  readonly pinnedGrip?: Grip;
 }
 
 const TAGS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -105,8 +121,9 @@ export function AppShell() {
         positions,
         drones,
         tag: n.tag,
-        caption: selectionLabel(selection),
+        caption: n.caption ?? selectionLabel(selection),
         isOrigin: n.isOrigin,
+        grip: n.pinnedGrip,
       };
     });
   }, [necks, entity, selection, tuningById]);
@@ -196,6 +213,27 @@ export function AppShell() {
     });
   }
 
+  /**
+   * Spawn the conversation's option voicings as comparison necks BESIDE the focused neck
+   * (docs/04 flow 2 — comparison is the teaching act). Each option becomes a new neck on
+   * the focused tuning, pinned to the option's grip + captioned with its symbol. We do NOT
+   * touch the user's own neck or change focus (the focus pointer stays on theirs).
+   */
+  function handleSpawnOptions(options: readonly SpawnOption[]) {
+    if (options.length === 0) return;
+    setNecks((prev) => {
+      const spawned: NeckState[] = options.map((o, i) => ({
+        id: `neck-${Date.now()}-${i}`,
+        tuningId: focusedTuning.id,
+        tag: TAGS[(prev.length + i) % TAGS.length],
+        isOrigin: false,
+        caption: `option · ${o.symbol}`,
+        pinnedGrip: fretsToGrip(o.frets),
+      }));
+      return [...prev, ...spawned];
+    });
+  }
+
   function handleClose(id: string) {
     setNecks((prev) => {
       if (prev.length <= 1) return prev;
@@ -249,7 +287,11 @@ export function AppShell() {
 
         <div className="right-region">
           <ReadoutPanel readout={readout} contextSummary={contextSummary} />
-          <ConversationPanel />
+          <ConversationPanel
+            grip={focusedGrip}
+            tuning={focusedTuning}
+            onSpawnOptions={handleSpawnOptions}
+          />
         </div>
       </div>
     </div>

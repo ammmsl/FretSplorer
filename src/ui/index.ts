@@ -19,6 +19,16 @@ export {
   ConversationPanel,
   NotationPane,
 } from './panels';
+export type { SpawnOption } from './panels';
+
+export { route, buildTurnView, intentLabel } from './conversation';
+export type {
+  Intent,
+  IntentKind,
+  TurnView,
+  TraceView,
+  OptionView,
+} from './conversation';
 
 export { TUNINGS, SCALES, CHORDS, tuningLabel } from './fixtures';
 export type { ScaleOption, ChordOption } from './fixtures';

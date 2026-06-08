@@ -86,6 +86,175 @@
 .conversation-panel {
   padding: 12px;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.conversation-log {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  margin: 8px 0;
+}
+.conv-turn {
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.conv-role {
+  display: inline-block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-right: 6px;
+}
+.conv-user {
+  margin: 0 0 4px;
+}
+.conv-intent {
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+.conv-model {
+  border-left: 2px solid var(--accent);
+  padding-left: 8px;
+}
+.conv-model.editorial {
+  border-left-color: #c08a3e;
+}
+.conv-line {
+  margin: 0 0 4px;
+}
+.conv-taste-flag {
+  margin: 2px 0 6px;
+  font-size: 11px;
+  font-style: italic;
+  color: #c08a3e;
+}
+.conv-options {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0;
+}
+.conv-options li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  margin: 2px 0;
+}
+.conv-option-frets {
+  font-family: monospace;
+  color: var(--text-dim);
+}
+.conv-option-play {
+  font-size: 10px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+.conv-expand {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 0;
+}
+.conv-grounding {
+  margin: 4px 0;
+  border-top: 1px dashed var(--border);
+  padding-top: 4px;
+}
+.conv-chain {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 4px 0;
+  padding-left: 16px;
+}
+.conv-traces {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0;
+}
+.conv-trace {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+  margin: 3px 0;
+}
+.conv-trace-text {
+  flex: 1;
+}
+.conv-trace-badge {
+  font-size: 10px;
+  font-family: monospace;
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+.conv-trace-badge.computed {
+  background: var(--border);
+  color: var(--text-dim);
+}
+.conv-trace-badge.kb {
+  background: rgba(80, 140, 200, 0.18);
+  color: var(--accent);
+}
+.conv-trace.editorial .conv-trace-badge {
+  background: rgba(192, 138, 62, 0.18);
+  color: #c08a3e;
+}
+.conv-trace.editorial .conv-trace-text {
+  font-style: italic;
+}
+.conv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0;
+}
+.conv-chip {
+  font-size: 11px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2px 8px;
+  color: var(--text);
+  cursor: pointer;
+}
+.conv-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.conv-form {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+.conv-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--text);
+  font-size: 13px;
+}
+.conv-send {
+  background: var(--accent);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
 }
 
 .collapse-btn {

@@ -14,6 +14,8 @@
 
 import { parse } from 'yaml';
 import type {
+  AffectiveDictionary,
+  AffectiveVibe,
   GrammarCard,
   RankingWeights,
   Rule,
@@ -120,4 +122,25 @@ export function loadRules(): RuleBundle {
     rankingWeights: loadRankingWeights(),
     sources: loadSources(),
   };
+}
+
+/**
+ * loadAffective(): parse kb/affective/dictionary.yaml into the typed (PROVISIONAL)
+ * affective dictionary — vibe words mapped to ordered, executable theory operations
+ * (affective.schema.json). The mapping is EDITORIAL: each vibe's provenance.kind is
+ * 'editorial', so any spoken vibe claim MUST be hedged (ADR 0003); the op RESULTS that
+ * the MCP feeling_to_options path computes are still fully grounded. Returns an empty
+ * dictionary if the file is missing/malformed (defensive; the file is expected present).
+ */
+export function loadAffective(): AffectiveDictionary {
+  const obj = parseYaml(rawBySuffix('affective/dictionary.yaml')) as
+    | Partial<AffectiveDictionary>
+    | null;
+  const vibes: AffectiveVibe[] = [];
+  for (const v of obj?.vibes ?? []) {
+    if (v && typeof v.id === 'string' && Array.isArray(v.operations) && v.provenance != null) {
+      vibes.push(v);
+    }
+  }
+  return { schemaVersion: obj?.schemaVersion ?? 1, vibes };
 }
