@@ -26,6 +26,13 @@ coverage
 .research
 .playwright-mcp
 
+# Spine-build orchestration scripts + milestone screenshot evidence (tooling, not app source)
+build-workflows
+m0-*.png
+m1-*.png
+m2-*.png
+m3-*.png
+
 # R1 spike: the results/*.json measurements ARE committed (they are the empirical
 # evidence cited by docs/adr/0008). Only the transient server log is ignored —
 # covered by the *.log rule above (spikes/r1-music21/results/uvicorn.log).
