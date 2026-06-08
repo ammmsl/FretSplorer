@@ -1,0 +1,99 @@
+schemaVersion: 1
+id: dadgad
+name: DADGAD
+aliases: ["D modal", "Celtic tuning"]
+
+# Open strings, string 1 (high) -> string 6 (low):  D4 A3 G3 D3 A2 D2
+# MIDI:  D4=62  A3=57  G3=55  D3=50  A2=45  D2=38
+# (verified: C4=60; D4 = 62; G3 = 55; standard low E2=40, low D2 = 40-2 = 38)
+# Array index carries NO pitch-order meaning; bass is computed from lowest pitch.
+strings: [62, 57, 55, 50, 45, 38]
+
+# Key center = D. Pitch class 2.
+# Home chord is DERIVED (not stored): pcs of the open strings = {D=2, G=7, A=9} = D-G-A = Dsus4.
+# DADGAD's signature is exactly this SUSPENDED, third-less home sonority: it is neither major nor
+# minor, so it floats between the two until a fretted note supplies a 3rd. That ambiguity -- the
+# reason the tuning sounds "modal/Celtic" -- is the relational point of the card.
+tonic: 2
+
+movableShapes:
+  - id: dad-sus4-barre
+    label: "movable sus4 (full barre)"
+    # Full six-string barre. Slides the third-less home Dsus4 sonority as a rigid block.
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: fret, offset: 0 }   # string 6
+    produces:
+      quality: "sus4 chord (the home Dsus4 transposed) -- third-less, neither major nor minor"
+    slideExamples:
+      - { anchorFret: 0, function: "Isus4 (Dsus4)" }
+      - { anchorFret: 5, function: "IVsus4 (Gsus4)" }
+      - { anchorFret: 7, function: "Vsus4 (Asus4)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        A flat barre transposes every open pitch equally, so the sounding pitch-class set is the
+        open-string set shifted by N -- the home Dsus4 ({D,G,A}, the 1-4-5) moved up N semitones,
+        staying suspended at every fret.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: open pcs {D,G,A} = Dsus4 (root D, 4th G, 5th A). anchor 5: opens+5 = [67,62,60,55,50,43]
+        -> pcs {G,C,D} = Gsus4 (root G, 4th C, 5th D). anchor 7: opens+7 = [69,64,62,57,52,45] -> pcs
+        {A,D,E} = Asus4 (root A, 4th D, 5th E). Suspended at every anchor. Confirmed.
+
+  - id: dad-power-chord
+    label: "one-finger power chord (low three strings)"
+    # The lowest three strings are D-A-D = a root-5th-octave power chord, barred with one finger and
+    # slid up the neck. Upper three muted. The cleanest movable shape for riffs in DADGAD.
+    strings:
+      - { play: mute }              # string 1
+      - { play: mute }              # string 2
+      - { play: mute }              # string 3
+      - { play: fret, offset: 0 }   # string 4 = D3
+      - { play: fret, offset: 0 }   # string 5 = A2
+      - { play: fret, offset: 0 }   # string 6 = D2
+    produces:
+      quality: "power chord (root-5th-octave) -- the low D-A-D, transposed"
+    slideExamples:
+      - { anchorFret: 0, function: "I5 (D5)" }
+      - { anchorFret: 5, function: "IV5 (G5)" }
+      - { anchorFret: 7, function: "V5 (A5)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        The lowest three strings sound D-A-D = a fifth plus its octave (a power chord). A flat barre
+        across just those strings transposes that interval set up N, so it is a power chord at any fret.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: strings 4-6 = [50,45,38] -> pcs {D,A,D} = {D,A} = D5. anchor 5: [55,50,43] -> pcs {G,D}
+        = G5. anchor 7: [57,52,45] -> pcs {A,E} = A5. Root-5th interval preserved at every anchor. Confirmed.
+
+capoBehavior: >
+  A capo is a runtime per-string shift, not stored here. DADGAD capo 2 gives "EADEAE" feel (in E),
+  preserving every drone relationship; only absolute pitch transposes. Partial capos are idiomatic here
+  (e.g. capoing the inner four strings to keep the outer D drones open).
+
+idiomaticProgressions:
+  - "Drone-rich Isus4 -> IVsus4 -> Vsus4 by barre (Dsus4 -> Gsus4 -> Asus4), the open D and A ringing throughout."
+  - "Add or drop a single fretted 3rd to colour the suspended home as momentarily major or minor."
+
+references:
+  - "DADGAD is associated with Celtic/folk guitar (Davey Graham, Pierre Bensusan) and with Led Zeppelin's 'Kashmir' (informational)."
+
+provenance:
+  kind: definitional
+  reasoning: >
+    DADGAD is the well-documented modal tuning D-A-D-G-A-D (low to high). The pitches are the tuning's
+    definition; the tonic D is the conventional key center (the open strings sound a third-less Dsus4,
+    1-4-5, which is the source of the tuning's suspended/modal character).
+  sources: [open-tunings-ref]
+  verifiedBy: both
+  verifiedNote: >
+    Pitches cross-computed from note+octave to MIDI and confirmed against an open-tunings reference;
+    open-string pc-set {D,G,A} confirms tonic D and the signature third-less Dsus4 home sonority.

@@ -1,0 +1,93 @@
+schemaVersion: 1
+id: open-e
+name: Open E
+aliases: ["Vestapol (in E)"]
+
+# Open strings, string 1 (high) -> string 6 (low):  E4 B3 G#3 E3 B2 E2
+# MIDI:  E4=64  B3=59  G#3=56  E3=52  B2=47  E2=40
+# (verified: C4=60; E4 = 60+4 = 64; G#3 = G3(55)+1 = 56; B2 = C3(48)-1 = 47; low E2 = 40)
+# Array index carries NO pitch-order meaning; bass is computed from lowest pitch.
+strings: [64, 59, 56, 52, 47, 40]
+
+# Key center = E. Pitch class 4.
+# Home chord is DERIVED (not stored): pcs of the open strings = {E=4, G#=8, B=11} = E major triad,
+# rooted on the tonic E -> "E major". All three open pitch-classes are chord tones; Open E is Open D
+# raised a whole step (same shapes, higher string tension -- see capoBehavior / the tension panel).
+tonic: 4
+
+movableShapes:
+  - id: oe-major-barre
+    label: "movable major (full barre)"
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: fret, offset: 0 }   # string 6
+    produces:
+      quality: "major triad (the home chord transposed)"
+    slideExamples:
+      - { anchorFret: 0, function: "I (E major)" }
+      - { anchorFret: 5, function: "IV (A major)" }
+      - { anchorFret: 7, function: "V (B major)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        A flat barre transposes every open pitch equally, so the sounding pitch-class set is the
+        open-string set shifted by N -- i.e. the home chord (E major) moved up N semitones.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: open pcs {E,G#,B} = E major. anchor 5: opens+5 = [69,64,61,57,52,45] -> pcs {A,C#,E}
+        = A major (IV). anchor 7: opens+7 = [71,66,63,59,54,47] -> pcs {B,D#,F#} = B major (V). Confirmed.
+
+  - id: oe-major-over-e-drone
+    label: "major over the low-E drone"
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: open }              # string 6 = open low E drone (does not slide)
+    produces:
+      quality: "major triad on the upper five strings, over the open low-E pedal"
+    slideExamples:
+      - { anchorFret: 0, function: "I with the low E as the root (E/E)" }
+      - { anchorFret: 5, function: "IV with the open E ringing as its 5th (A/E)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        The barred upper five strings make a major triad; the open low E is a fixed pedal whose degree
+        relative to that triad's root changes as the shape slides -- the root of E at anchor 0, the 5th
+        of A at anchor 5.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: strings1-5 open [64,59,56,52,47] -> pcs {E,G#,B} = E major; + open E2(40), bass = E2 ->
+        E/E, E = root. anchor 5: strings1-5 +5 = [69,64,61,57,52] -> pcs {A,C#,E} = A major; + open E2(40),
+        bass = E2 -> A/E, E = 5th of A. Confirmed.
+
+capoBehavior: >
+  A capo is a runtime per-string shift, not stored here. Open E is Open D capo 2 by pitch but is more
+  often tuned UP from standard, which raises string tension on three strings -- the tension panel will
+  flag the higher pull. Every relationship to the drones is identical to Open D; only absolute pitch differs.
+
+idiomaticProgressions:
+  - "I-IV-V by barre: open (I=E) -> barre 5 (IV=A) -> barre 7 (V=B), the E drones ringing throughout."
+
+references:
+  - "Open E is associated with electric slide blues (e.g. Duane Allman, Derek Trucks) (informational)."
+
+provenance:
+  kind: definitional
+  reasoning: >
+    Open E is the well-documented major open tuning E-B-E-G#-B-E (low to high). The pitches are the
+    tuning's definition; the tonic E is the conventional, authorial key center (the open strings sound
+    an E major triad). It shares all shapes with Open D, a whole step higher.
+  sources: [open-tunings-ref]
+  verifiedBy: both
+  verifiedNote: >
+    Pitches cross-computed from note+octave to MIDI and confirmed against an open-tunings reference;
+    open-string pc-set {E,G#,B} confirms tonic E and a clean E-major home chord.

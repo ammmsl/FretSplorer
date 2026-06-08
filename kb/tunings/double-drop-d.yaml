@@ -1,0 +1,99 @@
+schemaVersion: 1
+id: double-drop-d
+name: Double Drop D
+aliases: ["DADGBD", "double dropped D"]
+
+# Open strings, string 1 (high) -> string 6 (low):  D4 B3 G3 D3 A2 D2
+# MIDI:  D4=62  B3=59  G3=55  D3=50  A2=45  D2=38
+# Standard EADGBE with BOTH E strings dropped a whole step to D: low E2->D2 and high E4->D4.
+# (verified: standard E2=40 -> D2=38; standard E4=64 -> D4=62; the inner four strings are unchanged.)
+# Array index carries NO pitch-order meaning; bass is computed from lowest pitch.
+strings: [62, 59, 55, 50, 45, 38]
+
+# Key center = D. Pitch class 2.
+# Home chord is DERIVED (not stored): pcs of the open strings = {D=2, G=7, A=9, B=11}. This is a
+# G-major triad (G,B,D) plus an added A, sounding over the doubled low/high D -> readable as Gadd9/D,
+# or, D-rooted, as a 1-4-5-6 added-tone colour. The two D octaves bracketing the chord are the tuning's
+# signature ring; D is the natural drone/key center.
+tonic: 2
+
+movableShapes:
+  - id: ddd-add9-barre
+    label: "movable major-add9 (full barre)"
+    # Full six-string barre. Slides the home four-note added-tone sonority as a rigid block.
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: fret, offset: 0 }   # string 6
+    produces:
+      quality: "a major-add9 colour (the home open sonority transposed) -- a major triad with a ringing added 9th"
+    slideExamples:
+      - { anchorFret: 0, function: "the home colour (Gadd9 over the D drones)" }
+      - { anchorFret: 5, function: "up a 4th (Cadd9 colour)" }
+      - { anchorFret: 7, function: "up a 5th (Dadd9 colour)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        A flat barre transposes every open pitch equally, so the sounding pitch-class set is the
+        open-string set shifted by N -- the home major-add9 colour moved up N semitones, staying a
+        triad-plus-9th at every fret.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: open pcs {D,G,A,B} = G major (G,B,D) + added A -> Gadd9 (over the D drones). anchor 5:
+        opens+5 = [67,64,60,55,50,43] -> pcs {C,D,E,G} = Cadd9 (C,E,G + D). anchor 7: opens+7 =
+        [69,66,62,57,52,45] -> pcs {D,E,F#,A} = Dadd9 (D,F#,A + E). Major-add9 colour at every anchor. Confirmed.
+
+  - id: ddd-power-chord
+    label: "one-finger power chord (low three strings)"
+    # As in Drop D: the lowest three strings sound D-A-D = a root-5th-octave power chord, barred with one
+    # finger and slid up the neck. Upper three muted.
+    strings:
+      - { play: mute }              # string 1
+      - { play: mute }              # string 2
+      - { play: mute }              # string 3
+      - { play: fret, offset: 0 }   # string 4 = D3
+      - { play: fret, offset: 0 }   # string 5 = A2
+      - { play: fret, offset: 0 }   # string 6 = D2
+    produces:
+      quality: "power chord (root-5th-octave) -- the low D-A-D, transposed"
+    slideExamples:
+      - { anchorFret: 0, function: "D5 (the open low-D power chord)" }
+      - { anchorFret: 5, function: "G5" }
+      - { anchorFret: 7, function: "A5" }
+    provenance:
+      kind: derived
+      reasoning: >
+        The lowest three strings (unchanged from Drop D) sound D-A-D = a fifth plus its octave. A flat
+        barre across those strings transposes the interval set up N, so it is a power chord at any fret.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: strings 4-6 = [50,45,38] -> pcs {D,A,D} = {D,A} = D5. anchor 5: [55,50,43] -> pcs {G,D}
+        = G5. anchor 7: [57,52,45] -> pcs {A,E} = A5. Root-5th interval preserved at every anchor. Confirmed.
+
+capoBehavior: >
+  A capo is a runtime per-string shift, not stored here. Capoing transposes every drone relationship
+  identically; only absolute pitch changes. The two D octaves stay the bracketing drones whatever the fret.
+
+idiomaticProgressions:
+  - "Let the bracketing D drones ring while the inner voices move -- the home Gadd9/D colour shifting under a constant D frame."
+  - "Slide the one-finger low power chord (D5 -> G5 -> A5) for riffs against the open high D."
+
+references:
+  - "Double drop D is associated with Neil Young ('Cinnamon Girl', 'Ohio') and folk-rock open ringing textures (informational)."
+
+provenance:
+  kind: definitional
+  reasoning: >
+    Double drop D is standard EADGBE with BOTH E strings lowered a whole step to D (D-A-D-G-B-D low to
+    high). The pitches are the tuning's definition; the tonic D is the natural key center -- the two D
+    octaves bracket the chord and dominate as drones. The home sonority is a major-add9 colour (Gadd9/D).
+  sources: [open-tunings-ref]
+  verifiedBy: both
+  verifiedNote: >
+    Pitches cross-computed from note+octave to MIDI: only the two E strings differ from standard
+    (D2=38 vs E2=40, D4=62 vs E4=64); open-string pc-set {D,G,A,B} confirms the Gadd9/D home colour.

@@ -1,0 +1,74 @@
+schemaVersion: 1
+id: drop-d
+name: Drop D
+aliases: ["DADGBE"]
+
+# Open strings, string 1 (high) -> string 6 (low):  E4 B3 G3 D3 A2 D2
+# MIDI:  E4=64  B3=59  G3=55  D3=50  A2=45  D2=38
+# This is standard EADGBE with ONLY the low E (E2=40) dropped a whole step to D2=38.
+# (verified: standard low E2=40, low D2 = 40-2 = 38; the other five strings are unchanged.)
+# Array index carries NO pitch-order meaning; bass is computed from lowest pitch.
+strings: [64, 59, 55, 50, 45, 38]
+
+# Key center = E. Pitch class 4 -- INHERITED from standard tuning, of which Drop D is a minimal variant
+# (only the 6th string moves). The upper five strings ARE standard EADGB, so absolute (Tier-2) naming
+# stays correct for most grips; the card exists to explain the ONE thing the drop changes: a low D drone
+# that enables one-finger power chords on the bottom strings. (Whether to re-center the card on D is a
+# deliberate open question -- see BUILD-LOG.) Home pcs {E,B,G,D,A} sound an Em11-type colour with the
+# dropped low D as a b7 in the bass.
+tonic: 4
+
+movableShapes:
+  - id: dropd-power-chord
+    label: "one-finger power chord (low three strings)"
+    # THE Drop-D feature: the lowest three strings sound D-A-D = a root-5th-octave power chord, barred
+    # with a single finger and slid up the neck for instant power chords. Upper three muted.
+    strings:
+      - { play: mute }              # string 1
+      - { play: mute }              # string 2
+      - { play: mute }              # string 3
+      - { play: fret, offset: 0 }   # string 4 = D3
+      - { play: fret, offset: 0 }   # string 5 = A2
+      - { play: fret, offset: 0 }   # string 6 = D2
+    produces:
+      quality: "power chord (root-5th-octave) -- the low D-A-D, transposed"
+    slideExamples:
+      - { anchorFret: 0, function: "D5 (the open low-D power chord)" }
+      - { anchorFret: 2, function: "E5" }
+      - { anchorFret: 5, function: "G5" }
+      - { anchorFret: 7, function: "A5" }
+    provenance:
+      kind: derived
+      reasoning: >
+        Dropping the 6th string to D makes the lowest three strings D-A-D = a fifth plus its octave
+        (a power chord) playable with one finger. A flat barre across those strings transposes the
+        interval set up N, so it is a power chord at any fret -- the defining Drop-D move.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: strings 4-6 = [50,45,38] -> pcs {D,A,D} = {D,A} = D5. anchor 2: [52,47,40] -> pcs {E,B}
+        = E5. anchor 5: [55,50,43] -> pcs {G,D} = G5. anchor 7: [57,52,45] -> pcs {A,E} = A5. Root-5th
+        interval preserved at every anchor. Confirmed.
+
+capoBehavior: >
+  A capo is a runtime per-string shift, not stored here. A partial capo across the upper five strings
+  (leaving the low D open) is a classic Drop-D move: a ringing low-D pedal under capoed standard shapes.
+  Capoing transposes drone relationships identically; only absolute pitch changes.
+
+idiomaticProgressions:
+  - "Slide the one-finger low power chord for riffs: D5 (open) -> E5 (fret 2) -> G5 (fret 5) -> A5 (fret 7)."
+
+references:
+  - "Drop D is ubiquitous in rock and metal for fast power-chord riffing and the heavy low D (informational)."
+
+provenance:
+  kind: definitional
+  reasoning: >
+    Drop D is standard EADGBE with the 6th string lowered a whole step to D (D-A-D-G-B-E low to high).
+    The pitches are the tuning's definition. The tonic E is inherited from standard tuning (the five
+    unchanged strings); the card documents the low-D drone + the one-finger power chord it unlocks.
+  sources: [open-tunings-ref]
+  verifiedBy: both
+  verifiedNote: >
+    Pitches cross-computed from note+octave to MIDI: only string 6 differs from standard (D2=38 vs E2=40);
+    the lowest three strings {D,A,D} confirm the signature one-finger power chord.

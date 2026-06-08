@@ -21,9 +21,19 @@ import { loadAffective, loadGrammarCard, loadRules } from '../kb';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The tunings whose grammar cards (+ movable-shape ids) contribute to the registry.
- *  Today only "open-g" has a card; the others resolve to null and contribute nothing,
- *  but enumerating them keeps the registry honest as cards are authored (ADR 0001). */
-const KNOWN_TUNING_IDS: readonly string[] = ['open-g', 'eadgbe', 'dadgad', 'drop-d'];
+ *  The curated V1 set (docs/02) all have cards now EXCEPT standard "eadgbe", which is a
+ *  deliberate handoff fall-through (absolute T2 naming is correct there); it resolves to
+ *  null and contributes nothing, but enumerating it keeps the registry honest (ADR 0001). */
+const KNOWN_TUNING_IDS: readonly string[] = [
+  'open-g',
+  'open-d',
+  'open-e',
+  'open-c',
+  'dadgad',
+  'drop-d',
+  'double-drop-d',
+  'eadgbe',
+];
 
 /**
  * A KB-id registry: the FULL set of valid trace targets, plus the subset whose

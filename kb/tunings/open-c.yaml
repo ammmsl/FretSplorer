@@ -1,0 +1,93 @@
+schemaVersion: 1
+id: open-c
+name: Open C
+aliases: ["C-G-C-G-C-E"]
+
+# Open strings, string 1 (high) -> string 6 (low):  E4 C4 G3 C3 G2 C2
+# MIDI:  E4=64  C4=60  G3=55  C3=48  G2=43  C2=36
+# (verified: C4=60; E4 = 60+4 = 64; C3 = 60-12 = 48; G2 = 43; low C2 = 48-12 = 36, two semitones
+#  below standard low E2=40 -- the lowest string of the curated set.)
+# Array index carries NO pitch-order meaning; bass is computed from lowest pitch.
+strings: [64, 60, 55, 48, 43, 36]
+
+# Key center = C. Pitch class 0.
+# Home chord is DERIVED (not stored): pcs of the open strings = {C=0, E=4, G=7} = C major triad,
+# rooted on the tonic C -> "C major". A clean open-major tuning with a very low C2 bass.
+tonic: 0
+
+movableShapes:
+  - id: oc-major-barre
+    label: "movable major (full barre)"
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: fret, offset: 0 }   # string 6
+    produces:
+      quality: "major triad (the home chord transposed)"
+    slideExamples:
+      - { anchorFret: 0, function: "I (C major)" }
+      - { anchorFret: 5, function: "IV (F major)" }
+      - { anchorFret: 7, function: "V (G major)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        A flat barre transposes every open pitch equally, so the sounding pitch-class set is the
+        open-string set shifted by N -- i.e. the home chord (C major) moved up N semitones.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: open pcs {C,E,G} = C major. anchor 5: opens+5 = [69,65,60,53,48,41] -> pcs {F,A,C}
+        = F major (IV). anchor 7: opens+7 = [71,67,62,55,50,43] -> pcs {G,B,D} = G major (V). Confirmed.
+
+  - id: oc-major-over-c-drone
+    label: "major over the low-C drone"
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: open }              # string 6 = open low C drone (does not slide)
+    produces:
+      quality: "major triad on the upper five strings, over the open low-C pedal"
+    slideExamples:
+      - { anchorFret: 0, function: "I with the low C as the root (C/C)" }
+      - { anchorFret: 5, function: "IV with the open C ringing as its 5th (F/C)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        The barred upper five strings make a major triad; the open low C is a fixed pedal whose degree
+        relative to that triad's root changes as the shape slides -- the root of C at anchor 0, the 5th
+        of F at anchor 5.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: strings1-5 open [64,60,55,48,43] -> pcs {C,E,G} = C major; + open C2(36), bass = C2 ->
+        C/C, C = root. anchor 5: strings1-5 +5 = [69,65,60,53,48] -> pcs {F,A,C} = F major; + open C2(36),
+        bass = C2 -> F/C, C = 5th of F. Confirmed.
+
+capoBehavior: >
+  A capo is a runtime per-string shift, not stored here. The very low C2 makes the bottom string slack;
+  the tension panel will flag it as floppy and suggest a heavier gauge. Capoing transposes every drone
+  relationship identically -- only absolute pitch changes.
+
+idiomaticProgressions:
+  - "I-IV-V by barre: open (I=C) -> barre 5 (IV=F) -> barre 7 (V=G), the C drones ringing throughout."
+
+references:
+  - "Open C (C-G-C-G-C-E) is associated with Devin Townsend and John Butler's heavy/low work (informational)."
+
+provenance:
+  kind: definitional
+  reasoning: >
+    Open C is the well-documented major open tuning C-G-C-G-C-E (low to high). The pitches are the
+    tuning's definition; the tonic C is the conventional, authorial key center (the open strings sound
+    a C major triad). The low C2 is the deepest string in the curated set.
+  sources: [open-tunings-ref]
+  verifiedBy: both
+  verifiedNote: >
+    Pitches cross-computed from note+octave to MIDI and confirmed against an open-tunings reference;
+    open-string pc-set {C,E,G} confirms tonic C and a clean C-major home chord.

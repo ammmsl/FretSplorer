@@ -1,0 +1,98 @@
+schemaVersion: 1
+id: open-d
+name: Open D
+aliases: ["Vestapol", "Sebastopol"]
+
+# Open strings, string 1 (high) -> string 6 (low):  D4 A3 F#3 D3 A2 D2
+# MIDI:  D4=62  A3=57  F#3=54  D3=50  A2=45  D2=38
+# (verified: C4=60; D4 = 60+2 = 62; F#3 = F3(53)+1 = 54; standard low E2=40, low D2 = 40-2 = 38)
+# Array index carries NO pitch-order meaning; bass is computed from lowest pitch.
+strings: [62, 57, 54, 50, 45, 38]
+
+# Key center = D. Pitch class 2.
+# Home chord is DERIVED (not stored): pcs of the open strings = {D=2, F#=6, A=9} = D major triad,
+# rooted on the tonic D -> "D major". All three open pitch-classes are chord tones, so Open D is a
+# clean open-major tuning (the major-key twin of Open G, a whole step down from Open E).
+tonic: 2
+
+movableShapes:
+  - id: od-major-barre
+    label: "movable major (full barre)"
+    # Full six-string barre. Slides as a rigid block: barre at fret N = the home chord up N semitones.
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: fret, offset: 0 }   # string 6
+    produces:
+      quality: "major triad (the home chord transposed)"
+    slideExamples:
+      - { anchorFret: 0, function: "I (D major)" }
+      - { anchorFret: 5, function: "IV (G major)" }
+      - { anchorFret: 7, function: "V (A major)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        A flat barre transposes every open pitch equally, so the sounding pitch-class set is the
+        open-string set shifted by N -- i.e. the home chord (D major) moved up N semitones. This is
+        the foundational barre-as-transpose rule, stated rather than rediscovered.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: open pcs {D,F#,A} = D major. anchor 5: opens+5 = [67,62,59,55,50,43] -> pcs {G,B,D}
+        = G major (IV). anchor 7: opens+7 = [69,64,61,57,52,45] -> pcs {A,C#,E} = A major (V). Confirmed.
+
+  - id: od-major-over-d-drone
+    label: "major over the low-D drone"
+    # Barre the upper five strings; leave the low D (string 6) ringing open as a pedal.
+    # The barred strings carry an INVARIANT major quality while the open D's RELATIONSHIP to it
+    # (root at home, the 5th once moved to the IV) changes with the anchor.
+    strings:
+      - { play: fret, offset: 0 }   # string 1
+      - { play: fret, offset: 0 }   # string 2
+      - { play: fret, offset: 0 }   # string 3
+      - { play: fret, offset: 0 }   # string 4
+      - { play: fret, offset: 0 }   # string 5
+      - { play: open }              # string 6 = open low D drone (does not slide)
+    produces:
+      quality: "major triad on the upper five strings, over the open low-D pedal"
+    slideExamples:
+      - { anchorFret: 0, function: "I with the low D as the root (D/D)" }
+      - { anchorFret: 5, function: "IV with the open D ringing as its 5th (G/D)" }
+    provenance:
+      kind: derived
+      reasoning: >
+        The barred upper five strings make a major triad (same as the full barre); the open low D is a
+        fixed pedal whose degree relative to that triad's root changes as the shape slides -- the root
+        of D at anchor 0, the 5th of G at anchor 5.
+      sources: [equal-temperament]
+      verifiedBy: computation
+      verifiedNote: >
+        anchor 0: strings1-5 open [62,57,54,50,45] -> pcs {D,F#,A} = D major; + open D2(38), bass = D2 ->
+        D/D, D = root. anchor 5: strings1-5 +5 = [67,62,59,55,50] -> pcs {G,B,D} = G major; + open D2(38),
+        bass = D2 -> G/D, D = 5th of G. Confirmed.
+
+capoBehavior: >
+  A capo (or partial capo) is a uniform/per-string pitch shift applied at runtime, not stored here.
+  Open D capo 2 is "Open E" in feel with byte-identical native logic: every relationship to the drones
+  is preserved, only the absolute pitches transpose. Rendered at absolute frets, never renumbered.
+
+idiomaticProgressions:
+  - "I-IV-V by barre: open (I=D) -> barre 5 (IV=G) -> barre 7 (V=A), the D drones ringing throughout."
+
+references:
+  - "Open D ('Vestapol') is associated with country-blues slide and with Joni Mitchell's open-tuning work (informational)."
+
+provenance:
+  kind: definitional
+  reasoning: >
+    Open D is the well-documented major open tuning D-A-D-F#-A-D (low to high). The pitches are the
+    tuning's definition; the tonic D is the conventional, authorial key center (the open strings sound
+    a D major triad). It is Open E lowered a whole step, sharing its shapes.
+  sources: [open-tunings-ref]
+  verifiedBy: both
+  verifiedNote: >
+    Pitches cross-computed from note+octave to MIDI and confirmed against an open-tunings reference;
+    open-string pc-set {D,F#,A} confirms tonic D and a clean D-major home chord.
