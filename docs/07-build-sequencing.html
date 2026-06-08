@@ -45,6 +45,7 @@
   .tag.ms{color:#0d1117;background:var(--gate);border-color:var(--gate);}
   .tag.dec{color:var(--decide);border-color:#33285a;}
   .tag.defer{color:var(--defer);}
+  .tag.done{color:#0d1117;background:#7ee787;border-color:#7ee787;}
   /* tier colors */
   .spine{border-left-color:var(--spine);background:linear-gradient(180deg,var(--spine-bg),var(--panel));}
   .gate{border-left-color:var(--gate);}
@@ -53,6 +54,11 @@
   .par{border-left-color:var(--par);}
   .ortho{border-left-color:var(--ortho);}
   .defer{border-left-color:var(--defer);opacity:.82;border-style:dashed;}
+  /* completed work (landed in the consolidation commit) */
+  .node.done{box-shadow:inset 0 0 0 1px rgba(126,231,135,.45);}
+  .node.done::after{content:"✓";position:absolute;top:6px;right:9px;
+    color:#7ee787;font-weight:800;font-size:14px;line-height:1;}
+  .node.done .t{color:#cdeed3;}
   svg#edges{position:absolute;top:0;left:0;z-index:2;pointer-events:none;}
   .dim{opacity:.12 !important;}
   path.edge{fill:none;}
@@ -71,6 +77,29 @@
   .ms-defs table{border-collapse:collapse;width:100%;font-size:13px;}
   .ms-defs td{padding:6px 10px;border-top:1px solid var(--line);vertical-align:top;line-height:1.4;}
   .ms-defs td:first-child{white-space:nowrap;font-weight:700;color:var(--gate);}
+  /* feature-coverage matrix */
+  .coverage{max-width:1200px;margin:18px auto 0;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:14px 18px;}
+  .coverage h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);}
+  .coverage .cov-note{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.55;}
+  .coverage table{border-collapse:collapse;width:100%;font-size:12.5px;}
+  .coverage th{text-align:left;padding:6px 9px;border-bottom:1px solid var(--line);color:var(--muted);
+    font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+  .coverage th.lyr,.coverage td.lyr{text-align:center;width:58px;}
+  .coverage td{padding:7px 9px;border-top:1px solid var(--line);vertical-align:top;line-height:1.4;}
+  .coverage td.feat{font-weight:650;color:var(--ink);width:230px;}
+  .coverage td.gap{color:var(--muted);}
+  .coverage tr.grp td{background:#0a0e13;color:var(--muted);font-weight:700;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.5px;padding:6px 9px;border-top:1px solid var(--line);}
+  .st{display:inline-block;min-width:20px;font-weight:800;font-size:13px;line-height:1;}
+  .st.ok{color:#7ee787;}      /* built + reachable in the running app */
+  .st.part{color:#f5c451;}    /* built, partially wired / limited */
+  .st.un{color:#5aa9f0;}      /* logic exists, NO surface to reach it — the recurring gap */
+  .st.no{color:#f07a7a;}      /* not built */
+  .st.def{color:#6b7280;}     /* intentionally deferred post-V1 */
+  .st.na{color:#3a424d;}      /* not applicable to this layer */
+  .cov-legend{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 20px;font-size:12px;color:var(--muted);}
+  .cov-legend span b{font-size:13px;margin-right:4px;}
   footer{max-width:1200px;margin:20px auto 0;color:var(--muted);font-size:12px;line-height:1.5;}
   code{background:#0a0e13;padding:1px 5px;border-radius:5px;border:1px solid var(--line);font-size:12px;}
 </style>
@@ -82,6 +111,7 @@
      Arrows mean “must finish before.” Two nodes in the same column with <b>no</b> arrow between them can be built <b>at the same time</b>.
      The thick orange chain is the <b>critical path</b> — the serial spine that sets your minimum time-to-functional. Everything else hangs off it.</p>
   <p>Click any task to isolate its dependencies &amp; dependents. Click empty space to reset.</p>
+  <p><span style="color:#7ee787;font-weight:600;">Status:</span> the <b>entire critical spine is shipped</b> — <code>/core</code> → <code>project()</code> → fretboard (M0) → <code>identify()</code> (M1) → Tier-1 namer (M2) → MCP + grounding (M3) all landed and tested (271 tests green), along with Tier-2 (Tonal), Tier-3 (Pyodide+music21), <code>find_voicings</code>, the handoff rule, and every orthogonal build. The app is now in UI/visual refinement past M3. <b style="color:#f5c451;">Remaining:</b> the emergent movable-shapes algorithm (deferred — hand-authored in cards for V1), handoff-threshold tuning on a real grip corpus, KB content breadth (only Open-G authored so far), and the affective-seed post-build review. Decisions in <code>docs/adr/0001–0012</code>; pushed-back impacts in <code>09-downstream-impacts.md</code>.</p>
 </header>
 
 <div class="wrap">
@@ -108,6 +138,7 @@
       <div class="lgrow"><span class="swline" style="border-top-color:#586172"></span> Dependency (must finish before)</div>
       <div class="lgrow"><span class="swline" style="border-top-color:var(--defer);border-top-style:dashed"></span> Deferred dependency</div>
       <div class="lgrow"><span class="tag now">▶ NOW</span> Can start today — zero code dependency</div>
+      <div class="lgrow"><span class="tag done">✓ DONE</span> Shipped — landed in the consolidation commit</div>
       <div class="lgrow"><span class="tag ms">M0</span> Milestone reached at this node</div>
       <div class="lgrow"><span class="tag r">R#</span> Maps to a question in <code>06-research-directive.md</code></div>
     </div>
@@ -123,8 +154,118 @@
     </table>
   </div>
 
+  <div class="coverage">
+    <h3>Feature coverage — planned (docs/01 feature-set + docs/02 scope) vs implemented, by layer</h3>
+    <p class="cov-note">The map above is dependency <b>depth</b>. This is <b>breadth</b>: every V1 feature, and which layer it actually lives in today.
+       Layers — <b>Logic</b> (core/projection/naming/tension), <b>Tool</b> (the in-process MCP intent verb), <b>UI</b> (a control or route a user can reach),
+       <b>Data</b> (authored KB content). The recurring pattern jumps out as a column of
+       <b style="color:#5aa9f0">blue</b>: <b style="color:#5aa9f0">logic built, no surface to reach it</b>. Almost nothing is structurally absent — the gaps are unrouted tools and unauthored cards.</p>
+    <table>
+      <thead>
+        <tr><th>Feature</th><th class="lyr">Logic</th><th class="lyr">Tool</th><th class="lyr">UI</th><th class="lyr">Data</th><th>Gap to close</th></tr>
+      </thead>
+      <tbody>
+        <tr class="grp"><td colspan="6">A · Invariant core + B · Projection</td></tr>
+        <tr><td class="feat">Pitch model · intervals · scales · chords/voicings</td>
+            <td class="lyr"><span class="st ok" title="built + reachable">✓</span></td><td class="lyr"><span class="st na" title="n/a">–</span></td>
+            <td class="lyr"><span class="st part" title="partial">◐</span></td><td class="lyr"><span class="st part" title="partial">◐</span></td>
+            <td class="gap">Scales/chords are 5 hardcoded fixtures, not KB-driven.</td></tr>
+        <tr><td class="feat">project() forward · degree overlays · drone map</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st ok">✓</span></td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap">Shipped &amp; wired (M0).</td></tr>
+        <tr><td class="feat">identify() reverse · ranked candidates · bass-as-lowest-pitch</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st ok">✓</span></td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap">Shipped &amp; wired (M1).</td></tr>
+
+        <tr class="grp"><td colspan="6">C · Fretboard surface</td></tr>
+        <tr><td class="feat">Multiple necks · turn-level focus · spawn-beside</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st ok" title="board resource">✓</span></td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap">Shipped &amp; wired.</td></tr>
+        <tr><td class="feat">Capo / partial capo (virtual tuning)</td>
+            <td class="lyr"><span class="st ok" title="applyCapo + CapoShift">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="lyr"><span class="st un" title="logic exists, no UI control">○</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap"><b style="color:#5aa9f0">Unsurfaced</b> — engine has applyCapo(); no capo control in the shell.</td></tr>
+        <tr><td class="feat">Morph mode (retune string-by-string, frets preserve pitch)</td>
+            <td class="lyr"><span class="st ok" title="translate()">✓</span></td><td class="lyr"><span class="st ok">✓</span></td>
+            <td class="lyr"><span class="st un">○</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap"><b style="color:#5aa9f0">Unsurfaced</b> — translate() built + tooled; no animated view, no route.</td></tr>
+        <tr><td class="feat">Extended range — 7- &amp; 8-string</td>
+            <td class="lyr"><span class="st ok" title="string-count agnostic">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="lyr"><span class="st part" title="geometry pinned to 6">◐</span></td><td class="lyr"><span class="st no" title="no fixtures">✗</span></td>
+            <td class="gap">Geometry constant pins stringCount:6; no 7/8-string fixtures. Engine is ready.</td></tr>
+
+        <tr class="grp"><td colspan="6">D · Naming tiers</td></tr>
+        <tr><td class="feat">Tier 1 relational namer (the differentiator)</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st part" title="only Open-G carded">◐</span></td>
+            <td class="gap">Fires only where a grammar card exists — today <b>only Open-G</b>. Other tunings fall through.</td></tr>
+        <tr><td class="feat">Tier 2 absolute (Tonal) · Tier 3 anatomy (music21)</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap">Shipped &amp; wired (M2); T3 lazy on expand.</td></tr>
+        <tr><td class="feat">T1↔T2 handoff threshold</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st def" title="tuning deferred">⊘</span></td>
+            <td class="gap">Rule on a default threshold; calibration deferred — needs a grip corpus that doesn't exist.</td></tr>
+        <tr><td class="feat">Shape-discovery view (emergent movable shapes)</td>
+            <td class="lyr"><span class="st def" title="auto-derive deferred">⊘</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="lyr"><span class="st un">○</span></td><td class="lyr"><span class="st part" title="hand-authored in cards">◐</span></td>
+            <td class="gap">Shapes hand-authored in cards; no view renders them. Auto-derivation (R3) deferred.</td></tr>
+
+        <tr class="grp"><td colspan="6">E · String tension · F · Notation/audio</td></tr>
+        <tr><td class="feat">String-tension / setup advisor</td>
+            <td class="lyr"><span class="st ok" title="adviseSetup, validated data">✓</span></td><td class="lyr"><span class="st ok" title="adviseSetupTool">✓</span></td>
+            <td class="lyr"><span class="st un">○</span></td><td class="lyr"><span class="st ok" title="D'Addario-validated">✓</span></td>
+            <td class="gap"><b style="color:#5aa9f0">Unsurfaced</b> — built, MCP-tooled, grounding-tested; <b>no panel, no conversation route</b>.</td></tr>
+        <tr><td class="feat">Notation render + audio playback (alphaTab)</td>
+            <td class="lyr"><span class="st ok" title="adapter + soundfont">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="lyr"><span class="st un">○</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap"><b style="color:#5aa9f0">Unsurfaced</b> — adapter built; NotationPane is a stub.</td></tr>
+        <tr><td class="feat">Import GP / MusicXML (analyze existing tab)</td>
+            <td class="lyr"><span class="st def">⊘</span></td><td class="lyr"><span class="st def">⊘</span></td>
+            <td class="lyr"><span class="st def">⊘</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap">Deferred bonus (docs/02). alphaTab supports it; not in V1.</td></tr>
+
+        <tr class="grp"><td colspan="6">G · Conversational (MCP)</td></tr>
+        <tr><td class="feat">Intent: identify · what-does-this-do · easier-way · feeling→options</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st ok">✓</span></td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap">4 of 7 verbs routed (M3).</td></tr>
+        <tr><td class="feat">Intent: where-can-this-go (neighbors) · translate · advise-setup</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st ok">✓</span></td>
+            <td class="lyr"><span class="st un">○</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="gap"><b style="color:#5aa9f0">Unsurfaced</b> — 3 MCP tools built but absent from the conversation router.</td></tr>
+        <tr><td class="feat">Resource: grammar card · board collection</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st ok">✓</span></td>
+            <td class="lyr"><span class="st part" title="board live; card panel placeholder">◐</span></td><td class="lyr"><span class="st part" title="1 card">◐</span></td>
+            <td class="gap">Board live; GrammarCardPanel is a placeholder (doesn't render the card resource).</td></tr>
+        <tr><td class="feat">Affective → mechanism dictionary · grounding discipline</td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st ok">✓</span></td>
+            <td class="lyr"><span class="st ok">✓</span></td><td class="lyr"><span class="st part" title="seed; review pending">◐</span></td>
+            <td class="gap">Seed shipped; taste review pending (not autonomy-safe).</td></tr>
+
+        <tr class="grp"><td colspan="6">Content · curated tunings (docs/02)</td></tr>
+        <tr><td class="feat">Curated set — Open G/D/C/E, DADGAD, Drop D, double-drop D</td>
+            <td class="lyr"><span class="st ok" title="engine handles any">✓</span></td><td class="lyr"><span class="st na">–</span></td>
+            <td class="lyr"><span class="st part" title="4 fixtures selectable">◐</span></td><td class="lyr"><span class="st no" title="1 of 7 carded">✗</span></td>
+            <td class="gap"><b>Only 1 of 7 carded.</b> 6 grammar cards unauthored — this is why the "limits of implementation" aren't yet visible.</td></tr>
+      </tbody>
+    </table>
+    <div class="cov-legend">
+      <span><b class="st ok">✓</b>built + reachable</span>
+      <span><b class="st part">◐</b>partial / limited</span>
+      <span><b class="st un">○</b><b style="color:#5aa9f0">logic built, no surface</b></span>
+      <span><b class="st no">✗</b>not built</span>
+      <span><b class="st def">⊘</b>deferred post-V1</span>
+      <span><b class="st na">–</b>n/a for this layer</span>
+    </div>
+  </div>
+
   <footer>
-    <b>The leverage move:</b> the five <span style="color:#7ee787">▶ NOW</span> tasks (UX design, Tier-1 vocabulary spec R2, grammar-card schema R11, the music21 Pyodide-vs-backend prototype R1, and tension-data sourcing R7) have <b>no code dependency</b> — they can all run before a single line of the spine compiles. Your worst unknowns are deliberately <b>off</b> the code critical path. The music21 prototype (R1) is the one decision that can force structural rework if deferred, because it decides static-vs-backend for the whole app.
+    <b>The leverage move (paid off):</b> the five <span style="color:#7ee787">▶ NOW</span> tasks (UX design, Tier-1 vocabulary spec R2, grammar-card schema R11, the music21 Pyodide-vs-backend prototype R1, and tension-data sourcing R7) had <b>no code dependency</b> and all ran before a single line of the spine compiled. The worst unknown — the music21 prototype (R1), the one decision that could have forced structural rework — landed on <b>fully-static Pyodide</b> (ADR 0008), so no backend ever entered the architecture. With the unknowns retired off the critical path, the serial spine then compiled straight through with no rework: <code>/core</code> → <code>project()</code> → fretboard (M0) → <code>identify()</code> (M1) → Tier-1 namer (M2) → MCP (M3), all <b style="color:#7ee787">✓ shipped</b>. The thesis is demonstrable end-to-end; what's left is content breadth (more verified tunings beyond Open-G), the deferred movable-shapes algorithm, and calibration (handoff threshold, affective seed) rather than any structural build.
   </footer>
 </div>
 
@@ -151,34 +292,34 @@ const COLS = [
 ];
 
 const N = [
-  // id, col, lane, title, sub, cls, tags
-  {id:"d_pitch", col:0, lane:0, t:"Decide pitch-model rep", s:"MIDI/pc-sets · spelling-in-context · chord-vs-voicing multiset", cls:"decide", tags:["dec","now"]},
-  {id:"d_music21", col:0, lane:0, t:"PROTOTYPE music21 delivery", s:"Pyodide vs backend → static-or-not. Biggest infra fork.", cls:"decide", tags:["dec","now","R1"]},
-  {id:"d_render", col:2, lane:0, t:"Decide render + state", s:"SVG fretboard · ephemeral state (no persistence)", cls:"decide", tags:["dec"]},
+  // id, col, lane, title, sub, cls, tags   ·   "done" = landed in the consolidation commit
+  {id:"d_pitch", col:0, lane:0, t:"Decide pitch-model rep", s:"MIDI/pc-sets · spelling-in-context · chord-vs-voicing multiset (ADR 0007)", cls:"decide", tags:["dec","done"]},
+  {id:"d_music21", col:0, lane:0, t:"PROTOTYPE music21 delivery", s:"Resolved: Pyodide, lazy-loaded → fully static, no backend. ADR 0008 · R1 spike.", cls:"decide", tags:["dec","done","R1"]},
+  {id:"d_render", col:2, lane:0, t:"Decide render + state", s:"SVG fretboard (ADR 0006) · ephemeral state, no persistence (02-scope)", cls:"decide", tags:["dec","done"]},
 
-  {id:"ux", col:0, lane:1, t:"UX / visual design of surface", s:"Layout, interaction, multi-neck, degree-dot language. None exists yet.", cls:"design", tags:["now"]},
+  {id:"ux", col:0, lane:1, t:"UX / visual design of surface", s:"Spec'd: 08-ux-design · app shell ADR 0005 · SVG surface ADR 0006.", cls:"design", tags:["done"]},
 
-  {id:"core", col:1, lane:2, t:"Invariant pitch model /core", s:"intervals · scales · chords · voicings (lean on Tonal dicts)", cls:"spine", tags:[]},
-  {id:"project", col:2, lane:2, t:"project() — forward", s:"entity → (string,fret,degree). Math trivial; the contract is the work.", cls:"spine", tags:[]},
-  {id:"fretboard", col:3, lane:2, t:"Fretboard surface /ui", s:"degree-coloured overlays · tuning switch · multiple necks", cls:"spine", tags:["ms:M0"]},
-  {id:"identify", col:4, lane:2, t:"identify() — reverse", s:"ranked candidates · bass-from-lowest-pitch · re-entrant/capo", cls:"spine", tags:["ms:M1","R5","R10"]},
-  {id:"tier1", col:5, lane:2, t:"Tier 1 relational namer", s:"drone decomposition · home-relative role · tension-vs-pedal", cls:"spine", tags:["ms:M2"]},
-  {id:"mcp", col:6, lane:2, t:"MCP layer + grounding", s:"intent tools · resources · eval harness", cls:"spine", tags:["ms:M3","R9"]},
+  {id:"core", col:1, lane:2, t:"Invariant pitch model /core", s:"Built + tested (src/core, ADR 0007) — intervals/scales/chords/voicings/spelling.", cls:"spine", tags:["done"]},
+  {id:"project", col:2, lane:2, t:"project() — forward", s:"Built (src/projection) — entity → (string,fret,degree) + droneMap.", cls:"spine", tags:["done"]},
+  {id:"fretboard", col:3, lane:2, t:"Fretboard surface /ui", s:"Built (src/ui) — degree-coloured overlays · tuning switch · multiple necks.", cls:"spine", tags:["done","ms:M0"]},
+  {id:"identify", col:4, lane:2, t:"identify() — reverse", s:"Built (src/projection) — ranked candidates · bass-from-lowest-pitch · re-entrant/capo.", cls:"spine", tags:["done","ms:M1","R5","R10"]},
+  {id:"tier1", col:5, lane:2, t:"Tier 1 relational namer", s:"Built (src/naming/tier1-relational) — drone decomposition · home-relative role · tension-vs-pedal.", cls:"spine", tags:["done","ms:M2"]},
+  {id:"mcp", col:6, lane:2, t:"MCP layer + grounding", s:"Built (src/mcp + src/grounding) — intent tools · resources · eval harness · per-claim traces (ADR 0003).", cls:"spine", tags:["done","ms:M3","R9"]},
 
-  {id:"gschema", col:0, lane:3, t:"Grammar-card schema", s:"pitches · home chord · shapes · drone map · barre rule · provenance", cls:"gate", tags:["now","R11"]},
-  {id:"t1vocab", col:0, lane:3, t:"Tier 1 vocabulary spec", s:"graded tension-vs-drone · added tones · alterations. Hardest unknown.", cls:"gate", tags:["now","R2"]},
-  {id:"gcard", col:1, lane:3, t:"Author Open-G card", s:"one fully hand-verified card unblocks M2", cls:"gate", tags:[]},
-  {id:"affect", col:5, lane:3, t:"Affective dictionary seed", s:"vibe-word → theory ops (dreamier, darker, more open)", cls:"gate", tags:[]},
+  {id:"gschema", col:0, lane:3, t:"Grammar-card schema", s:"stores pitches · tonic · shapes · provenance (home chord/drone map/barre DERIVED). ADR 0001.", cls:"gate", tags:["done","R11"]},
+  {id:"t1vocab", col:0, lane:3, t:"Tier 1 vocabulary spec", s:"Spec'd: TIER1-VOCABULARY-SPEC · graded tension 5-level scale (ADR 0004).", cls:"gate", tags:["done","R2"]},
+  {id:"gcard", col:1, lane:3, t:"Author Open-G card", s:"Open G authored + verified (kb/tunings/open-g.yaml) — unblocks M2.", cls:"gate", tags:["done"]},
+  {id:"affect", col:5, lane:3, t:"Affective dictionary seed", s:"Provisional seed shipped (kb/affective) — vibe-word → theory ops; review post-build.", cls:"gate", tags:["done"]},
 
-  {id:"tonal", col:3, lane:4, t:"Tier 2 (Tonal) wrapper", s:"chord symbol + slash bass · candidate arrays", cls:"par", tags:[]},
-  {id:"handoff", col:5, lane:4, t:"T1↔T2 handoff rule", s:"default threshold now, tune on grip corpus later", cls:"gate", tags:["R4"]},
-  {id:"t3", col:5, lane:4, t:"Tier 3 (music21) anatomy", s:"root/bass/inversion · doublings · Roman numeral", cls:"gate", tags:[]},
+  {id:"tonal", col:3, lane:4, t:"Tier 2 (Tonal) wrapper", s:"Built (src/naming/tier2-tonal) — chord symbol + slash bass · candidate arrays.", cls:"par", tags:["done"]},
+  {id:"handoff", col:5, lane:4, t:"T1↔T2 handoff rule", s:"Rule built (handoff.ts) on A–C taxonomy default. Threshold tuning on grip corpus still deferred.", cls:"gate", tags:["done","R4"]},
+  {id:"t3", col:5, lane:4, t:"Tier 3 (music21) anatomy", s:"Built (src/naming/tier3-music21) — lazy Pyodide+music21 · root/bass/inversion · doublings · Roman numeral.", cls:"gate", tags:["done"]},
 
-  {id:"voicings", col:4, lane:5, t:"find_voicings + playability", s:"combinatorial search · pruning · tunable scoring", cls:"par", tags:["R6"]},
+  {id:"voicings", col:4, lane:5, t:"find_voicings + playability", s:"Built (src/voicings) — combinatorial search · pruning · tunable scoring.", cls:"par", tags:["done","R6"]},
 
-  {id:"tdata", col:0, lane:6, t:"Source + validate tension data", s:"D'Addario unit-weights · formula constant. Bad data = broken string.", cls:"ortho", tags:["now","R7"]},
-  {id:"tension", col:1, lane:6, t:"advise_setup() module", s:"per-string tension + gauge rec. Fully standalone.", cls:"ortho", tags:[]},
-  {id:"alphatab", col:3, lane:6, t:"alphaTab adapter + soundfont", s:"model → AlphaTex · let-ring playback · out of hot loop", cls:"ortho", tags:["R12","R8"]},
+  {id:"tdata", col:0, lane:6, t:"Source + validate tension data", s:"Validated <1% vs D'Addario refs (ADR 0009) · wound break-risk = unknown (ADR 0010).", cls:"ortho", tags:["done","R7"]},
+  {id:"tension", col:1, lane:6, t:"advise_setup() module", s:"Built + tested (src/tension) — per-string tension + gauge rec. Standalone.", cls:"ortho", tags:["done"]},
+  {id:"alphatab", col:3, lane:6, t:"alphaTab adapter + soundfont", s:"Built (src/render) — model → AlphaTex (ADR 0011) · sonivox soundfont (ADR 0012).", cls:"ortho", tags:["done","R12","R8"]},
   {id:"shapes", col:5, lane:6, t:"Emergent movable-shapes", s:"algorithm deferred — hand-author shapes in card for V1", cls:"defer", tags:["defer","R3"]},
 ];
 
@@ -301,11 +442,12 @@ E.forEach((e,i)=>{
 const nodeEls={};
 N.forEach(n=>{
   const d=document.createElement("div");
-  d.className="node "+n.cls;
+  d.className="node "+n.cls+(n.tags.includes("done")?" done":"");
   d.style.left=pos[n.id].x+"px"; d.style.top=pos[n.id].y+"px";
   let tags="";
   n.tags.forEach(tg=>{
-    if(tg==="now") tags+=`<span class="tag now">▶ NOW</span>`;
+    if(tg==="done") tags+=`<span class="tag done">✓ DONE</span>`;
+    else if(tg==="now") tags+=`<span class="tag now">▶ NOW</span>`;
     else if(tg==="dec") tags+=`<span class="tag dec">DECISION</span>`;
     else if(tg==="defer") tags+=`<span class="tag defer">DEFERRED</span>`;
     else if(tg.startsWith("ms:")) tags+=`<span class="tag ms">${tg.slice(3)}</span>`;
