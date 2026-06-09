@@ -261,16 +261,26 @@ export function AppShell() {
   // so setting a capo re-projects the overlay + re-derives the readout for free.
   // A capo-drag reports (fret, spanEnd): the bar covers strings 0..spanEnd at `fret` —
   // a contiguous span from the top edge. capoShiftFrom turns that into the per-string shift.
-  function handleCapoSet(fret: number, pointerString: number) {
+  function handleCapoSet(fret: number, loString: number, hiString: number) {
     const n = focusedBaseTuning.openStrings.length;
-    // Anchor the contiguous span at whichever EDGE is nearer the pointer and extend to it:
-    // near the top string -> cover 0..pointer; near the bottom -> cover pointer..n-1 (ties
-    // favour the top). So dragging in from either side grows the capo from that edge.
-    const fromTop = pointerString <= n - 1 - pointerString;
-    const covered = Array.from({ length: n }, (_, i) =>
-      fromTop ? i <= pointerString : i >= pointerString,
-    );
+    const covered = Array.from({ length: n }, (_, i) => i >= loString && i <= hiString);
     setCapos((prev) => ({ ...prev, [focusedId]: capoShiftFrom(fret, covered) }));
+    // A held note BEHIND the capo on a covered string can no longer ring — the capo is the
+    // new floor — so it shifts ONTO the capo line (becomes open-at-capo). Notes at/above the
+    // capo are untouched (ADR 0014).
+    setShapes((prev) => {
+      const cur = prev[focusedId];
+      if (!cur) return prev;
+      let changed = false;
+      const next = cur.map((sg, s) => {
+        if (covered[s] && sg.kind === 'fret' && sg.fret < fret) {
+          changed = true;
+          return { kind: 'open' as const };
+        }
+        return sg;
+      });
+      return changed ? { ...prev, [focusedId]: next } : prev;
+    });
   }
 
   function handleCapoClear() {

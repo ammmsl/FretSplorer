@@ -66,9 +66,9 @@ export interface NeckProps {
   readonly capo?: { readonly fret: number; readonly covered: readonly boolean[] } | null;
   /** When true (focused neck), neck pointer drags MOVE the capo instead of placing notes. */
   readonly capoEdit?: boolean;
-  /** Drag report: capo at `fret`, with the pointer over `pointerString` — the shell grows a
-   *  contiguous span from whichever neck EDGE is nearer the pointer out to it (ADR 0014). */
-  readonly onCapoSet?: (fret: number, pointerString: number) => void;
+  /** Drag report: capo at `fret`, covering the contiguous inclusive span `loString..hiString`.
+   *  The span is anchored to the edge the drag STARTED from (ADR 0014). */
+  readonly onCapoSet?: (fret: number, loString: number, hiString: number) => void;
 }
 
 const CAPO_W = 14; // thickness of the capo bar (a touch narrower than a fret cell)
@@ -148,7 +148,16 @@ export function Neck({
   const interactive = Boolean(onFretClick || onNutClick);
 
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [capoDragging, setCapoDragging] = useState(false);
+  // Capo drag: the anchored EDGE is fixed at pointer-down (the half you start in), so dragging
+  // across the neck grows the span from THAT edge — it never flips sides mid-drag (ADR 0014).
+  const [capoDrag, setCapoDrag] = useState<{ anchor: 'top' | 'bottom' } | null>(null);
+
+  // Report the covered span for a pointer cell, anchored at the fixed drag edge.
+  const emitCapo = (anchor: 'top' | 'bottom', cell: { fret: number; string: number }): void => {
+    const lo = anchor === 'top' ? 0 : cell.string;
+    const hi = anchor === 'top' ? cell.string : strings - 1;
+    onCapoSet?.(cell.fret, lo, hi);
+  };
 
   // A string's OPEN/ringing position: at the nut normally, but RELOCATED to the capo line
   // when the capo covers it (ADR 0014 — open + drone markers move to the capo). Frets behind
@@ -535,21 +544,23 @@ export function Neck({
           onPointerDown={(e) => {
             const c = pointToCell(e);
             if (!c) return;
+            // Lock the anchor to the edge nearer the START point; keep it for the whole drag.
+            const anchor: 'top' | 'bottom' = c.string <= (strings - 1) / 2 ? 'top' : 'bottom';
+            setCapoDrag({ anchor });
             try {
               (e.target as Element).setPointerCapture(e.pointerId);
             } catch {
               /* capture unavailable (e.g. synthetic event) — drag still works via move */
             }
-            setCapoDragging(true);
-            onCapoSet(c.fret, c.string);
+            emitCapo(anchor, c);
           }}
           onPointerMove={(e) => {
-            if (!capoDragging) return;
+            if (!capoDrag) return;
             const c = pointToCell(e);
-            if (c) onCapoSet(c.fret, c.string);
+            if (c) emitCapo(capoDrag.anchor, c);
           }}
           onPointerUp={(e) => {
-            setCapoDragging(false);
+            setCapoDrag(null);
             try {
               (e.target as Element).releasePointerCapture(e.pointerId);
             } catch {
