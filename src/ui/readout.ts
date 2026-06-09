@@ -26,7 +26,7 @@ import type {
   Tuning,
   Voicing,
 } from '../core';
-import { degreeFromOffset, midi, spell, toPitchClass } from '../core';
+import { degreeFromOffset, midi, spell, toPitchClass, voicing } from '../core';
 import { identify } from '../projection';
 import type { OpenStringDrone } from '../projection';
 import { nameTier2 } from '../naming/tier2-tonal';
@@ -221,18 +221,29 @@ export function buildReadout(
 
   const ctx: KeyContext = { tonic: tuning.tonic };
   const ranked = identify(placed, tuning, { key: ctx });
-  if (ranked.length === 0) return IDLE;
 
-  const primary = ranked[0];
-  const v = primary.voicing;
-  const rootPc = primary.chord.root as number;
+  // The realised voicing comes from the HELD NOTES, so it exists even when identify()
+  // names no chord (Tonal's detect found no symbol for this pitch-set). When a candidate
+  // WAS found we reuse its voicing (the identical multiset); otherwise we build it here.
+  // This keeps the bass, the per-note rows, and the LAZY Tier-3 anatomy available for an
+  // un-nameable shape — the "what is this sound, really?" path must not vanish just because
+  // no textbook chord symbol prints. With no primary there is simply no T2 symbol / no root,
+  // so degrees read null and the relational/symbol lines fall away honestly.
+  const primary = ranked[0] ?? null;
+  const v: Voicing = primary
+    ? primary.voicing
+    : voicing(placed.map((p) => midi((tuning.openStrings[p.string] as number) + p.fret)));
+  const rootPc = primary ? (primary.chord.root as number) : null;
 
-  // T2 symbol + slash bass via the same Tier-2 namer the absolute label uses.
-  const t2 = nameTier2(v, { key: ctx });
-  const symbol = t2.primary
-    ? t2.candidates[0].symbol
-    : (primary.chord.symbol ?? null);
-  const slashBass = t2.primary ? (t2.candidates[0].slashBass ?? null) : null;
+  // T2 symbol + slash bass via the same Tier-2 namer the absolute label uses — only when a
+  // chord was identified; an un-nameable shape carries no symbol.
+  let symbol: string | null = null;
+  let slashBass: string | null = null;
+  if (primary) {
+    const t2 = nameTier2(v, { key: ctx });
+    symbol = t2.primary ? t2.candidates[0].symbol : (primary.chord.symbol ?? null);
+    slashBass = t2.primary ? (t2.candidates[0].slashBass ?? null) : null;
+  }
 
   // Bass = the spelled LOWEST PITCH with octave (argmin, not lowest string) — R10.
   const bassPitch = v.pitches[v.bassIndex] as number;
@@ -253,7 +264,7 @@ export function buildReadout(
       string: p.string,
       pitch,
       name: spellWithOctave(pitch, ctx),
-      degree: degreeFromOffset(((pc - rootPc) % 12 + 12) % 12),
+      degree: rootPc === null ? null : degreeFromOffset(((pc - rootPc) % 12 + 12) % 12),
       isBass: false, // set after the sort, against the true bass pitch
       isOpen,
       drone: isOpen ? (droneByString.get(p.string) ?? null) : null,

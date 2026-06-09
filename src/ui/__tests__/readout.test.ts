@@ -77,6 +77,36 @@ describe('buildReadout — Open-G home chord (M1 gate)', () => {
   });
 });
 
+describe('buildReadout — un-nameable shape still exposes notes + Tier-3 (no idle collapse)', () => {
+  // A chromatic trichord (C, C#, D) Tonal cannot name as any chord, so identify() returns
+  // []. The readout must NOT collapse to the idle state: the held notes still have a bass,
+  // per-note rows, and a realised voicing for the LAZY Tier-3 anatomy — the "what is this
+  // sound, really?" path must survive a missing chord symbol.
+  const cluster = tuning('cluster', [62, 61, 60], 0); // D4 C#4 C4, all open
+  const allOpen: Shape = cluster.openStrings.map(() => ({ kind: 'open' as const }));
+  const vm = buildReadout(allOpen, cluster);
+
+  it('is not idle even though no chord was identified', () => {
+    expect(vm.empty).toBe(false);
+  });
+
+  it('carries no T2 symbol (nothing nameable) but still reports the bass (lowest pitch)', () => {
+    expect(vm.symbol).toBeNull();
+    expect(vm.slashBass).toBeNull();
+    expect(vm.bass).toBe('C4');
+  });
+
+  it('has one row per sounding note with null degrees (no chord root to measure against)', () => {
+    expect(vm.notes).toHaveLength(3);
+    expect(vm.notes.every((n) => n.degree === null)).toBe(true);
+  });
+
+  it('exposes the full voicing so the lazy Tier-3 anatomy can analyse it', () => {
+    expect(vm.primaryVoicing).not.toBeNull();
+    expect(vm.primaryVoicing!.pitches).toHaveLength(3);
+  });
+});
+
 describe('buildReadout — live update on shape change', () => {
   it('changing the shape changes the reading', () => {
     const before = buildReadout(allOpenG, openG);
