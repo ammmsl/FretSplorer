@@ -22,6 +22,7 @@ import {
   type SpawnOption,
 } from './panels';
 import { NotationPane } from './NotationPane';
+import { SetupPane } from './SetupPane';
 import { Lab } from './Lab';
 import { CHORDS, SCALES, TUNINGS } from './fixtures';
 import { DEFAULT_LABEL_MODE, type LabelMode } from './labels';
@@ -99,6 +100,7 @@ export function AppShell() {
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [notationCollapsed, setNotationCollapsed] = useState(true);
+  const [setupCollapsed, setSetupCollapsed] = useState(true);
 
   const [necks, setNecks] = useState<readonly NeckState[]>([
     { id: 'neck-0', tuningId: 'eadgbe', tag: 'A', isOrigin: true },
@@ -384,12 +386,21 @@ export function AppShell() {
             onFretClick={handleFretClick}
             onNutClick={handleNutClick}
           />
-          <NotationPane
-            collapsed={notationCollapsed}
-            onToggle={() => setNotationCollapsed((c) => !c)}
-            tuning={focusedTuning}
-            shape={focusedShape}
-          />
+          {/* Bottom dock — slow-cadence reference surfaces, out of the hot loop. Both
+              collapsible; the neck floor (ADR 0013) keeps them from crushing the board. */}
+          <div className="center-dock">
+            <NotationPane
+              collapsed={notationCollapsed}
+              onToggle={() => setNotationCollapsed((c) => !c)}
+              tuning={focusedTuning}
+              shape={focusedShape}
+            />
+            <SetupPane
+              collapsed={setupCollapsed}
+              onToggle={() => setSetupCollapsed((c) => !c)}
+              tuning={focusedTuning}
+            />
+          </div>
         </main>
 
         <div className="right-region">

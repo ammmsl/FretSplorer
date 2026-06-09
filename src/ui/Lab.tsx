@@ -4,19 +4,18 @@
 // decision: each section is a self-contained component wired to the focused neck. The
 // morning's IA work is pure rearrangement — lift these out of the Lab into their real homes.
 //
-// Sections shrink as the IA rework re-homes them (ADR 0013): Shape discovery has moved into
-// the grammar card. Remaining provisional tenants: Capo (→ on-neck overlay next) · Tension
-// (→ bottom dock) · Morph (→ spawn-beside). Deleted entirely once the last one re-homes.
+// Sections shrink as the IA rework re-homes them (ADR 0013): Shape discovery -> grammar card;
+// String tension -> the center-bottom Setup dock. Remaining provisional tenants: Capo
+// (→ on-neck overlay next) · Morph (→ spawn-beside). Deleted entirely once the last re-homes.
 
 import { useState } from 'react';
 import type { CapoShift, Tuning } from '../core';
 import { CapoControl } from './CapoControl';
-import { TensionPanel } from './TensionPanel';
 import { MorphView } from './MorphView';
 import type { Shape } from './shape';
 
 export interface LabProps {
-  /** The focused neck's EFFECTIVE tuning (after any capo) — tension + morph read this. */
+  /** The focused neck's EFFECTIVE tuning (after any capo) — morph reads this. */
   readonly focusedTuning: Tuning;
   /** The focused neck's BASE tuning (before capo) — capo operates on this. */
   readonly baseTuning: Tuning;
@@ -78,10 +77,6 @@ export function Lab({
             stringCount={baseTuning.openStrings.length}
             onChange={onCapoChange}
           />
-        </LabSection>
-
-        <LabSection title="String tension / setup">
-          <TensionPanel tuning={focusedTuning} />
         </LabSection>
 
         <LabSection title="Morph / translate to another tuning">

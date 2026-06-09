@@ -384,10 +384,81 @@
   color: var(--accent);
 }
 
-.notation-pane {
+.notation-pane,
+.setup-pane {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
+}
+
+/* Center-bottom dock — slow-cadence reference surfaces (Notation + Setup), stacked. */
+.center-dock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 0 0 auto;
+}
+.setup-body {
+  margin-top: var(--space-3);
+}
+.setup-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.setup-total {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+.setup-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.setup-row {
+  display: grid;
+  grid-template-columns: 2.6rem 7rem 3.6rem 1fr auto;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: var(--text-xs);
+  padding: 0.15rem 0;
+}
+.setup-note {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.setup-deviation.tone-looser {
+  color: #2f6f8f;
+}
+.setup-deviation.tone-tighter {
+  color: #c0622e;
+}
+.setup-deviation.tone-same,
+.setup-deviation.tone-none {
+  color: var(--text-dim);
+}
+.setup-band {
+  color: var(--text-dim);
+}
+.setup-flag {
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.setup-row.flag-break-risk .setup-flag {
+  color: #c0392b;
+  font-weight: 700;
+}
+.setup-row.flag-floppy .setup-flag {
+  color: #b6862f;
+}
+.setup-prov {
+  margin-top: var(--space-3);
 }
 
 /* ── A single neck panel ─────────────────────────────────────────────────── */
