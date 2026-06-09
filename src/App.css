@@ -370,6 +370,12 @@
   background: transparent;
   color: var(--text-dim);
 }
+.add-neck-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
 .add-neck {
   align-self: flex-start;
   padding: var(--space-3) var(--space-5);
@@ -378,6 +384,16 @@
   background: transparent;
   color: var(--text-dim);
   cursor: pointer;
+}
+.morph-select {
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-xs);
 }
 .add-neck:hover {
   border-color: var(--accent);

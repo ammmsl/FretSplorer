@@ -43,6 +43,9 @@ export interface NeckStackProps {
   readonly onFocus: (id: string) => void;
   readonly onClose: (id: string) => void;
   readonly onAddNeck: () => void;
+  /** Tunings the focused shape can morph to (spawns a re-placed neck beside the origin). */
+  readonly morphTargets?: readonly { readonly id: string; readonly label: string }[];
+  readonly onMorph?: (targetId: string) => void;
   /** Shape interaction on the focused neck (place/remove a fret; cycle the nut marker). */
   readonly onFretClick?: (string: number, fret: number) => void;
   readonly onNutClick?: (string: number) => void;
@@ -58,6 +61,8 @@ export function NeckStack({
   onFocus,
   onClose,
   onAddNeck,
+  morphTargets,
+  onMorph,
   onFretClick,
   onNutClick,
 }: NeckStackProps) {
@@ -118,9 +123,28 @@ export function NeckStack({
           </section>
         );
       })}
-      <button type="button" className="add-neck" onClick={onAddNeck}>
-        + neck
-      </button>
+      <div className="add-neck-group">
+        <button type="button" className="add-neck" onClick={onAddNeck}>
+          + neck
+        </button>
+        {onMorph && morphTargets && morphTargets.length > 0 && (
+          <select
+            className="morph-select"
+            aria-label="morph the focused shape to another tuning"
+            value=""
+            onChange={(e) => {
+              if (e.target.value) onMorph(e.target.value);
+            }}
+          >
+            <option value="">morph to…</option>
+            {morphTargets.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
     </div>
   );
 }

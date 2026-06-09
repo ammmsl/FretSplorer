@@ -13,6 +13,7 @@ import type { CapoShift, ProjectableEntity, Tuning } from '../core';
 import { applyCapo } from '../core';
 import { project, droneMap } from '../projection';
 import type { OpenStringDrone } from '../projection';
+import { translate } from '../mcp';
 import { ControlBar, type ContextSelection } from './ControlBar';
 import { NeckStack, type NeckInstance } from './NeckStack';
 import {
@@ -24,12 +25,13 @@ import {
 import { NotationPane } from './NotationPane';
 import { SetupPane } from './SetupPane';
 import { Lab } from './Lab';
-import { CHORDS, SCALES, TUNINGS } from './fixtures';
+import { CHORDS, SCALES, TUNINGS, tuningLabel } from './fixtures';
 import { DEFAULT_LABEL_MODE, type LabelMode } from './labels';
 import { DEFAULT_THEME, nextTheme, type Theme } from './theme';
 import {
   cycleNutMarker,
   emptyShape,
+  isShapeEmpty,
   placeFret,
   removeNote,
   type Shape,
@@ -171,6 +173,13 @@ export function AppShell() {
   const focusedTuning = effectiveTuning(focusedBaseTuning, capos[focusedNeck.id]);
   const contextSummary = selectionLabel(selection);
 
+  // Other tunings the focused shape can morph to (the "+ neck → morph to …" + conversation
+  // "in DADGAD?" both feed handleMorph). Excludes the focused tuning itself.
+  const morphTargets = TUNINGS.filter((t) => t.id !== focusedTuning.id).map((t) => ({
+    id: t.id,
+    label: tuningLabel(t.id),
+  }));
+
   // The focused neck's COMMITTED shape (default empty for its string count), and the
   // DISPLAYED shape = a live preview layered over it, else the committed one. Everything
   // downstream (readout, bass, neck, notation, conversation) reads the displayed shape, so
@@ -292,6 +301,45 @@ export function AppShell() {
   }
 
   /**
+   * Morph (translate) — re-place the focused shape's SOUNDING PITCHES on a target tuning and
+   * spawn the result as a new neck BESIDE the origin (docs/04 flow 3; CONTEXT.md "Origin
+   * neck" — the change from it to a spawned neck drives the learning path). Unreachable
+   * pitches (below the open string / off the neck) are dropped to muted on the spawned neck;
+   * the conversation turn carries the full per-pitch landing detail. With an empty focused
+   * shape this is just "add a neck in another tuning".
+   */
+  function handleMorph(targetId: string) {
+    const target = tuningById.get(targetId);
+    if (!target) return;
+    const frets: (number | null)[] = Array.from(
+      { length: target.openStrings.length },
+      () => null,
+    );
+    if (!isShapeEmpty(focusedShape)) {
+      const result = translate(focusedShape, focusedTuning, target);
+      for (const note of result.truth.notes) {
+        if (note.belowOpenString || note.offNeck || note.toString == null) continue;
+        frets[note.toString] = note.toFret ?? 0;
+      }
+    }
+    const morphed = fretsToShape(frets);
+    setNecks((prev) => {
+      const tag = TAGS[prev.length % TAGS.length];
+      return [
+        ...prev,
+        {
+          id: `neck-${Date.now()}`,
+          tuningId: targetId,
+          tag,
+          isOrigin: false,
+          caption: `morphed from ${tuningLabel(focusedTuning.id)}`,
+          pinnedShape: morphed,
+        },
+      ];
+    });
+  }
+
+  /**
    * Spawn the conversation's option voicings as comparison necks BESIDE the focused neck
    * (docs/04 flow 2 — comparison is the teaching act). Each option becomes a new neck on
    * the focused tuning, pinned to the option's shape + captioned with its symbol. We do NOT
@@ -383,6 +431,8 @@ export function AppShell() {
             onFocus={handleFocus}
             onClose={handleClose}
             onAddNeck={handleAddNeck}
+            morphTargets={morphTargets}
+            onMorph={handleMorph}
             onFretClick={handleFretClick}
             onNutClick={handleNutClick}
           />
@@ -409,19 +459,14 @@ export function AppShell() {
             shape={focusedShape}
             tuning={focusedTuning}
             onSpawnOptions={handleSpawnOptions}
+            onMorph={handleMorph}
           />
         </div>
       </div>
 
       {/* PROVISIONAL — built-but-unplaced surfaces, mounted in a clearly-labelled lab strip
           below the shell. Not final placement (overnight build charter: "reach, don't place"). */}
-      <Lab
-        focusedTuning={focusedTuning}
-        baseTuning={focusedBaseTuning}
-        focusedShape={focusedShape}
-        morphTargets={TUNINGS}
-        onCapoChange={handleCapoChange}
-      />
+      <Lab baseTuning={focusedBaseTuning} onCapoChange={handleCapoChange} />
     </div>
   );
 }

@@ -382,10 +382,13 @@ export function ConversationPanel({
   shape,
   tuning,
   onSpawnOptions,
+  onMorph,
 }: {
   shape: Shape;
   tuning: Tuning;
   onSpawnOptions: (options: readonly SpawnOption[]) => void;
+  /** "in DADGAD?" — spawn the morphed shape as a neck in the named target tuning. */
+  onMorph: (targetId: string) => void;
 }) {
   const [draft, setDraft] = useState('');
   const [turns, setTurns] = useState<readonly ConversationTurn[]>([]);
@@ -435,6 +438,8 @@ export function ConversationPanel({
         const target = TUNINGS.find((t) => t.id === intent.target);
         if (target) {
           view = buildTurnView(translate(shape, tuning, target));
+          // Spawn the morphed shape as a neck beside the origin (the turn carries the detail).
+          onMorph(target.id);
         } else {
           view = {
             modelLine:

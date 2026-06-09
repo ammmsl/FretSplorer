@@ -144,7 +144,7 @@ describe('translate — flags a note below the open string', () => {
     expect(claim).toBeDefined();
   });
 
-  it('reachable notes expose toString/toFret (the fields MorphView renders)', () => {
+  it('reachable notes expose toString/toFret (the fields the spawned morph neck uses)', () => {
     // Open-G -> DADGAD: the upper voices re-place; every reachable note carries a landing.
     const result = translate(allOpenShape, openG, dadgad);
     const reachable = result.truth.notes.filter((n) => !n.belowOpenString && !n.offNeck);
