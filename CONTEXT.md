@@ -53,12 +53,17 @@ _Avoid_: barre (a finger, not hardware), renumbered-nut, fret 0.
 
 ### Placing & rendering notes
 
-**Grip**:
+**Shape**:
 A specific set of finger placements a user clicks onto a neck — per string, a state of
 fretted(N) / open / muted(X) / unplayed. The physical-placement input to relational naming;
-nothing sounds until consciously selected.
-_Avoid_: chord (a grip may not be a nameable chord), shape, voicing (a voicing is the
-realized pitches a grip produces, not the placement itself).
+nothing sounds until consciously selected. The neutral guitarist's word for *any* fret
+pattern, named or not — deliberately NOT "chord shape", because a shape may not be a nameable
+chord (three drones + two voices in DADGAD has no clean chord name; naming it relationally is
+the whole point). A concrete placement; cf. **Movable shape**, the authored template that
+*generates* shapes as it slides.
+_Avoid_: grip (the prior term, retired — read as niche jargon), chord shape / chord (asserts
+the chord-ness relational naming exists to reject), voicing (a voicing is the realized pitches
+a shape produces, not the placement itself).
 
 **Open / ringing (string state)**:
 A string sounding *without* being actively fretted. The treatment signifies "you are not
@@ -110,8 +115,8 @@ _Avoid_: pedal (acceptable in prose; "drone" is canonical), open string (an open
 only a drone when ringing as context).
 
 **Active voice**:
-A fretted note in a grip, as opposed to a ringing **drone**. Relational naming decomposes a
-grip into drones + active voices and names the active voices as a function of the drones.
+A fretted note in a shape, as opposed to a ringing **drone**. Relational naming decomposes a
+shape into drones + active voices and names the active voices as a function of the drones.
 _Avoid_: fretted note (acceptable descriptively), melody note, lead.
 
 ### Theory objects
@@ -124,7 +129,7 @@ _Avoid_: voicing (a voicing is a realisation of a chord, not the chord itself).
 A specific octave-placed, possibly-doubled realisation of a chord — the actual sounding pitch
 multiset. In open tunings the specific voicing/drone colour is often the entire point, so
 voicings are first-class, not throwaway renderings.
-_Avoid_: chord (see above), grip (a grip is the physical placement; a voicing is the pitches
+_Avoid_: chord (see above), shape (a shape is the physical placement; a voicing is the pitches
 it produces).
 
 **Degree**:
@@ -144,31 +149,33 @@ _Avoid_: storing note names; using pitch class where octave matters (a voicing n
 to pitch classes).
 
 **Naming tiers (T1 / T2 / T3)**:
-The three engines that name a grip, in increasing abstraction-cost. **Tier-1 (relational)** —
+The three engines that name a shape, in increasing abstraction-cost. **Tier-1 (relational)** —
 custom, the **frame**/**drone**/**graded-tension** layer (the only tier built from scratch).
 **Tier-2 (absolute)** — Tonal.js, the chord symbol + slash bass. **Tier-3 (inter-instrument)**
 — music21, root/bass/inversion + doubling/omission + Roman numeral, consuming the **voicing**
-multiset. A grip with no Tier-1 **frame** hands off to Tier-2.
+multiset. A shape with no Tier-1 **frame** hands off to Tier-2.
 _Avoid_: treating the absolute symbol (T2) as the headline (the relational sentence is).
 
 ### Tier-1 relational naming
 
 **Native lexicon**:
 A tuning's own emergent grammar — its set of movable shapes plus the relational rules that
-name grips against the drones. The honest replacement for "drag my standard shapes into the
+name shapes against the drones. The honest replacement for "drag my standard shapes into the
 new tuning"; every tuning has its own. (CAGED is standard tuning's native lexicon.)
 _Avoid_: CAGED (that is one tuning's lexicon, not the general concept), shapes (too narrow).
 
 **Movable shape**:
-A hand-authored (V1) grip template that slides as a rigid block: ringing **drones** stay
+A hand-authored (V1) shape template that slides as a rigid block: ringing **drones** stay
 absolute while fretted notes carry offsets relative to the shape's anchor fret. The function
-it produces is **derived** from its anchor vs the tonic.
+it produces is **derived** from its anchor vs the tonic. Distinct from a bare **Shape**: a
+movable shape is the *generator*, a shape is the concrete *instance* it produces at a given
+anchor (`realizeShape`).
 _Avoid_: chord shape (a movable shape mixes fixed drones with movable fretted notes), voicing.
 
 **Frame**:
-The relational identity a grip is named *as*, anchored to the home context: the home chord,
+The relational identity a shape is named *as*, anchored to the home context: the home chord,
 the home chord transposed (barre = I up N), a modification of it (suspension / added tone /
-alteration / omission), or a diatonic function (IV, V, vi…). A grip with no available frame
+alteration / omission), or a diatonic function (IV, V, vi…). A shape with no available frame
 is the signal to hand off to Tier-2 absolute naming.
 _Avoid_: chord name (a frame is relational-to-home, not an absolute symbol).
 
@@ -196,9 +203,9 @@ _Avoid_: storing it as a card field; "safe/unsafe" binary (it is graded).
 
 ### Output surfaces & the knowledge base
 
-**Readout panel** ("What you're holding"):
+**Readout panel** ("This shape"):
 An always-on, structured output surface bound to the **focused neck**, updating live on every
-grip change. Tiered disclosure: relational sentence → absolute symbol → bass + per-note
+shape change. Tiered disclosure: relational sentence → absolute symbol → bass + per-note
 degree-vs-drone → voicing anatomy → ranked candidates when ambiguous. Distinct from the
 **Conversation panel** (turn-based dialogue).
 _Avoid_: results panel (too generic), inspector.
@@ -252,7 +259,11 @@ out — `/core` is pitch primitives only).
 **Setup advice**:
 The `/tension` advisor's output: per-string **physical string tension** (lb / N / kgf)
 computed from gauge + target pitch + scale length (D'Addario formula), plus comfort and safety
-verdicts. The physical half of the adoption thesis — orthogonal to the harmonic layers.
+verdicts. Communicated **relative to standard tuning** as the familiar baseline — each string
+framed as looser/tighter than its standard-tuning counterpart on the same assumed gauge set
+(default 25.5″ scale; a named default set per instrument) — because a deviation from a known
+feel is more legible than a raw force. The comfort/break-risk verdicts stay absolute (safety,
+not comparison). The physical half of the adoption thesis — orthogonal to the harmonic layers.
 _Avoid_: confusing physical string tension with harmonic **graded tension** (see the flagged
 ambiguity below).
 
@@ -266,6 +277,14 @@ _Avoid_: reading `unknown` as "safe"; conflating the comfort `band` with the saf
 `breakRisk`.
 
 ## Flagged ambiguities
+
+- **"Shape" vs "Movable shape" (and the retired "grip")** — a **Shape** is a concrete
+  per-string placement the user clicks onto a neck (named or not); a **Movable shape** is a
+  hand-authored card template that *generates* shapes as it slides. One is the instance, the
+  other the generator (`realizeShape(movableShape, anchor)`). The earlier term **grip** for
+  the concrete placement is **retired** — it read as niche jargon. We never say "chord shape":
+  it would assert the chord-ness relational naming exists to avoid (a shape may not be a
+  nameable chord).
 
 - **"Home chord" vs "tonic"** — earlier planning docs (00/01) conflate the open-string chord
   with the key centre. Resolved: **tonic** = the stored pitch-class key centre; **home
@@ -293,17 +312,17 @@ _Avoid_: reading `unknown` as "safe"; conflating the comfort `band` with the saf
 
 A dev and the project's theory lead, talking through a single moment of use:
 
-> **Dev:** They're in DADGAD, they click a grip on their **origin neck** — three open
+> **Dev:** They're in DADGAD, they click a shape on their **origin neck** — three open
 > strings ringing, two fretted. What does the readout say?
 >
-> **Theory lead:** First the namer decomposes the grip: the ringing strings are **drones**,
+> **Theory lead:** First the namer decomposes the shape: the ringing strings are **drones**,
 > the fretted ones are **active voices**. It names the active voices *as a function of* the
 > drones — relationally, not by spelling out an absolute **chord**.
 >
 > **Dev:** So it doesn't just say "Dsus4"?
 >
 > **Theory lead:** Not at Tier-1. It finds a **frame** — here the **home chord** of DADGAD,
-> which is Dsus4 relative to the **tonic** D. If the grip were that same shape barred up two
+> which is Dsus4 relative to the **tonic** D. If that same shape were barred up two
 > frets, the frame is "home chord, I up 2", because it matched a **movable shape** from the
 > tuning's **native lexicon**. The absolute symbol is the *subline* in the **Readout panel**,
 > not the headline.
@@ -321,5 +340,5 @@ A dev and the project's theory lead, talking through a single moment of use:
 >
 > **Theory lead:** **Provenance.** Every stored claim on the grammar card carries its reasoning
 > and sources, and the drone-tension grades come from computed facts — so the readout asserts
-> what's grounded and hedges what's only editorial. The **grip** is what they hold; the name
+> what's grounded and hedges what's only editorial. The **shape** is what they hold; the name
 > is what we can *defend*.
