@@ -56,6 +56,10 @@ export interface NeckStackProps {
   readonly onToggleCapoEdit?: () => void;
   readonly onCapoSet?: (fret: number, loString: number, hiString: number) => void;
   readonly onCapoClear?: () => void;
+  /** Whether the focused neck holds any notes (gates the "clear notes" affordance). */
+  readonly focusedHasShape?: boolean;
+  /** Clear the focused neck's held notes (not the capo, not the neck itself). */
+  readonly onClearShape?: () => void;
   /** Shape interaction on the focused neck (place/remove a fret; cycle the nut marker). */
   readonly onFretClick?: (string: number, fret: number) => void;
   readonly onNutClick?: (string: number) => void;
@@ -78,6 +82,8 @@ export function NeckStack({
   onToggleCapoEdit,
   onCapoSet,
   onCapoClear,
+  focusedHasShape,
+  onClearShape,
   onFretClick,
   onNutClick,
 }: NeckStackProps) {
@@ -110,6 +116,19 @@ export function NeckStack({
                 <span className="neck-origin" title="your original neck">
                   yours
                 </span>
+              )}
+              {focused && onClearShape && focusedHasShape && (
+                <button
+                  type="button"
+                  className="neck-clear-shape"
+                  title="Clear the held notes on this neck"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClearShape();
+                  }}
+                >
+                  clear notes
+                </button>
               )}
               {focused && onToggleCapoEdit && (
                 <span className="neck-capo-controls">

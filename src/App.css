@@ -911,7 +911,8 @@
   border-color: var(--accent);
   color: var(--accent-ink, #fff);
 }
-.neck-capo-clear {
+.neck-capo-clear,
+.neck-clear-shape {
   border: 0;
   background: none;
   color: var(--text-dim);

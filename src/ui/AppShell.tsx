@@ -292,6 +292,19 @@ export function AppShell() {
     });
   }
 
+  // Clear the FOCUSED neck's held notes (its shape), and any live preview. Leaves the capo,
+  // tuning, and other necks alone — distinct from the toolbar "Clear" (which clears the
+  // scale/chord OVERLAY) and from "remove" (which closes the neck).
+  function handleClearShape() {
+    setPreview(null);
+    setShapes((prev) => {
+      if (!prev[focusedId]) return prev;
+      const next = { ...prev };
+      delete next[focusedId];
+      return next;
+    });
+  }
+
   // ── Shape mutations (the focused neck only) ──
   /** Click a fret cell: remove if that string already holds THIS exact fret, else place.
    *  Starting to place notes dismisses any live preview (we edit the COMMITTED shape). */
@@ -489,6 +502,8 @@ export function AppShell() {
             onToggleCapoEdit={() => setCapoEdit((e) => !e)}
             onCapoSet={handleCapoSet}
             onCapoClear={handleCapoClear}
+            focusedHasShape={!isShapeEmpty(committedShape)}
+            onClearShape={handleClearShape}
           />
           {/* Bottom dock — slow-cadence reference surfaces, out of the hot loop. Both
               collapsible; the neck floor (ADR 0013) keeps them from crushing the board. */}
