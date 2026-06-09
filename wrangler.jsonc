@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fretsplorer",
+  "compatibility_date": "2026-06-09",
+  "assets": {
+    "directory": "./dist",
+    // SPA fallback: serve index.html for any path that doesn't match a built
+    // asset, so deep links and refreshes work. This replaces the Pages-style
+    // `_redirects` catch-all, which the Workers asset validator rejects.
+    "not_found_handling": "single-page-application"
+  }
+}
