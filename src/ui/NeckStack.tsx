@@ -54,7 +54,7 @@ export interface NeckStackProps {
   /** Whether the focused neck currently has a capo (gates the "remove" affordance). */
   readonly focusedHasCapo?: boolean;
   readonly onToggleCapoEdit?: () => void;
-  readonly onCapoSet?: (fret: number, spanEndString: number) => void;
+  readonly onCapoSet?: (fret: number, pointerString: number) => void;
   readonly onCapoClear?: () => void;
   /** Shape interaction on the focused neck (place/remove a fret; cycle the nut marker). */
   readonly onFretClick?: (string: number, fret: number) => void;

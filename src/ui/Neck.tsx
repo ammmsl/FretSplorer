@@ -66,8 +66,9 @@ export interface NeckProps {
   readonly capo?: { readonly fret: number; readonly covered: readonly boolean[] } | null;
   /** When true (focused neck), neck pointer drags MOVE the capo instead of placing notes. */
   readonly capoEdit?: boolean;
-  /** Drag report: capo at `fret`, covering strings 0..`spanEndString` (fret 0 clears it). */
-  readonly onCapoSet?: (fret: number, spanEndString: number) => void;
+  /** Drag report: capo at `fret`, with the pointer over `pointerString` — the shell grows a
+   *  contiguous span from whichever neck EDGE is nearer the pointer out to it (ADR 0014). */
+  readonly onCapoSet?: (fret: number, pointerString: number) => void;
 }
 
 const CAPO_W = 14; // thickness of the capo bar (a touch narrower than a fret cell)
@@ -522,8 +523,8 @@ export function Neck({
       )}
 
       {/* Capo-edit drag overlay — topmost while editing, so a pointer drag MOVES the capo
-          (x -> fret, y -> how far the contiguous span reaches from the top string) rather
-          than placing notes. A plain click sets a full capo at that fret (ADR 0014). */}
+          (x -> fret, y -> the span grows from the nearer neck edge out to the pointer string)
+          rather than placing notes (ADR 0014). */}
       {capoEdit && onCapoSet && (
         <rect
           className="capo-drag-overlay"

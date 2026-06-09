@@ -261,9 +261,15 @@ export function AppShell() {
   // so setting a capo re-projects the overlay + re-derives the readout for free.
   // A capo-drag reports (fret, spanEnd): the bar covers strings 0..spanEnd at `fret` —
   // a contiguous span from the top edge. capoShiftFrom turns that into the per-string shift.
-  function handleCapoSet(fret: number, spanEnd: number) {
+  function handleCapoSet(fret: number, pointerString: number) {
     const n = focusedBaseTuning.openStrings.length;
-    const covered = Array.from({ length: n }, (_, i) => i <= spanEnd);
+    // Anchor the contiguous span at whichever EDGE is nearer the pointer and extend to it:
+    // near the top string -> cover 0..pointer; near the bottom -> cover pointer..n-1 (ties
+    // favour the top). So dragging in from either side grows the capo from that edge.
+    const fromTop = pointerString <= n - 1 - pointerString;
+    const covered = Array.from({ length: n }, (_, i) =>
+      fromTop ? i <= pointerString : i >= pointerString,
+    );
     setCapos((prev) => ({ ...prev, [focusedId]: capoShiftFrom(fret, covered) }));
   }
 

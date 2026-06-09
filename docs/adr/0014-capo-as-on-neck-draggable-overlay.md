@@ -13,9 +13,11 @@ open/ringing + drone markers relocate to the capo line).
 - A per-neck **"Capo" pill** toggles a transient **capo-edit mode**. While lit, clicks/drags on
   the neck move the capo (horizontal = fret; vertical drag of the bar's end = string coverage).
   Toggling it off freezes the capo as a rendered overlay and returns clicks to placing a shape.
-- Partial capos are a **contiguous span anchored to an edge** — the bar retracts inward from one
-  edge. This is what the glossary already specifies ("a contiguous span from either edge") and
-  what real partial capos do; middle-floating spans are deliberately disallowed.
+- Partial capos are a **contiguous span anchored to an edge** — the bar grows from whichever
+  neck edge is **nearer the pointer** out to the dragged string (drag near the top → cover the
+  top strings; near the bottom → cover the bottom strings). This is what the glossary specifies
+  ("a contiguous span from either edge") and what real partial capos do; middle-floating spans
+  are deliberately disallowed.
 - The engine math is unchanged: `applyCapo` already shifts each clamped string's open pitch and
   preserves the **tonic**, and `capoShiftFrom` already clamps a straight bar at one fret. Only
   the *rendering* and the *input gesture* are new.
