@@ -111,10 +111,26 @@ export function AppShell() {
   // Per-neck CAPO shift (provisional; set from the Lab). Keyed by neck id; no entry = uncapoed.
   const [capos, setCapos] = useState<Readonly<Record<string, CapoShift>>>({});
 
+  // PREVIEW-WITH-RESTORE: a transient shape (from tapping a movable shape in the grammar
+  // card) layered OVER the focused neck's committed shape. The neck + readout render the
+  // preview; dismissing (Esc / re-tap / starting to place notes / changing focus) restores
+  // the committed shape; "keep" commits it. `key` = `${shapeId}@${anchor}` (ADR 0013).
+  const [preview, setPreview] = useState<{ shape: Shape; key: string } | null>(null);
+
   // Apply the theme to the document root so CSS can theme-switch.
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  // Esc dismisses a live preview (restores the committed shape).
+  useEffect(() => {
+    if (!preview) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreview(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [preview]);
 
   const entity = useMemo(() => buildEntity(selection), [selection]);
 
@@ -153,9 +169,13 @@ export function AppShell() {
   const focusedTuning = effectiveTuning(focusedBaseTuning, capos[focusedNeck.id]);
   const contextSummary = selectionLabel(selection);
 
-  // The focused neck's shape (default empty for its string count).
-  const focusedShape: Shape =
+  // The focused neck's COMMITTED shape (default empty for its string count), and the
+  // DISPLAYED shape = a live preview layered over it, else the committed one. Everything
+  // downstream (readout, bass, neck, notation, conversation) reads the displayed shape, so
+  // a preview is analysed exactly as if held — without destroying the committed shape.
+  const committedShape: Shape =
     shapes[focusedNeck.id] ?? emptyShape(focusedTuning.openStrings.length);
+  const focusedShape: Shape = preview ? preview.shape : committedShape;
 
   // Drone readings for the focused neck (the open-string drone channel, when a context
   // is selected) — fed to the Readout so OPEN strings report their drone tension.
@@ -187,6 +207,7 @@ export function AppShell() {
   // Tuning selector retunes the FOCUSED neck (re-projection follows from useMemo).
   // Retuning clears that neck's shape — the held frets mean different pitches now.
   function handleTuningChange(id: string) {
+    setPreview(null);
     setNecks((prev) =>
       prev.map((n) => (n.id === focusedId ? { ...n, tuningId: id } : n)),
     );
@@ -216,8 +237,10 @@ export function AppShell() {
   );
 
   // ── Shape mutations (the focused neck only) ──
-  /** Click a fret cell: remove if that string already holds THIS exact fret, else place. */
+  /** Click a fret cell: remove if that string already holds THIS exact fret, else place.
+   *  Starting to place notes dismisses any live preview (we edit the COMMITTED shape). */
   function handleFretClick(string: number, fret: number) {
+    setPreview(null);
     setShapes((prev) => {
       const cur = prev[focusedId] ?? emptyShape(focusedTuning.openStrings.length);
       const sg = cur[string];
@@ -229,18 +252,27 @@ export function AppShell() {
     });
   }
 
-  /** Click the nut marker: cycle open -> muted -> off. */
+  /** Click the nut marker: cycle open -> muted -> off. (Also dismisses a live preview.) */
   function handleNutClick(string: number) {
+    setPreview(null);
     setShapes((prev) => {
       const cur = prev[focusedId] ?? emptyShape(focusedTuning.openStrings.length);
       return { ...prev, [focusedId]: cycleNutMarker(cur, string) };
     });
   }
 
-  // Preview a movable shape (from the Lab's shape discovery) on the FOCUSED neck. Like any
-  // shape mutation it replaces the focused neck's held shape; the readout re-derives for free.
-  function handlePreviewShape(shape: Shape) {
-    setShapes((prev) => ({ ...prev, [focusedId]: shape }));
+  // Preview a realised movable shape (from the grammar card) on the FOCUSED neck. Toggling
+  // the same anchor again restores the committed shape; tapping another swaps the preview.
+  function handlePreviewShape(shape: Shape, key: string) {
+    setPreview((cur) => (cur?.key === key ? null : { shape, key }));
+  }
+
+  // "Keep this shape" — commit the live preview into the focused neck's held shape.
+  function handleKeepPreview() {
+    if (!preview) return;
+    const kept = preview.shape;
+    setShapes((prev) => ({ ...prev, [focusedId]: kept }));
+    setPreview(null);
   }
 
   function handleAddNeck() {
@@ -278,7 +310,15 @@ export function AppShell() {
     });
   }
 
+  // Move focus to another neck — a live preview was relative to the previously-focused neck,
+  // so it's dismissed (restoring that neck's committed shape) as focus moves.
+  function handleFocus(id: string) {
+    if (id !== focusedId) setPreview(null);
+    setFocusedId(id);
+  }
+
   function handleClose(id: string) {
+    setPreview(null);
     setNecks((prev) => {
       if (prev.length <= 1) return prev;
       const remaining = prev.filter((n) => n.id !== id);
@@ -307,9 +347,30 @@ export function AppShell() {
           contextSummary={contextSummary}
           collapsed={leftCollapsed}
           onToggle={() => setLeftCollapsed((c) => !c)}
+          onPreviewShape={handlePreviewShape}
+          previewKey={preview?.key ?? null}
         />
 
         <main className="center-region" aria-label="Neck stack">
+          {preview && (
+            <div className="preview-bar" role="status" aria-live="polite">
+              <span className="preview-bar-label">
+                Previewing a shape from the grammar card — not kept yet.
+              </span>
+              <span className="preview-bar-actions">
+                <button type="button" className="preview-keep" onClick={handleKeepPreview}>
+                  keep this shape
+                </button>
+                <button
+                  type="button"
+                  className="preview-dismiss"
+                  onClick={() => setPreview(null)}
+                >
+                  dismiss (Esc)
+                </button>
+              </span>
+            </div>
+          )}
           <NeckStack
             necks={neckInstances}
             focusedId={focusedId}
@@ -317,7 +378,7 @@ export function AppShell() {
             focusedShape={focusedShape}
             bassString={bass ? bass.string : null}
             bassFret={bass ? bass.fret : null}
-            onFocus={setFocusedId}
+            onFocus={handleFocus}
             onClose={handleClose}
             onAddNeck={handleAddNeck}
             onFretClick={handleFretClick}
@@ -349,7 +410,6 @@ export function AppShell() {
         focusedShape={focusedShape}
         morphTargets={TUNINGS}
         onCapoChange={handleCapoChange}
-        onPreviewShape={handlePreviewShape}
       />
     </div>
   );

@@ -10,8 +10,10 @@
 // Flanks collapse so the neck stack goes near-full-width (docs/08 §1j).
 
 import { useRef, useState } from 'react';
-import type { Tuning } from '../core';
+import type { Chord, Tuning } from '../core';
 import { spell, pitchClass } from '../core';
+import { droneMap } from '../projection';
+import { realizeShape, shapeAnchors } from './shapes';
 import {
   adviseSetupTool,
   feelingToOptions,
@@ -46,21 +48,38 @@ function spellOpenStrings(tuning: Tuning): string[] {
 }
 
 /**
- * LEFT — the grammar-card RESOURCE for the focused tuning (M-card milestone). Replaces the
- * M0 placeholder: loads the real card via grammarCardResource and renders the home chord,
- * movable shapes (barre rule + slide functions), and capo behaviour. For a card-less tuning
- * (standard EADGBE, the extended-range necks) it says so honestly and still shows the open
- * strings + tonic — it never fakes a relational cheat-sheet (docs/08 f; ADR 0003).
+ * LEFT — the grammar-card RESOURCE for the focused tuning: the tuning's cheat-sheet. Loads
+ * the real card via grammarCardResource and renders the open strings, tonic, and a computed
+ * DRONE-MAP home-context view (each open string vs the tonic, graded) that shows for EVERY
+ * tuning — carded or not — since it needs no card (it works for future custom tunings too).
+ * When a card exists it also renders the interactive MOVABLE SHAPES (tap an anchor to preview
+ * the realised shape on the focused neck), capo behaviour, and idioms. A card-less tuning
+ * (standard EADGBE, the extended-range necks) says so honestly for the relational layer but
+ * still shows open strings + tonic + drone map (docs/08 f; ADR 0003; ADR 0013).
  */
 export function GrammarCardPanel({
   tuning,
   contextSummary,
   collapsed,
   onToggle,
-}: CollapsibleProps & { tuning: Tuning; contextSummary: string }) {
+  onPreviewShape,
+  previewKey,
+}: CollapsibleProps & {
+  tuning: Tuning;
+  contextSummary: string;
+  /** Preview a realised movable shape on the focused neck (key = `${shapeId}@${anchor}`). */
+  onPreviewShape: (shape: Shape, key: string) => void;
+  /** The currently-previewed shape key, so the active anchor reads as pressed (or null). */
+  previewKey: string | null;
+}) {
   const tonicName = spell(tuning.tonic, { tonic: tuning.tonic });
   const { card } = grammarCardResource(tuning.id);
   const openNotes = spellOpenStrings(tuning).join(' · ');
+  // The home-context drone map: each open string graded vs the TONIC (droneMap reads only
+  // entity.root). Computed, never stored — so it renders for card-less + custom tunings too.
+  // (Under a capo this reflects the focused/effective tuning; the tonic is preserved.)
+  const homeEntity: Chord = { root: tuning.tonic, pitchClasses: [tuning.tonic] };
+  const homeDrones = droneMap(homeEntity, tuning);
 
   return (
     <aside className={`panel left-panel${collapsed ? ' collapsed' : ''}`} aria-label="Grammar card">
@@ -84,25 +103,71 @@ export function GrammarCardPanel({
             <code>{contextSummary}</code>
           </p>
 
+          {/* Drone map — home-context, every tuning. Each open string vs the tonic, graded on
+              the 5-level scale; colour + the term carry the tension (cf. live drone status). */}
+          <section className="card-dronemap" aria-label="drone map (home context)">
+            <h3>
+              Drone map <span className="card-section-sub">· each open string vs the tonic</span>
+            </h3>
+            <ul className="card-drone-list">
+              {homeDrones.map((d) => {
+                const ds = droneStyle(d.tension);
+                const name = spell(d.pitchClass, { tonic: tuning.tonic });
+                return (
+                  <li
+                    key={`drone-${d.string}`}
+                    className="card-drone-row"
+                    style={{ borderLeftColor: ds.color }}
+                  >
+                    <span className="card-drone-string">str {d.string + 1}</span>
+                    <span className="card-drone-note">{name}</span>
+                    <span className="card-drone-tension" style={{ color: ds.color }}>
+                      {d.tension}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
           {card ? (
             <>
               {card.movableShapes && card.movableShapes.length > 0 && (
                 <section className="card-shapes" aria-label="movable shapes">
-                  <h3>Movable shapes</h3>
+                  <h3>
+                    Movable shapes <span className="card-section-sub">· tap a fret to try it</span>
+                  </h3>
                   <ul>
                     {card.movableShapes.map((s) => (
                       <li key={s.id} className="card-shape">
-                        <strong>{s.label}</strong>
-                        <span className="card-shape-quality">{s.produces.quality}</span>
-                        {s.slideExamples && s.slideExamples.length > 0 && (
-                          <ul className="card-shape-slides">
-                            {s.slideExamples.map((ex, i) => (
-                              <li key={`${s.id}-slide-${i}`}>
-                                <code>fret {ex.anchorFret}</code> → {ex.function}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                        <div className="card-shape-head">
+                          <strong>{s.label}</strong>
+                          <span className="card-shape-quality">{s.produces.quality}</span>
+                        </div>
+                        <div
+                          className="card-shape-anchors"
+                          role="group"
+                          aria-label={`${s.label} anchors`}
+                        >
+                          {shapeAnchors(s).map((anchor) => {
+                            const ex = s.slideExamples?.find((e) => e.anchorFret === anchor);
+                            const key = `${s.id}@${anchor}`;
+                            const active = previewKey === key;
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                className={`card-shape-anchor${active ? ' active' : ''}`}
+                                aria-pressed={active}
+                                title={ex ? ex.function : `anchor fret ${anchor}`}
+                                onClick={() => onPreviewShape(realizeShape(s, anchor), key)}
+                              >
+                                fret {anchor}
+                                {ex ? <span className="card-shape-fn"> · {ex.function}</span> : null}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -161,8 +226,8 @@ export function ReadoutPanel({
 }) {
   if (readout.empty) {
     return (
-      <section className="panel readout-panel" aria-label="Readout: what you're holding">
-        <h2>What you're holding</h2>
+      <section className="panel readout-panel" aria-label="Readout: this shape">
+        <h2>This shape</h2>
         <p className="readout-idle">Nothing yet — place notes on the focused neck.</p>
         {contextSummary !== 'nothing yet' && (
           <p className="panel-note">Overlay context: {contextSummary}</p>
@@ -177,8 +242,8 @@ export function ReadoutPanel({
   const rel = readout.relational;
 
   return (
-    <section className="panel readout-panel" aria-label="Readout: what you're holding">
-      <h2>What you're holding</h2>
+    <section className="panel readout-panel" aria-label="Readout: this shape">
+      <h2>This shape</h2>
 
       {/* T1 relational — the HEADLINE (the relational sentence leads; the T2 symbol is the
           subline). On a Tier-1 handoff the symbol leads honestly; with no card we show a

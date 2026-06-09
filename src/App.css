@@ -335,6 +335,41 @@
      else absorbs its own overflow"). */
   flex: 0 0 auto;
 }
+
+/* Preview bar — shown above the neck while a grammar-card shape is being tried on. */
+.preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft, var(--surface));
+  font-size: var(--text-xs);
+}
+.preview-bar-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.preview-keep,
+.preview-dismiss {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 4px);
+  padding: 0.15rem 0.6rem;
+  font-size: var(--text-2xs);
+  cursor: pointer;
+}
+.preview-keep {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink, #fff);
+}
+.preview-dismiss {
+  background: transparent;
+  color: var(--text-dim);
+}
 .add-neck {
   align-self: flex-start;
   padding: var(--space-3) var(--space-5);
@@ -620,12 +655,88 @@
 /* ── Grammar-card panel: movable shapes + prose ───────────────────────────────── */
 .card-shapes h3,
 .card-capo h3,
-.card-idioms h3 {
+.card-idioms h3,
+.card-dronemap h3 {
   font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-dim);
   margin: 0.75rem 0 0.3rem;
+}
+.card-section-sub {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+/* Drone map — home-context, every tuning. One row per open string vs the tonic. */
+.card-drone-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.card-drone-row {
+  display: grid;
+  grid-template-columns: 3.2rem 2.4rem 1fr;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: var(--text-xs);
+  border-left: 3px solid var(--border);
+  padding-left: 0.45rem;
+}
+.card-drone-string {
+  color: var(--text-dim);
+  font-size: var(--text-2xs);
+}
+.card-drone-note {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.card-drone-tension {
+  font-size: var(--text-2xs);
+}
+
+/* Interactive movable shapes — tap an anchor to preview the realised shape. */
+.card-shape-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.5rem;
+  align-items: baseline;
+}
+.card-shape-anchors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+.card-shape-anchor {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: var(--text-2xs);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.card-shape-anchor:hover {
+  border-color: var(--accent);
+}
+.card-shape-anchor.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink, #fff);
+}
+.card-shape-fn {
+  color: var(--text-dim);
+}
+.card-shape-anchor.active .card-shape-fn {
+  color: inherit;
+  opacity: 0.85;
 }
 .card-shapes ul,
 .card-idiom-list {

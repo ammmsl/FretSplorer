@@ -1,5 +1,5 @@
 // Movable-shape helpers (/ui) — PURE shape -> Shape projection at a chosen anchor fret,
-// kept out of the ShapeDiscovery component file (react-refresh) and unit-testable. A
+// consumed by the grammar card's interactive movable-shape list (ADR 0013) and unit-testable. A
 // MovableShape is a hand-authored per-string template (open / mute / fret+offset); placing
 // it at anchor fret N realises a concrete Shape: a fretted string lands at N + offset, an
 // `open` string stays at fret 0 (a drone that does NOT slide), a `mute` string is damped.
