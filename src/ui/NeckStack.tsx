@@ -29,6 +29,8 @@ export interface NeckInstance {
    *  The focused neck draws the live `focusedShape` instead; this lets a spawned option
    *  neck show its concrete voicing without being focused (docs/04 flow 2). */
   readonly shape?: Shape;
+  /** The capo on this neck (absolute fret + covered strings), or null (ADR 0014). */
+  readonly capo?: { readonly fret: number; readonly covered: readonly boolean[] } | null;
 }
 
 export interface NeckStackProps {
@@ -46,6 +48,14 @@ export interface NeckStackProps {
   /** Tunings the focused shape can morph to (spawns a re-placed neck beside the origin). */
   readonly morphTargets?: readonly { readonly id: string; readonly label: string }[];
   readonly onMorph?: (targetId: string) => void;
+  // ── Capo, on the FOCUSED neck (ADR 0014). ──
+  /** Whether capo-edit mode is on (neck drags move the capo). */
+  readonly capoEditActive?: boolean;
+  /** Whether the focused neck currently has a capo (gates the "remove" affordance). */
+  readonly focusedHasCapo?: boolean;
+  readonly onToggleCapoEdit?: () => void;
+  readonly onCapoSet?: (fret: number, spanEndString: number) => void;
+  readonly onCapoClear?: () => void;
   /** Shape interaction on the focused neck (place/remove a fret; cycle the nut marker). */
   readonly onFretClick?: (string: number, fret: number) => void;
   readonly onNutClick?: (string: number) => void;
@@ -63,6 +73,11 @@ export function NeckStack({
   onAddNeck,
   morphTargets,
   onMorph,
+  capoEditActive,
+  focusedHasCapo,
+  onToggleCapoEdit,
+  onCapoSet,
+  onCapoClear,
   onFretClick,
   onNutClick,
 }: NeckStackProps) {
@@ -96,6 +111,35 @@ export function NeckStack({
                   yours
                 </span>
               )}
+              {focused && onToggleCapoEdit && (
+                <span className="neck-capo-controls">
+                  <button
+                    type="button"
+                    className={`neck-capo-pill${capoEditActive ? ' active' : ''}`}
+                    aria-pressed={!!capoEditActive}
+                    title="Drag a capo onto the neck (drag down to cover more strings)"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleCapoEdit();
+                    }}
+                  >
+                    Capo
+                  </button>
+                  {focusedHasCapo && onCapoClear && (
+                    <button
+                      type="button"
+                      className="neck-capo-clear"
+                      title="Remove the capo"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCapoClear();
+                      }}
+                    >
+                      remove
+                    </button>
+                  )}
+                </span>
+              )}
               <button
                 type="button"
                 className="neck-close"
@@ -119,6 +163,9 @@ export function NeckStack({
               bassFret={focused ? bassFret : null}
               onFretClick={focused ? onFretClick : undefined}
               onNutClick={focused ? onNutClick : undefined}
+              capo={n.capo}
+              capoEdit={focused ? capoEditActive : false}
+              onCapoSet={focused ? onCapoSet : undefined}
             />
           </section>
         );

@@ -8,9 +8,10 @@
 // it derives PlacedPosition[] and the live Readout view-model (docs/09 UI#4). Only
 // alphaTab stays out of the hot loop.
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CapoShift, ProjectableEntity, Tuning } from '../core';
 import { applyCapo } from '../core';
+import { capoShiftFrom } from './capo';
 import { project, droneMap } from '../projection';
 import type { OpenStringDrone } from '../projection';
 import { translate } from '../mcp';
@@ -24,7 +25,6 @@ import {
 } from './panels';
 import { NotationPane } from './NotationPane';
 import { SetupPane } from './SetupPane';
-import { Lab } from './Lab';
 import { CHORDS, SCALES, TUNINGS, tuningLabel } from './fixtures';
 import { DEFAULT_LABEL_MODE, type LabelMode } from './labels';
 import { DEFAULT_THEME, nextTheme, type Theme } from './theme';
@@ -69,6 +69,20 @@ function effectiveTuning(base: Tuning, capo: CapoShift | undefined): Tuning {
     return base;
   }
   return { ...applyCapo(base, capo), id: base.id };
+}
+
+/**
+ * Derive the renderable capo (absolute fret + which strings it covers) from a CapoShift.
+ * capoShiftFrom clamps every covered string at one fret, so the fret is the max entry and
+ * the covered strings are those at that fret. Returns null for a no-op (all-zero) shift.
+ */
+function capoFromShift(
+  shift: CapoShift | undefined,
+): { fret: number; covered: boolean[] } | null {
+  if (!shift || shift.length === 0) return null;
+  const fret = Math.max(0, ...shift);
+  if (fret === 0) return null;
+  return { fret, covered: shift.map((v) => v === fret) };
 }
 
 /** A voicing's per-string frets (fret, 0 = open, null = muted) -> a renderable Shape. */
@@ -121,6 +135,10 @@ export function AppShell() {
   // the committed shape; "keep" commits it. `key` = `${shapeId}@${anchor}` (ADR 0013).
   const [preview, setPreview] = useState<{ shape: Shape; key: string } | null>(null);
 
+  // Capo-edit mode for the FOCUSED neck: while on, neck pointer drags move the capo bar
+  // instead of placing notes (ADR 0014). Reset whenever focus/tuning changes.
+  const [capoEdit, setCapoEdit] = useState(false);
+
   // Apply the theme to the document root so CSS can theme-switch.
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -164,6 +182,7 @@ export function AppShell() {
         caption: n.caption ?? selectionLabel(selection),
         isOrigin: n.isOrigin,
         shape: n.pinnedShape,
+        capo: capoFromShift(capos[n.id]),
       };
     });
   }, [necks, entity, selection, tuningById, capos]);
@@ -219,6 +238,7 @@ export function AppShell() {
   // Retuning clears that neck's shape — the held frets mean different pitches now.
   function handleTuningChange(id: string) {
     setPreview(null);
+    setCapoEdit(false);
     setNecks((prev) =>
       prev.map((n) => (n.id === focusedId ? { ...n, tuningId: id } : n)),
     );
@@ -238,14 +258,23 @@ export function AppShell() {
   }
 
   // Capo for the focused neck (provisional; from the Lab). applyCapo runs in effectiveTuning,
-  // so setting a capo re-projects the overlay + re-derives the readout for free. useCallback
-  // keeps the identity stable for the CapoControl's reporting effect.
-  const handleCapoChange = useCallback(
-    (capo: CapoShift) => {
-      setCapos((prev) => ({ ...prev, [focusedId]: capo }));
-    },
-    [focusedId],
-  );
+  // so setting a capo re-projects the overlay + re-derives the readout for free.
+  // A capo-drag reports (fret, spanEnd): the bar covers strings 0..spanEnd at `fret` —
+  // a contiguous span from the top edge. capoShiftFrom turns that into the per-string shift.
+  function handleCapoSet(fret: number, spanEnd: number) {
+    const n = focusedBaseTuning.openStrings.length;
+    const covered = Array.from({ length: n }, (_, i) => i <= spanEnd);
+    setCapos((prev) => ({ ...prev, [focusedId]: capoShiftFrom(fret, covered) }));
+  }
+
+  function handleCapoClear() {
+    setCapos((prev) => {
+      if (!prev[focusedId]) return prev;
+      const next = { ...prev };
+      delete next[focusedId];
+      return next;
+    });
+  }
 
   // ── Shape mutations (the focused neck only) ──
   /** Click a fret cell: remove if that string already holds THIS exact fret, else place.
@@ -363,12 +392,16 @@ export function AppShell() {
   // Move focus to another neck — a live preview was relative to the previously-focused neck,
   // so it's dismissed (restoring that neck's committed shape) as focus moves.
   function handleFocus(id: string) {
-    if (id !== focusedId) setPreview(null);
+    if (id !== focusedId) {
+      setPreview(null);
+      setCapoEdit(false);
+    }
     setFocusedId(id);
   }
 
   function handleClose(id: string) {
     setPreview(null);
+    setCapoEdit(false);
     setNecks((prev) => {
       if (prev.length <= 1) return prev;
       const remaining = prev.filter((n) => n.id !== id);
@@ -435,6 +468,11 @@ export function AppShell() {
             onMorph={handleMorph}
             onFretClick={handleFretClick}
             onNutClick={handleNutClick}
+            capoEditActive={capoEdit}
+            focusedHasCapo={!!capoFromShift(capos[focusedId])}
+            onToggleCapoEdit={() => setCapoEdit((e) => !e)}
+            onCapoSet={handleCapoSet}
+            onCapoClear={handleCapoClear}
           />
           {/* Bottom dock — slow-cadence reference surfaces, out of the hot loop. Both
               collapsible; the neck floor (ADR 0013) keeps them from crushing the board. */}
@@ -463,10 +501,6 @@ export function AppShell() {
           />
         </div>
       </div>
-
-      {/* PROVISIONAL — built-but-unplaced surfaces, mounted in a clearly-labelled lab strip
-          below the shell. Not final placement (overnight build charter: "reach, don't place"). */}
-      <Lab baseTuning={focusedBaseTuning} onCapoChange={handleCapoChange} />
     </div>
   );
 }

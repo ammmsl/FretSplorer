@@ -21,6 +21,7 @@
 // note) + open(O)/mute(X) glyphs at the nut + a bass callout — deliberately not the
 // degree dot fill and not the drone line, so the held shape never reads as an overlay.
 
+import { useRef, useState } from 'react';
 import type {
   KeyContext,
   ProjectedPosition,
@@ -60,7 +61,16 @@ export interface NeckProps {
   readonly onFretClick?: (string: number, fret: number) => void;
   /** Click the per-string nut marker -> cycle open/mute/off. */
   readonly onNutClick?: (string: number) => void;
+  // ── Capo (ADR 0014) — a physical bar drawn ON the neck. ──
+  /** The capo on THIS neck: an absolute fret + which strings it covers (contiguous). */
+  readonly capo?: { readonly fret: number; readonly covered: readonly boolean[] } | null;
+  /** When true (focused neck), neck pointer drags MOVE the capo instead of placing notes. */
+  readonly capoEdit?: boolean;
+  /** Drag report: capo at `fret`, covering strings 0..`spanEndString` (fret 0 clears it). */
+  readonly onCapoSet?: (fret: number, spanEndString: number) => void;
 }
+
+const CAPO_W = 14; // thickness of the capo bar (a touch narrower than a fret cell)
 
 const DOT_R = 9;
 const SHAPE_R = 10;
@@ -123,6 +133,9 @@ export function Neck({
   bassFret,
   onFretClick,
   onNutClick,
+  capo,
+  capoEdit,
+  onCapoSet,
 }: NeckProps) {
   // Geometry is DERIVED from the tuning's string count (7-/8-string necks size correctly);
   // 6-string necks are byte-for-byte identical to the old DEFAULT_GEOMETRY (never hardcode 6).
@@ -132,6 +145,31 @@ export function Neck({
   const h = neckHeight(g);
   const ctx: KeyContext = { tonic: tuning.tonic };
   const interactive = Boolean(onFretClick || onNutClick);
+
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [capoDragging, setCapoDragging] = useState(false);
+
+  // A string's OPEN/ringing position: at the nut normally, but RELOCATED to the capo line
+  // when the capo covers it (ADR 0014 — open + drone markers move to the capo). Frets behind
+  // the capo on a covered string are dead.
+  const openX = (s: number): number =>
+    capo && capo.covered[s] ? noteX(g, capo.fret) : nutX(g);
+  const isDeadCell = (s: number, fret: number): boolean =>
+    !!capo && capo.covered[s] && fret < capo.fret;
+
+  // Pointer (client) -> { fret, string } in neck coordinates, for capo dragging.
+  const pointToCell = (e: { clientX: number; clientY: number }): { fret: number; string: number } | null => {
+    const svg = svgRef.current;
+    const ctm = svg?.getScreenCTM();
+    if (!svg || !ctm) return null;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const loc = pt.matrixTransform(ctm.inverse());
+    const fret = Math.max(1, Math.min(g.fretCount, Math.ceil((loc.x - g.padLeft) / g.fretSpacing)));
+    const string = Math.max(0, Math.min(strings - 1, Math.round((loc.y - g.padY) / g.stringSpacing)));
+    return { fret, string };
+  };
 
   // Neck + nut geometry. The fretboard underlay is the full NECK WIDTH — the string span
   // plus a shoulder past each outer string — and runs from the nut to the last fret.
@@ -163,7 +201,8 @@ export function Neck({
 
   return (
     <svg
-      className="neck-svg"
+      ref={svgRef}
+      className={`neck-svg${capoEdit ? ' capo-edit' : ''}`}
       viewBox={`0 0 ${w} ${svgH}`}
       width="100%"
       role="img"
@@ -237,34 +276,44 @@ export function Neck({
           === nutX); the strings run through its full thickness. */}
       <path d={nutPath} className="nut-bar" aria-hidden="true" />
 
-      {/* String lines — carry the DRONE channel when a context is active. */}
+      {/* String lines — carry the DRONE channel when a context is active. Under a capo the
+          live (ringing) portion of a COVERED string starts at the capo line; the segment
+          behind the capo reads dead (ADR 0014). */}
       <g className="neck-strings">
         {tuning.openStrings.map((_, s) => {
           const drone = drones?.[s];
           const style = drone ? droneStyle(drone.tension) : undefined;
           const y = stringY(g, s);
+          const liveX1 = openX(s);
           return (
-            <line
-              key={`string-${s}`}
-              x1={nutLeft}
-              y1={y}
-              x2={fretLineX(g, g.fretCount)}
-              y2={y}
-              className={style ? 'string-line drone-active' : 'string-line'}
-              stroke={style?.color}
-              strokeWidth={style?.width}
-              strokeDasharray={style?.dash || undefined}
-              aria-label={
-                drone
-                  ? `string ${s + 1} drone: ${drone.tension}`
-                  : undefined
-              }
-            />
+            <g key={`string-${s}`}>
+              {capo && capo.covered[s] && (
+                <line
+                  className="string-line dead"
+                  x1={nutLeft}
+                  y1={y}
+                  x2={liveX1}
+                  y2={y}
+                  aria-hidden="true"
+                />
+              )}
+              <line
+                x1={liveX1}
+                y1={y}
+                x2={fretLineX(g, g.fretCount)}
+                y2={y}
+                className={style ? 'string-line drone-active' : 'string-line'}
+                stroke={style?.color}
+                strokeWidth={style?.width}
+                strokeDasharray={style?.dash || undefined}
+                aria-label={drone ? `string ${s + 1} drone: ${drone.tension}` : undefined}
+              />
+            </g>
           );
         })}
       </g>
 
-      {/* Nut halos — the open-string drone halo, second drone geometry. */}
+      {/* Nut halos — the open-string drone halo. Relocates to the capo line on covered strings. */}
       {drones && (
         <g className="neck-halos">
           {drones.map((drone, s) => {
@@ -272,7 +321,7 @@ export function Neck({
             return (
               <circle
                 key={`halo-${s}`}
-                cx={nutX(g)}
+                cx={openX(s)}
                 cy={stringY(g, s)}
                 r={DOT_R + 3}
                 className="drone-halo"
@@ -286,6 +335,32 @@ export function Neck({
           })}
         </g>
       )}
+
+      {/* The CAPO — a physical bar across the covered strings at its absolute fret (ADR 0014).
+          A contiguous span; the open/ringing + drone markers for covered strings have already
+          relocated to this line. Drawn above the strings so it reads as clamped on top. */}
+      {capo &&
+        (() => {
+          const coveredIdx = capo.covered
+            .map((c, i) => (c ? i : -1))
+            .filter((i) => i >= 0);
+          if (coveredIdx.length === 0) return null;
+          const cx = noteX(g, capo.fret);
+          const top = stringY(g, coveredIdx[0]) - g.stringSpacing * 0.42;
+          const bottom = stringY(g, coveredIdx[coveredIdx.length - 1]) + g.stringSpacing * 0.42;
+          return (
+            <g className="neck-capo" aria-label={`capo at fret ${capo.fret}`} role="img">
+              <rect
+                className="capo-bar"
+                x={cx - CAPO_W / 2}
+                y={top}
+                width={CAPO_W}
+                height={bottom - top}
+                rx={5}
+              />
+            </g>
+          );
+        })()}
 
       {/* Degree dots — the DEGREE channel (shape + colour fill). */}
       <g className="neck-dots">
@@ -334,7 +409,7 @@ export function Neck({
           {shape.map((sg, s) => {
             if (sg.kind !== 'open' && sg.kind !== 'fret') return null;
             const fret = sg.kind === 'open' ? 0 : sg.fret;
-            const cx = noteX(g, fret);
+            const cx = sg.kind === 'open' ? openX(s) : noteX(g, fret);
             const cy = stringY(g, s);
             const isBass = bassString === s && (bassFret ?? 0) === fret;
             return (
@@ -360,7 +435,7 @@ export function Neck({
       {shape && bassString != null && (
         <text
           className="shape-bass-label"
-          x={noteX(g, bassFret ?? 0)}
+          x={bassFret ? noteX(g, bassFret) : openX(bassString)}
           y={stringY(g, bassString)}
           textAnchor="middle"
         >
@@ -378,17 +453,18 @@ export function Neck({
             Array.from({ length: g.fretCount }, (_, i) => {
               const fret = i + 1;
               const cy = stringY(g, s);
+              const dead = isDeadCell(s, fret); // behind the capo on a covered string
               return (
                 <rect
                   key={`cell-${s}-${fret}`}
-                  className="fret-cell"
+                  className={`fret-cell${dead ? ' dead' : ''}`}
                   x={fretLineX(g, fret - 1)}
                   y={cy - g.stringSpacing / 2}
                   width={g.fretSpacing}
                   height={g.stringSpacing}
-                  onClick={() => onFretClick(s, fret)}
-                  role="button"
-                  aria-label={`string ${s + 1} fret ${fret}`}
+                  onClick={dead ? undefined : () => onFretClick(s, fret)}
+                  role={dead ? undefined : 'button'}
+                  aria-label={dead ? undefined : `string ${s + 1} fret ${fret}`}
                 />
               );
             }),
@@ -409,7 +485,7 @@ export function Neck({
         <g className="neck-nut-markers">
           {tuning.openStrings.map((_, s) => {
             const sg = shape?.[s];
-            const cx = nutX(g);
+            const cx = openX(s);
             const cy = stringY(g, s);
             const isOpen = sg?.kind === 'open';
             const isMuted = sg?.kind === 'muted';
@@ -443,6 +519,43 @@ export function Neck({
             );
           })}
         </g>
+      )}
+
+      {/* Capo-edit drag overlay — topmost while editing, so a pointer drag MOVES the capo
+          (x -> fret, y -> how far the contiguous span reaches from the top string) rather
+          than placing notes. A plain click sets a full capo at that fret (ADR 0014). */}
+      {capoEdit && onCapoSet && (
+        <rect
+          className="capo-drag-overlay"
+          x={fretLineX(g, 0)}
+          y={nutCy - neckHalf}
+          width={fretLineX(g, g.fretCount) - fretLineX(g, 0)}
+          height={neckHalf * 2}
+          onPointerDown={(e) => {
+            const c = pointToCell(e);
+            if (!c) return;
+            try {
+              (e.target as Element).setPointerCapture(e.pointerId);
+            } catch {
+              /* capture unavailable (e.g. synthetic event) — drag still works via move */
+            }
+            setCapoDragging(true);
+            onCapoSet(c.fret, c.string);
+          }}
+          onPointerMove={(e) => {
+            if (!capoDragging) return;
+            const c = pointToCell(e);
+            if (c) onCapoSet(c.fret, c.string);
+          }}
+          onPointerUp={(e) => {
+            setCapoDragging(false);
+            try {
+              (e.target as Element).releasePointerCapture(e.pointerId);
+            } catch {
+              /* pointer already released */
+            }
+          }}
+        />
       )}
     </svg>
   );
