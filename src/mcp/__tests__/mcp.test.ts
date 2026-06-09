@@ -8,7 +8,7 @@
 // grounded computed option voicings.
 
 import { describe, expect, it } from 'vitest';
-import { TUNINGS } from '../../ui/fixtures';
+import { TUNINGS, resizeTuning } from '../../ui/fixtures';
 import type { Shape } from '../../ui';
 import { loadAffective, loadGrammarCard, loadRules } from '../../kb';
 import {
@@ -197,9 +197,10 @@ describe('adviseSetupTool', () => {
   });
 
   it('surfaces a per-string flag the Setup pane renders, across string counts', () => {
-    // The Setup pane reads noteName/tension.lb/band/flag per string.
-    for (const id of ['open-c', 'standard-7', 'standard-8']) {
-      const t = TUNINGS.find((x) => x.id === id)!;
+    // The Setup pane reads noteName/tension.lb/band/flag per string. 7-/8-string tunings
+    // are now derived by resizing a 6-string base (resizeTuning), so exercise that path.
+    const open_c = TUNINGS.find((x) => x.id === 'open-c')!;
+    for (const t of [open_c, resizeTuning(eadgbe, 7), resizeTuning(eadgbe, 8)]) {
       const advice = adviseSetupTool(t).truth.advice;
       expect(advice.strings.length).toBe(t.openStrings.length);
       for (const s of advice.strings) {

@@ -25,7 +25,14 @@ import {
 } from './panels';
 import { NotationPane } from './NotationPane';
 import { SetupPane } from './SetupPane';
-import { CHORDS, SCALES, TUNINGS, tuningLabel } from './fixtures';
+import {
+  CHORDS,
+  DEFAULT_STRING_COUNT,
+  SCALES,
+  TUNINGS,
+  resizeTuning,
+  tuningLabel,
+} from './fixtures';
 import { DEFAULT_LABEL_MODE, type LabelMode } from './labels';
 import { DEFAULT_THEME, nextTheme, type Theme } from './theme';
 import {
@@ -100,6 +107,8 @@ function fretsToShape(frets: readonly (number | null)[]): Shape {
 interface NeckState {
   readonly id: string;
   readonly tuningId: string;
+  /** How many strings this neck has; the base tuning is resized to it (default 6). */
+  readonly stringCount: number;
   readonly tag: string;
   readonly isOrigin: boolean;
   /** Caption override (e.g. a spawned comparison option's chord symbol). */
@@ -119,7 +128,13 @@ export function AppShell() {
   const [setupCollapsed, setSetupCollapsed] = useState(true);
 
   const [necks, setNecks] = useState<readonly NeckState[]>([
-    { id: 'neck-0', tuningId: 'eadgbe', tag: 'A', isOrigin: true },
+    {
+      id: 'neck-0',
+      tuningId: 'eadgbe',
+      stringCount: DEFAULT_STRING_COUNT,
+      tag: 'A',
+      isOrigin: true,
+    },
   ]);
   const [focusedId, setFocusedId] = useState('neck-0');
 
@@ -167,7 +182,7 @@ export function AppShell() {
   // tuning change -> the overlay moves (the M0 DoD).
   const neckInstances: NeckInstance[] = useMemo(() => {
     return necks.map((n) => {
-      const base = tuningById.get(n.tuningId) ?? TUNINGS[0];
+      const base = resizeTuning(tuningById.get(n.tuningId) ?? TUNINGS[0], n.stringCount);
       const tuning = effectiveTuning(base, capos[n.id]);
       const positions = entity ? project(entity, tuning) : [];
       const drones: readonly OpenStringDrone[] | undefined = entity
@@ -188,7 +203,10 @@ export function AppShell() {
   }, [necks, entity, selection, tuningById, capos]);
 
   const focusedNeck = necks.find((n) => n.id === focusedId) ?? necks[0];
-  const focusedBaseTuning = tuningById.get(focusedNeck.tuningId) ?? TUNINGS[0];
+  const focusedBaseTuning = resizeTuning(
+    tuningById.get(focusedNeck.tuningId) ?? TUNINGS[0],
+    focusedNeck.stringCount,
+  );
   const focusedTuning = effectiveTuning(focusedBaseTuning, capos[focusedNeck.id]);
   const contextSummary = selectionLabel(selection);
 
@@ -249,6 +267,29 @@ export function AppShell() {
       return next;
     });
     // A retune also clears the capo: the shift vector was sized for the old string count.
+    setCapos((prev) => {
+      if (!prev[focusedId]) return prev;
+      const next = { ...prev };
+      delete next[focusedId];
+      return next;
+    });
+  }
+
+  // String-count selector resizes the FOCUSED neck (resizeTuning expands/shrinks its base
+  // tuning). Like a retune, it clears that neck's shape + capo — both are sized per-string,
+  // so held frets and the capo vector no longer fit the new string count.
+  function handleStringCountChange(count: number) {
+    setPreview(null);
+    setCapoEdit(false);
+    setNecks((prev) =>
+      prev.map((n) => (n.id === focusedId ? { ...n, stringCount: count } : n)),
+    );
+    setShapes((prev) => {
+      if (!prev[focusedId]) return prev;
+      const next = { ...prev };
+      delete next[focusedId];
+      return next;
+    });
     setCapos((prev) => {
       if (!prev[focusedId]) return prev;
       const next = { ...prev };
@@ -351,6 +392,7 @@ export function AppShell() {
       const next: NeckState = {
         id,
         tuningId: focusedTuning.id,
+        stringCount: focusedNeck.stringCount,
         tag,
         isOrigin: false,
       };
@@ -367,8 +409,10 @@ export function AppShell() {
    * shape this is just "add a neck in another tuning".
    */
   function handleMorph(targetId: string) {
-    const target = tuningById.get(targetId);
-    if (!target) return;
+    const baseTarget = tuningById.get(targetId);
+    if (!baseTarget) return;
+    // Morph onto a same-sized neck so the comparison lines up string-for-string.
+    const target = resizeTuning(baseTarget, focusedNeck.stringCount);
     const frets: (number | null)[] = Array.from(
       { length: target.openStrings.length },
       () => null,
@@ -388,6 +432,7 @@ export function AppShell() {
         {
           id: `neck-${Date.now()}`,
           tuningId: targetId,
+          stringCount: focusedNeck.stringCount,
           tag,
           isOrigin: false,
           caption: `morphed from ${tuningLabel(focusedTuning.id)}`,
@@ -409,6 +454,7 @@ export function AppShell() {
       const spawned: NeckState[] = options.map((o, i) => ({
         id: `neck-${Date.now()}-${i}`,
         tuningId: focusedTuning.id,
+        stringCount: focusedNeck.stringCount,
         tag: TAGS[(prev.length + i) % TAGS.length],
         isOrigin: false,
         caption: `option · ${o.symbol}`,
@@ -443,10 +489,12 @@ export function AppShell() {
     <div className={`app-shell theme-${theme}`}>
       <ControlBar
         tuningId={focusedTuning.id}
+        stringCount={focusedNeck.stringCount}
         selection={selection}
         labelMode={labelMode}
         theme={theme}
         onTuningChange={handleTuningChange}
+        onStringCountChange={handleStringCountChange}
         onSelectionChange={setSelection}
         onLabelModeChange={setLabelMode}
         onClear={() => setSelection(null)}

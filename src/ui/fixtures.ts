@@ -7,13 +7,13 @@
 // openStrings are string 1 (HIGH) -> string N (LOW), matching Tuning's convention.
 
 import type { Chord, Scale, Tuning } from '../core';
-import { chord, scale, tuning } from '../core';
+import { chord, midi, scale, tuning } from '../core';
 
-// Built-in tunings. openStrings: string 1 (high) -> string N (low). The 6-string entries
-// (strings + tonic) match the authored kb/tunings/*.yaml grammar cards EXACTLY — the readout
+// Built-in tunings — all authored as 6-string. openStrings: string 1 (high) -> string N (low).
+// The strings + tonic match the authored kb/tunings/*.yaml grammar cards EXACTLY — the readout
 // joins a card to its tuning by id and compares open-string pitch-classes, so they must agree.
-// The two extended-range entries (7-/8-string standard) have NO card: they exercise the
-// derived geometry (geometryForStringCount) and absolute (Tier-2) naming, not relational cards.
+// String COUNT is no longer baked into the tuning: a neck picks a count (6/7/8) and resizeTuning
+// expands the base tuning to it (extra low strings appended), so any tuning works at any count.
 export const TUNINGS: readonly Tuning[] = [
   // ── curated tuning set (each has a grammar card; docs/02) ──
   tuning('open-g', [62, 59, 55, 50, 43, 38], 7), // D B G D G D, tonic G
@@ -25,10 +25,31 @@ export const TUNINGS: readonly Tuning[] = [
   tuning('double-drop-d', [62, 59, 55, 50, 45, 38], 2), // D B G D A D, tonic D
   // ── standard EADGBE (deliberately card-less: absolute naming is correct here) ──
   tuning('eadgbe', [64, 59, 55, 50, 45, 40], 4), // standard E, tonic E
-  // ── extended range (no card; derived geometry) ──
-  tuning('standard-7', [64, 59, 55, 50, 45, 40, 35], 4), // E B G D A E B, 7-string standard, tonic E
-  tuning('standard-8', [64, 59, 55, 50, 45, 40, 35, 30], 4), // + low F#1, 8-string standard, tonic E
 ];
+
+/** The string counts a neck may take. 6 is the default (the count tunings are authored at). */
+export const STRING_COUNTS: readonly number[] = [6, 7, 8];
+export const DEFAULT_STRING_COUNT = 6;
+
+/**
+ * Expand (or shrink) a base tuning to `count` strings WITHOUT changing its id or tonic — so the
+ * grammar card still resolves and the relational anchor is unchanged. Added strings are appended
+ * below the current lowest string, each a perfect fourth (5 semitones) below the previous one
+ * (the standard extended-range convention: E2 -> B1 -> F#1, which reproduces the old
+ * standard-7 / standard-8 fixtures exactly). Shrinking drops the lowest (last) strings.
+ */
+export function resizeTuning(base: Tuning, count: number): Tuning {
+  const cur = base.openStrings;
+  if (count === cur.length) return base;
+  if (count < cur.length) {
+    return { ...base, openStrings: cur.slice(0, count) };
+  }
+  const next = [...cur];
+  while (next.length < count) {
+    next.push(midi((next[next.length - 1] as number) - 5));
+  }
+  return { ...base, openStrings: next };
+}
 
 /** Human label for a tuning id. */
 export function tuningLabel(id: string): string {
@@ -49,10 +70,6 @@ export function tuningLabel(id: string): string {
       return 'Drop D';
     case 'double-drop-d':
       return 'Double Drop D';
-    case 'standard-7':
-      return '7-string (standard)';
-    case 'standard-8':
-      return '8-string (standard)';
     default:
       return id;
   }

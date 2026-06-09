@@ -6,7 +6,7 @@
 // The harmonic-context selector is a single <select> whose options are grouped into
 // scales and chords; an empty value = no context (the dormant/cleared state).
 
-import { CHORDS, SCALES, TUNINGS, tuningLabel } from './fixtures';
+import { CHORDS, SCALES, STRING_COUNTS, TUNINGS, tuningLabel } from './fixtures';
 import { labelModeCaption, nextLabelMode, type LabelMode } from './labels';
 import type { Theme } from './theme';
 
@@ -18,10 +18,12 @@ export interface ContextSelection {
 
 export interface ControlBarProps {
   readonly tuningId: string;
+  readonly stringCount: number;
   readonly selection: ContextSelection | null;
   readonly labelMode: LabelMode;
   readonly theme: Theme;
   readonly onTuningChange: (id: string) => void;
+  readonly onStringCountChange: (count: number) => void;
   readonly onSelectionChange: (sel: ContextSelection | null) => void;
   readonly onLabelModeChange: (mode: LabelMode) => void;
   readonly onClear: () => void;
@@ -45,10 +47,12 @@ function decode(value: string): ContextSelection | null {
 
 export function ControlBar({
   tuningId,
+  stringCount,
   selection,
   labelMode,
   theme,
   onTuningChange,
+  onStringCountChange,
   onSelectionChange,
   onLabelModeChange,
   onClear,
@@ -64,6 +68,20 @@ export function ControlBar({
           {TUNINGS.map((t) => (
             <option key={t.id} value={t.id}>
               {tuningLabel(t.id)}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="control">
+        <span className="control-label">Strings</span>
+        <select
+          value={stringCount}
+          onChange={(e) => onStringCountChange(Number(e.target.value))}
+        >
+          {STRING_COUNTS.map((n) => (
+            <option key={n} value={n}>
+              {n}
             </option>
           ))}
         </select>
