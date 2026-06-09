@@ -329,6 +329,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  /* The neck has a floor: it never shrinks to make room for a sibling (the docked
+     Notation/Setup pane). When the dock opens, the scrollable .center-region absorbs the
+     overflow instead of crushing the board (ADR 0013 — "the neck has a floor; everything
+     else absorbs its own overflow"). */
+  flex: 0 0 auto;
 }
 .add-neck {
   align-self: flex-start;
@@ -664,6 +669,12 @@
   border-top: 2px dashed var(--accent);
   background: var(--surface);
   padding: 0.6rem 1rem 1rem;
+  /* TRANSITIONAL: the Lab is being dismantled section-by-section as each surface re-homes
+     (ADR 0013). Until it's gone, bound it so it scrolls internally instead of stealing
+     height from .shell-body and crushing the neck. Deleted with the last Lab section. */
+  flex: 0 0 auto;
+  max-height: 42vh;
+  overflow-y: auto;
 }
 .lab-header {
   display: flex;
