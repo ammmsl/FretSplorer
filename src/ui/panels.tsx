@@ -23,7 +23,7 @@ import {
   translate,
 } from '../mcp';
 import { TUNINGS, tuningLabel } from './fixtures';
-import type { Grip } from './grip';
+import type { Shape } from './shape';
 import { degreeStyle, droneStyle } from './palette';
 import type { ReadoutViewModel } from './readout';
 import { Tier3Anatomy } from './Tier3Anatomy';
@@ -146,7 +146,7 @@ export function GrammarCardPanel({
 
 /**
  * RIGHT-top — the always-live "What you're holding" Readout (M1). Bound to the focused
- * neck's grip via the assembled ReadoutViewModel (docs/08 decision f; docs/09 UI#4).
+ * neck's shape via the assembled ReadoutViewModel (docs/08 decision f; docs/09 UI#4).
  * Tiered disclosure: T1 relational HEADLINE (the relational sentence is the headline; the
  * T2 absolute symbol is the subline — docs/08 f) -> bass -> per-note degree-vs-drone ->
  * ranked candidates -> the expandable, LAZY Tier-3 anatomy. Degree colour and drone
@@ -274,7 +274,7 @@ export function ReadoutPanel({
   );
 }
 
-/** One spawnable comparison option carried to the AppShell (a grip on the focused tuning). */
+/** One spawnable comparison option carried to the AppShell (a shape on the focused tuning). */
 export interface SpawnOption {
   readonly symbol: string;
   /** Per-string frets aligned to tuning.openStrings: fret, 0 = open, null = muted. */
@@ -289,7 +289,7 @@ interface ConversationTurn {
   readonly view: TurnView;
 }
 
-/** The quick-action chips — one-tap turns onto the focused grip (docs/04 intents). */
+/** The quick-action chips — one-tap turns onto the focused shape (docs/04 intents). */
 const QUICK_ACTIONS: readonly { readonly text: string; readonly chip: string }[] = [
   { text: 'make it dreamier', chip: 'make it dreamier' },
   { text: 'darker', chip: 'darker' },
@@ -305,7 +305,7 @@ const QUICK_ACTIONS: readonly { readonly text: string; readonly chip: string }[]
 /**
  * RIGHT-bottom — the M3 CONVERSATION surface (the product gate). A deterministic intent
  * router (conversation.route) over the in-process MCP tools (/mcp): a user turn is parsed
- * for a known intent / vibe keyword and dispatched against the FOCUSED neck's grip +
+ * for a known intent / vibe keyword and dispatched against the FOCUSED neck's shape +
  * tuning (deixis -> the focus pointer, docs/04). The ToolResult is rendered as a turn —
  * the EXPLANATION as the model line, the REASONING CHAIN expandable, and every claim's
  * TRACE made VISIBLE (computed / KB id), with editorial taste kept hedged and marked as
@@ -314,11 +314,11 @@ const QUICK_ACTIONS: readonly { readonly text: string; readonly chip: string }[]
  * flow 2) — via onSpawnOptions, which never overwrites the user's neck.
  */
 export function ConversationPanel({
-  grip,
+  shape,
   tuning,
   onSpawnOptions,
 }: {
-  grip: Grip;
+  shape: Shape;
   tuning: Tuning;
   onSpawnOptions: (options: readonly SpawnOption[]) => void;
 }) {
@@ -339,8 +339,8 @@ export function ConversationPanel({
 
     switch (intent.kind) {
       case 'feeling': {
-        const result = feelingToOptions(grip, tuning, intent.vibe ?? userText);
-        // Map the COMPUTED option voicings -> spawnable grips + the turn's OptionView rows.
+        const result = feelingToOptions(shape, tuning, intent.vibe ?? userText);
+        // Map the COMPUTED option voicings -> spawnable shapes + the turn's OptionView rows.
         const optionViews: OptionView[] = result.truth.options.map((o) => ({
           symbol: o.symbol,
           frets: o.voicing ? o.voicing.frets : tuning.openStrings.map(() => null),
@@ -353,23 +353,23 @@ export function ConversationPanel({
         break;
       }
       case 'identify': {
-        view = buildTurnView(mcpIdentify(grip, tuning));
+        view = buildTurnView(mcpIdentify(shape, tuning));
         break;
       }
       case 'function': {
-        view = buildTurnView(functionOf(grip, tuning));
+        view = buildTurnView(functionOf(shape, tuning));
         break;
       }
       case 'neighbors': {
         // "where can this go?" — small single-string voice-leading moves from here.
-        view = buildTurnView(neighbors(grip, tuning));
+        view = buildTurnView(neighbors(shape, tuning));
         break;
       }
       case 'translate': {
         // "…in DADGAD?" — re-place the SAME sounding pitches on the named target tuning.
         const target = TUNINGS.find((t) => t.id === intent.target);
         if (target) {
-          view = buildTurnView(translate(grip, tuning, target));
+          view = buildTurnView(translate(shape, tuning, target));
         } else {
           view = {
             modelLine:
@@ -388,9 +388,9 @@ export function ConversationPanel({
         break;
       }
       case 'voicings': {
-        // "easier way?" — re-voice the grip's best-fit chord. Identify the held chord
+        // "easier way?" — re-voice the shape's best-fit chord. Identify the held chord
         // first so we ask findVoicings for the SAME sonority, but easier to finger.
-        const id = mcpIdentify(grip, tuning);
+        const id = mcpIdentify(shape, tuning);
         const symbol = id.truth.candidates[0]?.chord.symbol ?? null;
         if (symbol) {
           view = buildTurnView(findVoicingsTool(symbol, tuning));
@@ -398,7 +398,7 @@ export function ConversationPanel({
           view = {
             modelLine:
               'Place some notes on the focused neck first — then I can find an easier way to play that shape.',
-            reasoningChain: ['The grip sounds nothing, so there is no chord to re-voice.'],
+            reasoningChain: ['The shape sounds nothing, so there is no chord to re-voice.'],
             traces: [],
             options: [],
             hasEditorial: false,
@@ -436,7 +436,7 @@ export function ConversationPanel({
       <div className="conversation-log" aria-live="polite">
         {turns.length === 0 && (
           <p className="panel-note">
-            Ask about the focused grip: <em>what is this?</em>, <em>what does this do?</em>,{' '}
+            Ask about the focused shape: <em>what is this?</em>, <em>what does this do?</em>,{' '}
             <em>easier way?</em>, or <em>make it dreamier / darker / more open</em>.
           </p>
         )}
@@ -560,7 +560,7 @@ export function ConversationPanel({
         <input
           type="text"
           className="conv-input"
-          aria-label="ask about the focused grip"
+          aria-label="ask about the focused shape"
           placeholder="ask… (e.g. make it dreamier)"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}

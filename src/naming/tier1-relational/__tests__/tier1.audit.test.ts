@@ -3,11 +3,11 @@
 // §6 and the kb/rules/*.yaml rule files, validating:
 //   1. the §6 worked example exactly (Open-G barre-5 over open low D -> IV / C major,
 //      open D as the 9th, traces [frame-diatonic-function, drone-as-9th], kind theory);
-//   2. the T1<->T2 handoff fires on an unframeable grip (frame=null, toTier2=true);
+//   2. the T1<->T2 handoff fires on an unframeable shape (frame=null, toTier2=true);
 //   3. grounding traceability (ADR 0003): every checkable claim carries a trace (a KB
 //      rule id or "computed"); rule-sourced claims have provenance kind theory; none
 //      are unsourced.
-// Grips are built independently from the card (not copied from the implementer's file).
+// Shapes are built independently from the card (not copied from the implementer's file).
 
 import { describe, expect, it } from 'vitest';
 import type { PlacedPosition, Tuning } from '../../../core';
@@ -47,8 +47,8 @@ const allOpen = (): PlacedPosition[] => [0, 1, 2, 3, 4, 5].map((string) => ({ st
 // 1. §6 WORKED EXAMPLE — the hard acceptance test.
 // ────────────────────────────────────────────────────────────────────────────
 describe('AUDIT 1 — spec §6 worked example reproduced exactly', () => {
-  const grip = barreOverLowD(5); // shape og-major-over-d-drone, anchor 5
-  const r = nameTier1(grip, openG, card, rules);
+  const shape = barreOverLowD(5); // shape og-major-over-d-drone, anchor 5
+  const r = nameTier1(shape, openG, card, rules);
 
   it('decomposes into one open low-D drone (D2=38) + five barred active voices', () => {
     expect(r.decomposition.drones).toHaveLength(1);
@@ -103,7 +103,7 @@ describe('AUDIT 1 — spec §6 worked example reproduced exactly', () => {
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-// 2. T1<->T2 HANDOFF — an unframeable grip yields frame=null, toTier2=true.
+// 2. T1<->T2 HANDOFF — an unframeable shape yields frame=null, toTier2=true.
 // ────────────────────────────────────────────────────────────────────────────
 describe('AUDIT 2 — unframeable chromatic cluster triggers the handoff', () => {
   // A tight chromatic cluster, no open drone, that spells no A-C frame: it is not the
@@ -131,8 +131,8 @@ describe('AUDIT 2 — unframeable chromatic cluster triggers the handoff', () =>
 //    Every checkable claim carries a trace; rule-sourced claims are kind theory;
 //    none are unsourced.
 // ────────────────────────────────────────────────────────────────────────────
-describe('AUDIT 3 — grounding traceability across varied grips', () => {
-  const grips: PlacedPosition[][] = [
+describe('AUDIT 3 — grounding traceability across varied shapes', () => {
+  const shapes: PlacedPosition[][] = [
     allOpen(),
     barre(5),
     barre(7),
@@ -149,8 +149,8 @@ describe('AUDIT 3 — grounding traceability across varied grips', () => {
   );
 
   it('every trace source is either a known KB rule id or the literal "computed"', () => {
-    for (const grip of grips) {
-      const r = nameTier1(grip, openG, card, rules);
+    for (const shape of shapes) {
+      const r = nameTier1(shape, openG, card, rules);
       expect(r.traces.length).toBeGreaterThan(0);
       for (const t of r.traces) {
         const ok = t.source === 'computed' || KNOWN_RULE_IDS.has(t.source);
@@ -160,8 +160,8 @@ describe('AUDIT 3 — grounding traceability across varied grips', () => {
   });
 
   it('the frame, when present, is joined to a KB rule whose provenance is kind theory', () => {
-    for (const grip of grips) {
-      const r = nameTier1(grip, openG, card, rules);
+    for (const shape of shapes) {
+      const r = nameTier1(shape, openG, card, rules);
       if (r.frame === null) continue;
       expect(KNOWN_RULE_IDS.has(r.frame.ruleId)).toBe(true);
       const rule = rules.relationalVocabulary.find((x) => x.id === r.frame!.ruleId);
@@ -172,8 +172,8 @@ describe('AUDIT 3 — grounding traceability across varied grips', () => {
   });
 
   it('every drone role traces to a KB rule id or "computed"; KB-sourced ones are theory', () => {
-    for (const grip of grips) {
-      const r = nameTier1(grip, openG, card, rules);
+    for (const shape of shapes) {
+      const r = nameTier1(shape, openG, card, rules);
       for (const role of r.droneRoles) {
         const ok = role.ruleId === 'computed' || KNOWN_RULE_IDS.has(role.ruleId);
         expect(ok, `drone role degree ${role.droneDegree} -> "${role.ruleId}"`).toBe(true);
@@ -186,8 +186,8 @@ describe('AUDIT 3 — grounding traceability across varied grips', () => {
   });
 
   it('every tension reading traces to a tension-table rule id or "computed"', () => {
-    for (const grip of grips) {
-      const r = nameTier1(grip, openG, card, rules);
+    for (const shape of shapes) {
+      const r = nameTier1(shape, openG, card, rules);
       for (const t of r.tensionVsPedal) {
         const ok = t.ruleId === 'computed' || KNOWN_RULE_IDS.has(t.ruleId);
         expect(ok, `tension ic ${t.intervalClass} -> "${t.ruleId}"`).toBe(true);

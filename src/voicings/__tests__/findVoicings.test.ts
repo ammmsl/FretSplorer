@@ -16,7 +16,7 @@ const CMAJ = chord('C');
 const C_PCS = new Set<number>([0, 4, 7]);
 
 describe('playability', () => {
-  it('flags an open-position narrow grip easy', () => {
+  it('flags an open-position narrow shape easy', () => {
     // open C chord shape frets: x3201 0 → fretted {3,2,1}, span 2
     const p = playability([3, 2, 1]);
     expect(p.fretSpan).toBe(2);
@@ -32,7 +32,7 @@ describe('playability', () => {
     expect(p.flag).toBe('easy');
   });
 
-  it('flags a wide barre-like grip hard', () => {
+  it('flags a wide barre-like shape hard', () => {
     // frets spanning 7..12 → span 5 (> hardSpan 4, ≤ impossibleSpan 6)
     const p = playability([7, 9, 12]);
     expect(p.fretSpan).toBe(5);
@@ -94,7 +94,7 @@ describe('findVoicings', () => {
     expect(out.length).toBeLessThanOrEqual(2);
   });
 
-  it('never returns an impossible-to-fret grip', () => {
+  it('never returns an impossible-to-fret shape', () => {
     const out = findVoicings(CMAJ, EADGBE, { limit: 8 });
     for (const rv of out) {
       expect(rv.playability.flag).not.toBe('impossible');
@@ -120,7 +120,7 @@ describe('findVoicings', () => {
 });
 
 describe('scoreFeatures', () => {
-  it('rewards completeness and easy playability over sparse/hard grips', () => {
+  it('rewards completeness and easy playability over sparse/hard shapes', () => {
     const good = scoreFeatures({
       hasThird: true,
       hasSeventh: false,

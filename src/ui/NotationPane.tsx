@@ -2,17 +2,17 @@
 // (item 7; ADR 0011/0012). alphaTab is heavy, so — mirroring the Tier-3 Pyodide pattern —
 // it is NEVER imported in the hot loop and NOT loaded until the user first EXPANDS the pane.
 // On expand we dynamic-import the engine + the Bravura font + the sonivox soundfont, boot an
-// AlphaTabApi against a container div, and render the focused grip (or, if empty, the open
+// AlphaTabApi against a container div, and render the focused shape (or, if empty, the open
 // chord) via our pure model->AlphaTex adapter (fragmentToAlphaTex). A play/pause control
-// arms once the soundfont has loaded. Re-rendering on grip/tuning change is a slow-cadence
+// arms once the soundfont has loaded. Re-rendering on shape/tuning change is a slow-cadence
 // tex() push, never the interactive loop. Load failure shows an error, never a crash.
 // PROVISIONAL placement (it already lived in the shell as a placeholder; only the content is new).
 
 import { useEffect, useRef, useState } from 'react';
 import type { Tuning } from '../core';
 import { fragmentToAlphaTex } from '../render';
-import type { Grip } from './grip';
-import { gripToFragment } from './notation';
+import type { Shape } from './shape';
+import { shapeToFragment } from './notation';
 
 interface CollapsibleProps {
   readonly collapsed: boolean;
@@ -35,8 +35,8 @@ export function NotationPane({
   collapsed,
   onToggle,
   tuning,
-  grip,
-}: CollapsibleProps & { tuning: Tuning; grip: Grip }) {
+  shape,
+}: CollapsibleProps & { tuning: Tuning; shape: Shape }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const apiRef = useRef<AlphaTabApiLike | null>(null);
   const startedRef = useRef(false);
@@ -80,7 +80,7 @@ export function NotationPane({
           if (!cancelled) setSoundReady(true);
         });
         apiRef.current = api;
-        api.tex(fragmentToAlphaTex(gripToFragment(grip, tuning, tempo)));
+        api.tex(fragmentToAlphaTex(shapeToFragment(shape, tuning, tempo)));
         setPhase('ready');
       } catch (e: unknown) {
         if (cancelled) return;
@@ -92,7 +92,7 @@ export function NotationPane({
     return () => {
       cancelled = true;
     };
-    // Only the first expand boots the engine; grip/tuning re-render is a separate effect.
+    // Only the first expand boots the engine; shape/tuning re-render is a separate effect.
     // `phase` is intentionally NOT a dep (see comment above); startedRef makes this run once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collapsed]);
@@ -105,14 +105,14 @@ export function NotationPane({
     };
   }, []);
 
-  // Slow-cadence re-render: when the grip or tuning changes and the engine is ready, push a
-  // fresh AlphaTex. Never runs in the hot interactive loop (only on a committed grip change).
-  // gripToFragment always yields a valid, non-empty fragment (it falls back to the open chord
+  // Slow-cadence re-render: when the shape or tuning changes and the engine is ready, push a
+  // fresh AlphaTex. Never runs in the hot interactive loop (only on a committed shape change).
+  // shapeToFragment always yields a valid, non-empty fragment (it falls back to the open chord
   // and frets are >= 0), so fragmentToAlphaTex cannot throw here.
   useEffect(() => {
     if (phase !== 'ready' || apiRef.current === null) return;
-    apiRef.current.tex(fragmentToAlphaTex(gripToFragment(grip, tuning, tempo)));
-  }, [grip, tuning, tempo, phase]);
+    apiRef.current.tex(fragmentToAlphaTex(shapeToFragment(shape, tuning, tempo)));
+  }, [shape, tuning, tempo, phase]);
 
   return (
     <section className={`panel notation-pane${collapsed ? ' collapsed' : ''}`} aria-label="Notation">

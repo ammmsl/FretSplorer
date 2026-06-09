@@ -62,7 +62,7 @@ describe('identify', () => {
     expect(r5.length).toBeLessThanOrEqual(3);
   });
 
-  it('RANKED: within a dropped-5th grip the omitted-5th reading is the LIGHTLY penalised alternate', () => {
+  it('RANKED: within a dropped-5th shape the omitted-5th reading is the LIGHTLY penalised alternate', () => {
     // C E Bb (C4 E4 Bb4): Tonal detects "C7no5" (nothing missing) AND "C7" (assumes
     // a G that is not sounding -> omit5thPenalty + one parsimony tone). Both are
     // C-rooted root-position readings, so they differ ONLY by the omission penalty:
@@ -77,7 +77,7 @@ describe('identify', () => {
   });
 
   it('KEY CONTEXT biases ranking toward the diatonic / tonic reading', () => {
-    // Open-G grip read in the key of G: G major (root in key, diatonic) should win
+    // Open-G shape read in the key of G: G major (root in key, diatonic) should win
     // decisively, with a markedly higher score than without context.
     const openG = tuning('open-g', [62, 59, 55, 50, 43, 38], 7);
     const withKey = identify(allOpen(6), openG, { key: { tonic: pitchClass(7) } });
@@ -104,7 +104,7 @@ describe('identify', () => {
     }
   });
 
-  it('EMPTY grip returns [] without throwing', () => {
+  it('EMPTY shape returns [] without throwing', () => {
     const openG = tuning('open-g', [62, 59, 55, 50, 43, 38], 7);
     expect(() => identify([], openG, {})).not.toThrow();
     expect(identify([], openG, {})).toEqual([]);

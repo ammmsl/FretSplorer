@@ -3,8 +3,8 @@
 
 import type { KeyContext, Midi, PitchClass, Tuning } from '../core';
 import { pitchClass, spell, toPitchClass } from '../core';
-import type { Grip } from '../ui';
-import { gripToPlaced } from '../ui';
+import type { Shape } from '../ui';
+import { shapeToPlaced } from '../ui';
 import type { PlacedPosition } from '../core';
 
 /** The tuning's tonic as a KeyContext, for in-context enharmonic spelling. */
@@ -30,15 +30,15 @@ export function midiNameOctave(m: Midi | number, tuning: Tuning): string {
   return `${midiName(n, tuning)}${octave}`;
 }
 
-/** A grip on a tuning -> the PlacedPosition[] identify/nameTier1 consume (one per
- *  SOUNDING string; muted/unplayed skipped). Delegates to the /ui grip helper. */
-export function placedFromGrip(grip: Grip): PlacedPosition[] {
-  return gripToPlaced(grip);
+/** A shape on a tuning -> the PlacedPosition[] identify/nameTier1 consume (one per
+ *  SOUNDING string; muted/unplayed skipped). Delegates to the /ui shape helper. */
+export function placedFromShape(shape: Shape): PlacedPosition[] {
+  return shapeToPlaced(shape);
 }
 
-/** The sounding MIDI pitches of a grip on a tuning (one per sounding string). */
-export function soundingPitches(grip: Grip, tuning: Tuning): number[] {
-  return placedFromGrip(grip).map(
+/** The sounding MIDI pitches of a shape on a tuning (one per sounding string). */
+export function soundingPitches(shape: Shape, tuning: Tuning): number[] {
+  return placedFromShape(shape).map(
     (p) => (tuning.openStrings[p.string] as number) + p.fret,
   );
 }

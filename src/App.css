@@ -451,19 +451,19 @@
   opacity: 0.85;
 }
 
-/* ── GRIP: held notes, nut markers, bass callout, fret-cell hit layer ───────── */
-/* A placed grip note: a SOLID disc + ring, deliberately unlike the degree dot
-   (filled hue/diamond) and the drone line — so the held grip reads as foreground. */
-.grip-disc {
+/* ── SHAPE: held notes, nut markers, bass callout, fret-cell hit layer ───────── */
+/* A placed shape note: a SOLID disc + ring, deliberately unlike the degree dot
+   (filled hue/diamond) and the drone line — so the held shape reads as foreground. */
+.shape-disc {
   fill: var(--text);
   stroke: var(--neck-bg);
   stroke-width: 2.5;
 }
-.grip-bass-ring {
+.shape-bass-ring {
   stroke: var(--accent);
   stroke-width: 2.5;
 }
-.grip-bass-label {
+.shape-bass-label {
   font-size: 9px;
   font-weight: var(--font-weight-bold);
   fill: var(--neck-bg);

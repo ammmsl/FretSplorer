@@ -10,7 +10,7 @@ import type { ProjectedPosition, Tuning } from '../core';
 import type { OpenStringDrone } from '../projection';
 import { Neck } from './Neck';
 import type { LabelMode } from './labels';
-import type { Grip } from './grip';
+import type { Shape } from './shape';
 import { tuningLabel } from './fixtures';
 
 /** One neck instance in the stack. */
@@ -25,25 +25,25 @@ export interface NeckInstance {
   readonly caption: string;
   /** True for the origin ("yours") neck — a persistent subtle marker. */
   readonly isOrigin: boolean;
-  /** A pinned grip to render on a NON-focused neck (e.g. a spawned comparison option).
-   *  The focused neck draws the live `focusedGrip` instead; this lets a spawned option
+  /** A pinned shape to render on a NON-focused neck (e.g. a spawned comparison option).
+   *  The focused neck draws the live `focusedShape` instead; this lets a spawned option
    *  neck show its concrete voicing without being focused (docs/04 flow 2). */
-  readonly grip?: Grip;
+  readonly shape?: Shape;
 }
 
 export interface NeckStackProps {
   readonly necks: readonly NeckInstance[];
   readonly focusedId: string;
   readonly labelMode: LabelMode;
-  /** The FOCUSED neck's grip (rendered + interactive); other necks stay presentational. */
-  readonly focusedGrip?: Grip;
+  /** The FOCUSED neck's shape (rendered + interactive); other necks stay presentational. */
+  readonly focusedShape?: Shape;
   /** Bass (lowest-pitch) string+fret to call out on the focused neck; null = none. */
   readonly bassString?: number | null;
   readonly bassFret?: number | null;
   readonly onFocus: (id: string) => void;
   readonly onClose: (id: string) => void;
   readonly onAddNeck: () => void;
-  /** Grip interaction on the focused neck (place/remove a fret; cycle the nut marker). */
+  /** Shape interaction on the focused neck (place/remove a fret; cycle the nut marker). */
   readonly onFretClick?: (string: number, fret: number) => void;
   readonly onNutClick?: (string: number) => void;
 }
@@ -52,7 +52,7 @@ export function NeckStack({
   necks,
   focusedId,
   labelMode,
-  focusedGrip,
+  focusedShape,
   bassString,
   bassFret,
   onFocus,
@@ -109,7 +109,7 @@ export function NeckStack({
               positions={n.positions}
               drones={n.drones}
               labelMode={labelMode}
-              grip={focused ? focusedGrip : n.grip}
+              shape={focused ? focusedShape : n.shape}
               bassString={focused ? bassString : null}
               bassFret={focused ? bassFret : null}
               onFretClick={focused ? onFretClick : undefined}

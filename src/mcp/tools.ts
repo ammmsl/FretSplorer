@@ -32,7 +32,7 @@ import {
   loadRules,
 } from '../kb';
 import type { AffectiveVibe } from '../kb';
-import type { Grip } from '../ui';
+import type { Shape } from '../ui';
 
 import type { Claim, ToolResult } from './contract';
 import { computedClaim, editorialClaim, kbClaim } from './contract';
@@ -40,7 +40,7 @@ import {
   midiName,
   midiNameOctave,
   pcName,
-  placedFromGrip,
+  placedFromShape,
   soundingPitches,
 } from './shared';
 
@@ -51,9 +51,9 @@ import {
 export interface IdentifyTruth {
   /** Ranked theory candidates (identify), multiset preserved (R10). */
   readonly candidates: ReturnType<typeof identify>;
-  /** The Tier-1 relational reading of the grip (frame, drones, tension). */
+  /** The Tier-1 relational reading of the shape (frame, drones, tension). */
   readonly tier1: Tier1Result;
-  /** Spelled bass note WITH octave (the lowest pitch; R10), or null if grip empty. */
+  /** Spelled bass note WITH octave (the lowest pitch; R10), or null if shape empty. */
   readonly bassNote: string | null;
   /** Per-open-string graded drone tension vs the best candidate's chord root. */
   readonly drones: readonly OpenStringDrone[];
@@ -62,7 +62,7 @@ export interface IdentifyTruth {
 }
 
 /**
- * mcpIdentify(grip, tuning, ctx) — the headline identify tool. Composes identify()
+ * mcpIdentify(shape, tuning, ctx) — the headline identify tool. Composes identify()
  * (ranked candidates, bass = argmin pitch), nameTier1() (the relational frame + drone
  * roles + tension-vs-pedal, each already trace-carrying), and droneMap() (graded
  * drone tension). Every checkable claim is traced: the bass is "computed"; the frame
@@ -70,11 +70,11 @@ export interface IdentifyTruth {
  * rule id; each tension reading carries its tension-table rule id.
  */
 export function mcpIdentify(
-  grip: Grip,
+  shape: Shape,
   tuning: Tuning,
   ctx: IdentifyContext = {},
 ): ToolResult<IdentifyTruth> {
-  const positions = placedFromGrip(grip);
+  const positions = placedFromShape(shape);
   const candidates = identify(positions, tuning, ctx);
   const card = loadGrammarCard(tuning.id);
   const rules = loadRules();
@@ -83,7 +83,7 @@ export function mcpIdentify(
   const claims: Claim[] = [];
 
   reasoningChain.push(
-    `Read the grip as ${positions.length} sounding position(s) on ${tuning.id}.`,
+    `Read the shape as ${positions.length} sounding position(s) on ${tuning.id}.`,
   );
 
   // Bass = the lowest PITCH of the best candidate's preserved voicing (R10).
@@ -102,7 +102,7 @@ export function mcpIdentify(
       );
     }
   } else {
-    reasoningChain.push('The grip sounds nothing — no candidates.');
+    reasoningChain.push('The shape sounds nothing — no candidates.');
   }
 
   // Tier-1 relational reading. Its traces are already per-claim grounded; lift them.
@@ -113,7 +113,7 @@ export function mcpIdentify(
     tier1 = nameTier1(positions, tuning, card, rules);
     handoffToTier2 = shouldHandoffToTier2(tier1);
     reasoningChain.push(
-      `nameTier1() read the grip relative to the ${tuning.id} drones: ${tier1.sentence}`,
+      `nameTier1() read the shape relative to the ${tuning.id} drones: ${tier1.sentence}`,
     );
 
     // The frame headline -> a KB-traced claim (its relational-vocabulary rule id).
@@ -149,7 +149,7 @@ export function mcpIdentify(
       );
     }
   } else {
-    // No card (non-open-g tuning) or empty grip: a minimal, still-grounded result.
+    // No card (non-open-g tuning) or empty shape: a minimal, still-grounded result.
     tier1 = {
       decomposition: { drones: [], activeVoices: [] },
       frame: null,
@@ -158,11 +158,11 @@ export function mcpIdentify(
       sentence:
         card == null
           ? `No grammar card for ${tuning.id}; relational framing unavailable.`
-          : 'Empty grip.',
+          : 'Empty shape.',
       traces: [],
       handoff: {
         toTier2: true,
-        reason: card == null ? 'no-card' : 'empty-grip',
+        reason: card == null ? 'no-card' : 'empty-shape',
       },
     };
   }
@@ -199,13 +199,13 @@ export interface FunctionTruth {
 }
 
 /**
- * functionOf(grip, tuning) — the relational FRAME plus its diatonic function and any
+ * functionOf(shape, tuning) — the relational FRAME plus its diatonic function and any
  * pull/resolution tendency. Composes nameTier1() for the frame + roman numeral, then
  * joins the resolved roman numeral to the function-tendencies rule set (loadRules) by
  * its `key.function`. Each tendency claim is traced to its function-tendency rule id.
  */
-export function functionOf(grip: Grip, tuning: Tuning): ToolResult<FunctionTruth> {
-  const positions = placedFromGrip(grip);
+export function functionOf(shape: Shape, tuning: Tuning): ToolResult<FunctionTruth> {
+  const positions = placedFromShape(shape);
   const card = loadGrammarCard(tuning.id);
   const rules = loadRules();
   const claims: Claim[] = [];
@@ -220,9 +220,9 @@ export function functionOf(grip: Grip, tuning: Tuning): ToolResult<FunctionTruth
       sentence:
         card == null
           ? `No grammar card for ${tuning.id}.`
-          : 'Empty grip.',
+          : 'Empty shape.',
       traces: [],
-      handoff: { toTier2: true, reason: card == null ? 'no-card' : 'empty-grip' },
+      handoff: { toTier2: true, reason: card == null ? 'no-card' : 'empty-shape' },
     };
     return {
       truth: {
@@ -239,7 +239,7 @@ export function functionOf(grip: Grip, tuning: Tuning): ToolResult<FunctionTruth
   }
 
   const tier1 = nameTier1(positions, tuning, card, rules);
-  reasoningChain.push(`nameTier1() framed the grip: ${tier1.sentence}`);
+  reasoningChain.push(`nameTier1() framed the shape: ${tier1.sentence}`);
 
   const rn = tier1.frame?.romanNumeral ?? null;
   if (tier1.frame != null) {
@@ -296,7 +296,7 @@ export interface NeighborMove {
   /** Spelled note before -> after. */
   readonly fromNote: string;
   readonly toNote: string;
-  /** Resulting chord symbol (Tier-2) for the moved grip, or null. */
+  /** Resulting chord symbol (Tier-2) for the moved shape, or null. */
   readonly resultSymbol: string | null;
 }
 
@@ -305,13 +305,13 @@ export interface NeighborsTruth {
 }
 
 /**
- * neighbors(grip, tuning) — enumerate a few single-string ±1 / ±2 semitone moves
- * (the smallest voice-leading steps) and name the resulting grip via nameTier2(). Each
+ * neighbors(shape, tuning) — enumerate a few single-string ±1 / ±2 semitone moves
+ * (the smallest voice-leading steps) and name the resulting shape via nameTier2(). Each
  * move's result symbol is COMPUTED (traced "computed"). Only moves that stay on the neck
  * (fret >= 0) are kept; we cap the list so the conversational surface stays small.
  */
-export function neighbors(grip: Grip, tuning: Tuning): ToolResult<NeighborsTruth> {
-  const positions = placedFromGrip(grip);
+export function neighbors(shape: Shape, tuning: Tuning): ToolResult<NeighborsTruth> {
+  const positions = placedFromShape(shape);
   const reasoningChain: string[] = [];
   const claims: Claim[] = [];
 
@@ -367,7 +367,7 @@ export function neighbors(grip: Grip, tuning: Tuning): ToolResult<NeighborsTruth
       ? `Small moves from here: ${moves
           .map((m) => `${m.fromNote}->${m.toNote} (${m.resultSymbol ?? '?'})`)
           .join(', ')}.`
-      : 'No single-step neighbours available (empty grip).';
+      : 'No single-step neighbours available (empty shape).';
 
   return { truth: { moves }, explanation, reasoningChain, claims };
 }
@@ -406,10 +406,10 @@ export function findVoicingsTool(
   }
 
   reasoningChain.push(
-    `Parsed "${chordSymbol}" to a pitch-class set; searching fingerable grips on ${tuning.id}.`,
+    `Parsed "${chordSymbol}" to a pitch-class set; searching fingerable shapes on ${tuning.id}.`,
   );
   const voicings = findVoicings(chord, tuning);
-  reasoningChain.push(`findVoicings() returned ${voicings.length} ranked grip(s).`);
+  reasoningChain.push(`findVoicings() returned ${voicings.length} ranked shape(s).`);
 
   for (const v of voicings) {
     claims.push(
@@ -459,18 +459,18 @@ export interface TranslateTruth {
 }
 
 /**
- * translate(grip, fromTuning, toTuning) — morph a grip's SOUNDING PITCHES (the invariant)
+ * translate(shape, fromTuning, toTuning) — morph a shape's SOUNDING PITCHES (the invariant)
  * onto the target tuning, finding the lowest fret on any string that reproduces each
  * pitch (docs/04 flow 3). Pitches that fall BELOW every target open string, or above the
  * neck, are flagged unreachable. Every placement / flag is COMPUTED.
  */
 export function translate(
-  grip: Grip,
+  shape: Shape,
   fromTuning: Tuning,
   toTuning: Tuning,
   maxFret = 22,
 ): ToolResult<TranslateTruth> {
-  const pitches = soundingPitches(grip, fromTuning);
+  const pitches = soundingPitches(shape, fromTuning);
   const reasoningChain: string[] = [];
   const claims: Claim[] = [];
 
@@ -578,18 +578,18 @@ function degreeToSemitone(degree: number): number {
 }
 
 /**
- * feelingToOptions(grip, tuning, vibe) — THE honesty-seam tool (docs/04 flow 2; ADR 0003).
+ * feelingToOptions(shape, tuning, vibe) — THE honesty-seam tool (docs/04 flow 2; ADR 0003).
  *
  * 1. loadAffective() the vibe -> its EDITORIAL op list. The vibe rationale is taste
  *    (provenance.kind 'editorial'), so its claim is editorial:true AND hedged ("usually"),
  *    traced to the affective VIBE ID (a valid KB id).
- * 2. Apply the ops to the grip's current chord to produce concrete option chords, then
+ * 2. Apply the ops to the shape's current chord to produce concrete option chords, then
  *    findVoicings() each -> COMPUTED option voicings. Those claims are grounded ("computed").
  *
  * So ONE ToolResult mixes a hedged editorial vibe-claim with grounded computed options.
  */
 export function feelingToOptions(
-  grip: Grip,
+  shape: Shape,
   tuning: Tuning,
   vibe: string,
 ): ToolResult<FeelingTruth> {
@@ -626,9 +626,9 @@ export function feelingToOptions(
     ),
   );
 
-  // Resolve the grip's current chord identity to morph from (best identify candidate),
+  // Resolve the shape's current chord identity to morph from (best identify candidate),
   // else fall back to the tuning's home/tonic triad.
-  const positions = placedFromGrip(grip);
+  const positions = placedFromShape(shape);
   const ctx: IdentifyContext = {};
   const cands = positions.length > 0 ? identify(positions, tuning, ctx) : [];
   const baseChord: Chord =
@@ -683,7 +683,7 @@ export function feelingToOptions(
     if (o.voicing) {
       claims.push(
         computedClaim(
-          `option grip [${o.voicing.frets
+          `option shape [${o.voicing.frets
             .map((f) => (f === null ? 'x' : f))
             .join(' ')}] is ${o.voicing.playability.flag} to play`,
         ),

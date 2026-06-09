@@ -34,7 +34,7 @@ function openChord(strings: number[], title: string): RenderFragment {
 const FRAGMENTS: Record<string, RenderFragment> = {
   'Open G — open chord (all opens ringing)': openChord(OPEN_G, 'Open G — open drone chord'),
   'DADGAD — open chord (all opens ringing)': openChord(DADGAD, 'DADGAD — open drone chord'),
-  'DADGAD — Dsus4 grip over low-D drone': {
+  'DADGAD — Dsus4 shape over low-D drone': {
     title: 'DADGAD — fretted voice over sustained opens',
     tuning: { strings: DADGAD },
     notes: [

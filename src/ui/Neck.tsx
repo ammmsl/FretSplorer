@@ -12,14 +12,14 @@
 //
 // MOSTLY presentational: it receives the already-projected positions + drone readings
 // (computed by /projection in the shell) and the label mode. It ALSO renders an
-// optional GRIP (the held notes, docs/08 decision e) and, when the interaction props
+// optional SHAPE (the held notes, docs/08 decision e) and, when the interaction props
 // are supplied, becomes INTERACTIVE — clicking fret cells / nut markers calls back to
-// the shell which owns the grip state (docs/09 UI#4). With no interaction props it is
+// the shell which owns the shape state (docs/09 UI#4). With no interaction props it is
 // purely presentational, so existing tests/usage are unaffected.
 //
-// Grip markers are a DISTINCT third visual: a SOLID filled disc with a ring (placed
+// Shape markers are a DISTINCT third visual: a SOLID filled disc with a ring (placed
 // note) + open(O)/mute(X) glyphs at the nut + a bass callout — deliberately not the
-// degree dot fill and not the drone line, so the held grip never reads as an overlay.
+// degree dot fill and not the drone line, so the held shape never reads as an overlay.
 
 import type {
   KeyContext,
@@ -40,7 +40,7 @@ import {
 } from './geometry';
 import { degreeStyle, droneStyle } from './palette';
 import { dotLabel, type LabelMode } from './labels';
-import type { Grip } from './grip';
+import type { Shape } from './shape';
 
 export interface NeckProps {
   readonly tuning: Tuning;
@@ -50,8 +50,8 @@ export interface NeckProps {
   readonly drones?: readonly OpenStringDrone[];
   readonly labelMode: LabelMode;
   // ── Optional interaction (the focused neck only). Omit all to stay presentational. ──
-  /** The held grip to render (solid placed-note markers + nut O/X glyphs). */
-  readonly grip?: Grip;
+  /** The held shape to render (solid placed-note markers + nut O/X glyphs). */
+  readonly shape?: Shape;
   /** String index of the BASS (lowest pitch) note to call out; null = none. */
   readonly bassString?: number | null;
   /** Fret of the bass note (so the marker sits on the right cell; 0 = open). */
@@ -63,7 +63,7 @@ export interface NeckProps {
 }
 
 const DOT_R = 9;
-const GRIP_R = 10;
+const SHAPE_R = 10;
 const NUT_W = 18; // thickness of the nut bar (a chunky bone-nut bar)
 // The nut is a rounded-corner TRAPEZOID, NOT a vertical pill (a pill reads wrong and,
 // sized to overhang the strings, floats past the neck — jarring under WYSIWYG). Its two
@@ -118,7 +118,7 @@ export function Neck({
   positions,
   drones,
   labelMode,
-  grip,
+  shape,
   bassString,
   bassFret,
   onFretClick,
@@ -326,12 +326,12 @@ export function Neck({
         })}
       </g>
 
-      {/* GRIP placed notes — a SOLID disc + ring, visually distinct from the degree
+      {/* SHAPE placed notes — a SOLID disc + ring, visually distinct from the degree
           dot fill and the drone line (docs/08 decision e). Rendered above the overlay
-          so the held grip reads as the foreground subject. */}
-      {grip && (
-        <g className="neck-grip">
-          {grip.map((sg, s) => {
+          so the held shape reads as the foreground subject. */}
+      {shape && (
+        <g className="neck-shape">
+          {shape.map((sg, s) => {
             if (sg.kind !== 'open' && sg.kind !== 'fret') return null;
             const fret = sg.kind === 'open' ? 0 : sg.fret;
             const cx = noteX(g, fret);
@@ -339,16 +339,16 @@ export function Neck({
             const isBass = bassString === s && (bassFret ?? 0) === fret;
             return (
               <g
-                key={`grip-${s}`}
-                className={`grip-note${isBass ? ' grip-bass' : ''}`}
+                key={`shape-${s}`}
+                className={`shape-note${isBass ? ' shape-bass' : ''}`}
                 role="img"
                 aria-label={`held note on string ${s + 1} ${
                   fret === 0 ? 'open' : `fret ${fret}`
                 }${isBass ? ' (bass)' : ''}`}
               >
-                <circle className="grip-disc" cx={cx} cy={cy} r={GRIP_R} />
+                <circle className="shape-disc" cx={cx} cy={cy} r={SHAPE_R} />
                 {isBass && (
-                  <circle className="grip-bass-ring" cx={cx} cy={cy} r={GRIP_R + 4} fill="none" />
+                  <circle className="shape-bass-ring" cx={cx} cy={cy} r={SHAPE_R + 4} fill="none" />
                 )}
               </g>
             );
@@ -357,9 +357,9 @@ export function Neck({
       )}
 
       {/* BASS marker label — a small "B" badge calling out the computed lowest pitch. */}
-      {grip && bassString != null && (
+      {shape && bassString != null && (
         <text
-          className="grip-bass-label"
+          className="shape-bass-label"
           x={noteX(g, bassFret ?? 0)}
           y={stringY(g, bassString)}
           textAnchor="middle"
@@ -397,18 +397,18 @@ export function Neck({
       )}
 
       {/* Per-string NUT markers — sit ON the nut bar (cx === nutX), exactly where an
-          open note's grip disc lands, so the control and its result are co-located.
+          open note's shape disc lands, so the control and its result are co-located.
           Rendered ABOVE the fret-cell layer so a click right at the nut rings the string
           open (cycle open -> muted -> off) rather than landing on fret 1. Visual states:
-            - open  : shown by the solid grip disc on the nut (drawn above).
+            - open  : shown by the solid shape disc on the nut (drawn above).
             - muted : an X glyph on the nut.
             - off   : no persistent mark — the chunky nut bar is the affordance; a soft
                       accent ring appears on hover to confirm the string is clickable.
-          Shown whenever interactive OR a grip is present. */}
-      {(grip || interactive) && (
+          Shown whenever interactive OR a shape is present. */}
+      {(shape || interactive) && (
         <g className="neck-nut-markers">
           {tuning.openStrings.map((_, s) => {
-            const sg = grip?.[s];
+            const sg = shape?.[s];
             const cx = nutX(g);
             const cy = stringY(g, s);
             const isOpen = sg?.kind === 'open';

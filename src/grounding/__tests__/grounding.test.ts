@@ -12,7 +12,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { TUNINGS } from '../../ui/fixtures';
-import type { Grip } from '../../ui';
+import type { Shape } from '../../ui';
 import type { Claim, ToolResult } from '../../mcp';
 import {
   adviseSetupTool,
@@ -28,8 +28,8 @@ import { checkGrounding, collectKbIds, collectEditorialKbIds } from '../index';
 const openG = TUNINGS.find((t) => t.id === 'open-g')!;
 const eadgbe = TUNINGS.find((t) => t.id === 'eadgbe')!;
 
-/** The Open-G home chord grip: all six strings open (the I in G). */
-const allOpenGrip: Grip = openG.openStrings.map(() => ({ kind: 'open' }) as const);
+/** The Open-G home chord shape: all six strings open (the I in G). */
+const allOpenShape: Shape = openG.openStrings.map(() => ({ kind: 'open' }) as const);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // collectKbIds — the registry of legal trace targets
@@ -76,15 +76,15 @@ describe('checkGrounding — the representative set passes (M3 gate)', () => {
   }
 
   it('mcpIdentify(Open-G home chord) is fully grounded', () => {
-    expectGrounded(mcpIdentify(allOpenGrip, openG));
+    expectGrounded(mcpIdentify(allOpenShape, openG));
   });
 
   it('functionOf(Open-G home chord) is fully grounded', () => {
-    expectGrounded(functionOf(allOpenGrip, openG));
+    expectGrounded(functionOf(allOpenShape, openG));
   });
 
   it('neighbors(Open-G home chord) is fully grounded', () => {
-    expectGrounded(neighbors(allOpenGrip, openG));
+    expectGrounded(neighbors(allOpenShape, openG));
   });
 
   it('findVoicingsTool(C on EADGBE) is fully grounded', () => {
@@ -92,11 +92,11 @@ describe('checkGrounding — the representative set passes (M3 gate)', () => {
   });
 
   it('translate(Open-G -> EADGBE) is fully grounded', () => {
-    expectGrounded(translate(allOpenGrip, openG, eadgbe));
+    expectGrounded(translate(allOpenShape, openG, eadgbe));
   });
 
   it('feelingToOptions(dreamier on Open-G) — editorial seam + computed options — is grounded', () => {
-    const result = feelingToOptions(allOpenGrip, openG, 'dreamier');
+    const result = feelingToOptions(allOpenShape, openG, 'dreamier');
     // The editorial vibe claim must itself be detected as editorial AND hedged.
     const editorial = result.claims.filter((c) => c.editorial);
     expect(editorial.length).toBeGreaterThanOrEqual(1);
@@ -109,12 +109,12 @@ describe('checkGrounding — the representative set passes (M3 gate)', () => {
 
   it('the WHOLE representative set passes in aggregate (ok:true everywhere)', () => {
     const results: ToolResult<unknown>[] = [
-      mcpIdentify(allOpenGrip, openG),
-      functionOf(allOpenGrip, openG),
-      neighbors(allOpenGrip, openG),
+      mcpIdentify(allOpenShape, openG),
+      functionOf(allOpenShape, openG),
+      neighbors(allOpenShape, openG),
       findVoicingsTool('C', eadgbe),
-      translate(allOpenGrip, openG, eadgbe),
-      feelingToOptions(allOpenGrip, openG, 'dreamier'),
+      translate(allOpenShape, openG, eadgbe),
+      feelingToOptions(allOpenShape, openG, 'dreamier'),
       adviseSetupTool(openG),
     ];
     for (const r of results) {
@@ -142,7 +142,7 @@ describe('checkGrounding — catches violations', () => {
 
   it('flags UNTRACEABLE for a claim traced to a totally-made-up id', () => {
     const result = resultWith([
-      { text: 'This grip is a secret augmented eleventh.', trace: 'totally-made-up-id' },
+      { text: 'This shape is a secret augmented eleventh.', trace: 'totally-made-up-id' },
     ]);
     const report = checkGrounding(result, kbIds);
     expect(report.ok).toBe(false);

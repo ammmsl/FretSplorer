@@ -6,11 +6,11 @@ import { describe, expect, it } from 'vitest';
 import { chord, pitchClass, tuning } from '../../core';
 import { droneMap } from '../../projection';
 import { buildReadout, spellWithOctave } from '../readout';
-import { emptyGrip, placeFret, type Grip } from '../grip';
+import { emptyShape, placeFret, type Shape } from '../shape';
 
 // open-g: string 0..5 = [62,59,55,50,43,38] (D4 B3 G3 D3 G2 D2), tonic G = 7.
 const openG = tuning('open-g', [62, 59, 55, 50, 43, 38], 7);
-const allOpenG: Grip = openG.openStrings.map(() => ({ kind: 'open' as const }));
+const allOpenG: Shape = openG.openStrings.map(() => ({ kind: 'open' as const }));
 
 describe('spellWithOctave', () => {
   it('spells MIDI with scientific octave (60 = C4)', () => {
@@ -21,8 +21,8 @@ describe('spellWithOctave', () => {
 });
 
 describe('buildReadout — idle', () => {
-  it('an empty grip is the idle state', () => {
-    const vm = buildReadout(emptyGrip(6), openG);
+  it('an empty shape is the idle state', () => {
+    const vm = buildReadout(emptyShape(6), openG);
     expect(vm.empty).toBe(true);
     expect(vm.symbol).toBeNull();
     expect(vm.notes).toHaveLength(0);
@@ -77,8 +77,8 @@ describe('buildReadout — Open-G home chord (M1 gate)', () => {
   });
 });
 
-describe('buildReadout — live update on grip change', () => {
-  it('changing the grip changes the reading', () => {
+describe('buildReadout — live update on shape change', () => {
+  it('changing the shape changes the reading', () => {
     const before = buildReadout(allOpenG, openG);
     // Fret the low D string (5) up two -> E2, breaking the clean G triad reading.
     const changed = placeFret(allOpenG, 5, 2);

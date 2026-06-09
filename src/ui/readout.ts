@@ -1,6 +1,6 @@
 // Readout view-model (/ui) — PURE assembly of the live "What you're holding" panel
 // (docs/08 decision f; docs/09 UI#4; CONTEXT.md "Readout panel"). Given the focused
-// neck's grip + tuning, it runs identify() and builds a tiered, render-ready view:
+// neck's shape + tuning, it runs identify() and builds a tiered, render-ready view:
 //
 //   T1  relational sentence — the REAL relational headline (M2). When the focused tuning
 //       has a grammar card (loadGrammarCard; today only "open-g"), nameTier1 runs and its
@@ -16,7 +16,7 @@
 //       SEPARATE channel). Degree and drone never share a pixel-role (docs/01 §B).
 //   candidates — when identify returns >1, the ranked ambiguity list (symbol + score).
 //
-// This module owns NO React; it is unit-tested against known grips. It reuses the same
+// This module owns NO React; it is unit-tested against known shapes. It reuses the same
 // /core + /naming primitives the neck overlay uses so the panel mirrors the board.
 
 import type {
@@ -34,12 +34,12 @@ import { loadGrammarCard, loadRules } from '../kb';
 import type { GrammarCard, RuleBundle } from '../kb';
 import { nameTier1 } from '../naming/tier1-relational';
 import type { Tier1Result } from '../naming/tier1-relational';
-import { gripToPlaced, isGripEmpty, type Grip } from './grip';
+import { shapeToPlaced, isShapeEmpty, type Shape } from './shape';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KB load is MEMOISED — the card + rule bundle are loaded ONCE (per id for cards,
 // once for the global rules), never per keystroke. buildReadout runs in the hot
-// loop, so it must not re-parse YAML on every grip change.
+// loop, so it must not re-parse YAML on every shape change.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CARD_CACHE = new Map<string, GrammarCard | null>();
@@ -200,23 +200,23 @@ const IDLE: ReadoutViewModel = {
 };
 
 /**
- * Build the live readout view-model for a grip on the focused neck (the hot loop).
+ * Build the live readout view-model for a shape on the focused neck (the hot loop).
  *
- * @param grip   the focused neck's grip.
+ * @param shape   the focused neck's shape.
  * @param tuning the focused neck's tuning (also supplies the key context tonic).
  * @param drones optional droneMap() readings for the active scale/chord overlay; when
  *               present, OPEN strings carry their context-root drone tension. The
  *               drone channel is independent of identify() — it reflects the SELECTED
- *               harmonic context, not the held grip (docs/01 §B two channels).
+ *               harmonic context, not the held shape (docs/01 §B two channels).
  */
 export function buildReadout(
-  grip: Grip,
+  shape: Shape,
   tuning: Tuning,
   drones?: readonly OpenStringDrone[],
 ): ReadoutViewModel {
-  if (isGripEmpty(grip)) return IDLE;
+  if (isShapeEmpty(shape)) return IDLE;
 
-  const placed = gripToPlaced(grip);
+  const placed = shapeToPlaced(shape);
   if (placed.length === 0) return IDLE;
 
   const ctx: KeyContext = { tonic: tuning.tonic };

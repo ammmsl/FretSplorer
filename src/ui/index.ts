@@ -63,16 +63,16 @@ export { DEFAULT_THEME, nextTheme } from './theme';
 export type { Theme } from './theme';
 
 export {
-  emptyGrip,
-  isGripEmpty,
+  emptyShape,
+  isShapeEmpty,
   placeFret,
   removeNote,
   cycleNutMarker,
   isSounding,
-  gripToPlaced,
+  shapeToPlaced,
   soundingPitch,
-} from './grip';
-export type { Grip, StringGrip } from './grip';
+} from './shape';
+export type { Shape, StringShape } from './shape';
 
 export {
   buildReadout,

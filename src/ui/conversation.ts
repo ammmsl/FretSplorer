@@ -5,7 +5,7 @@
 // There is NO LLM in this static client app (ADR 0008). The "conversation" is a
 // DETERMINISTIC INTENT ROUTER over the in-process MCP tools (/mcp): a user turn is
 // parsed for a known intent / vibe keyword and dispatched to the matching tool against
-// the FOCUSED neck's grip + tuning (deixis -> the focus pointer, docs/04). The tool
+// the FOCUSED neck's shape + tuning (deixis -> the focus pointer, docs/04). The tool
 // returns a uniform ToolResult<…> (truth + explanation + reasoningChain + per-claim
 // traces); this module turns that into a render-ready TurnView the React panel paints.
 //
@@ -210,7 +210,7 @@ export interface TraceView {
   readonly hedged: boolean;
 }
 
-/** A spawnable comparison option (feelingToOptions) — a per-string grip on the tuning. */
+/** A spawnable comparison option (feelingToOptions) — a per-string shape on the tuning. */
 export interface OptionView {
   readonly symbol: string;
   /** Per-string frets aligned to tuning.openStrings: fret number, 0 = open, null = muted. */
@@ -249,7 +249,7 @@ function toTraceView(claim: Claim): TraceView {
  * buildTurnView(result, options?) — fold a uniform ToolResult into a TurnView. The
  * explanation becomes the model line; the reasoning chain is carried verbatim; every
  * claim becomes a visible TraceView (computed vs KB id, editorial taste kept hedged).
- * `options` are the spawnable comparison grips (only the feeling intent supplies them);
+ * `options` are the spawnable comparison shapes (only the feeling intent supplies them);
  * they are passed in already-shaped (the React layer maps RankedVoicing -> OptionView)
  * so this stays free of the voicings types and trivially testable.
  */

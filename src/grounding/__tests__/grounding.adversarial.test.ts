@@ -5,7 +5,7 @@
 //   1. CATCHES CONFABULATION — hand-build ToolResults that SHOULD fail and assert
 //      checkGrounding flags each: (a) an untraceable id, (b) an unhedged editorial vibe
 //      claim stated as fact, (c) an empty trace. A PASS here is a real hole.
-//   2. REAL OUTPUT IS TRACEABLE — call the ACTUAL mcp tools on Open-G grips (incl. the §6
+//   2. REAL OUTPUT IS TRACEABLE — call the ACTUAL mcp tools on Open-G shapes (incl. the §6
 //      barre-5-over-low-D and the all-open home chord) and assert checkGrounding(...).ok
 //      and that every claim trace RESOLVES (no claim silently traced to a stale/typo id).
 //      The editorial affective claim must be the ONLY editorial one, and must be hedged.
@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { TUNINGS } from '../../ui/fixtures';
-import type { Grip } from '../../ui';
+import type { Shape } from '../../ui';
 import type { Claim, ToolResult } from '../../mcp';
 import {
   feelingToOptions,
@@ -39,14 +39,14 @@ const eadgbe = TUNINGS.find((t) => t.id === 'eadgbe')!;
 const kbIds = collectKbIds();
 const editorialIds = collectEditorialKbIds();
 
-// ── Grip fixtures (index-aligned with Tuning.openStrings; string 0 = high) ──
+// ── Shape fixtures (index-aligned with Tuning.openStrings; string 0 = high) ──
 
 /** All six strings open — the Open-G home I chord (G). */
-const allOpenGrip: Grip = openG.openStrings.map(() => ({ kind: 'open' }) as const);
+const allOpenShape: Shape = openG.openStrings.map(() => ({ kind: 'open' }) as const);
 
 /** §6 worked example: upper five strings barred at fret 5, low string (idx 5) open low D.
  *  This is the og-major-over-d-drone shape (IV / C major over the open D drone). */
-const barre5OverLowD: Grip = openG.openStrings.map((_, i) =>
+const barre5OverLowD: Shape = openG.openStrings.map((_, i) =>
   i === 5 ? ({ kind: 'open' } as const) : ({ kind: 'fret', fret: 5 } as const),
 );
 
@@ -68,7 +68,7 @@ describe('PROBE 1 — confabulation must be caught', () => {
   it('1a: a checkable claim traced to a non-existent id ("frame-does-not-exist") is UNTRACEABLE', () => {
     const result = resultWith([
       {
-        text: 'This grip frames as a secret Lydian pivot.',
+        text: 'This shape frames as a secret Lydian pivot.',
         trace: 'frame-does-not-exist',
       },
     ]);
@@ -136,19 +136,19 @@ describe('PROBE 1 — confabulation must be caught', () => {
 // PROBE 2 — REAL tool output is genuinely traceable (every trace resolves)
 // ════════════════════════════════════════════════════════════════════════════
 
-/** A representative set of REAL tool calls over Open-G grips (+ a cross-tuning translate). */
+/** A representative set of REAL tool calls over Open-G shapes (+ a cross-tuning translate). */
 function representativeSet(): { name: string; result: ToolResult<unknown> }[] {
   return [
     { name: 'mcpIdentify(barre-5-over-low-D)', result: mcpIdentify(barre5OverLowD, openG) },
-    { name: 'mcpIdentify(all-open home)', result: mcpIdentify(allOpenGrip, openG) },
+    { name: 'mcpIdentify(all-open home)', result: mcpIdentify(allOpenShape, openG) },
     { name: 'functionOf(barre-5-over-low-D)', result: functionOf(barre5OverLowD, openG) },
-    { name: 'functionOf(all-open home)', result: functionOf(allOpenGrip, openG) },
-    { name: 'neighbors(all-open home)', result: neighbors(allOpenGrip, openG) },
+    { name: 'functionOf(all-open home)', result: functionOf(allOpenShape, openG) },
+    { name: 'neighbors(all-open home)', result: neighbors(allOpenShape, openG) },
     { name: 'neighbors(barre-5-over-low-D)', result: neighbors(barre5OverLowD, openG) },
-    { name: 'translate(Open-G home -> EADGBE)', result: translate(allOpenGrip, openG, eadgbe) },
-    { name: 'feelingToOptions(dreamier, home)', result: feelingToOptions(allOpenGrip, openG, 'dreamier') },
+    { name: 'translate(Open-G home -> EADGBE)', result: translate(allOpenShape, openG, eadgbe) },
+    { name: 'feelingToOptions(dreamier, home)', result: feelingToOptions(allOpenShape, openG, 'dreamier') },
     { name: 'feelingToOptions(darker, barre-5)', result: feelingToOptions(barre5OverLowD, openG, 'darker') },
-    { name: 'feelingToOptions(more-open, home)', result: feelingToOptions(allOpenGrip, openG, 'more-open') },
+    { name: 'feelingToOptions(more-open, home)', result: feelingToOptions(allOpenShape, openG, 'more-open') },
   ];
 }
 
@@ -185,7 +185,7 @@ describe('PROBE 2 — real tool output is traceable', () => {
 
   it('feelingToOptions has EXACTLY ONE editorial claim and it is hedged + traced to a vibe id', () => {
     for (const vibe of ['dreamier', 'darker', 'more-open']) {
-      const result = feelingToOptions(allOpenGrip, openG, vibe);
+      const result = feelingToOptions(allOpenShape, openG, vibe);
       const editorial = result.claims.filter(
         (c) => c.editorial === true || editorialIds.has(c.trace),
       );

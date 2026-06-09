@@ -6,8 +6,8 @@
 //       required fields, id/shape-id kebab pattern, MIDI/tonic ranges, provenance.verifiedBy
 //       on definitional|derived, and the movable-shape per-string template (play + offset).
 //   (B) GROUNDED ok:true — running the REAL /mcp intents (mcpIdentify, functionOf) on the
-//       card's home (all-open) grip passes checkGrounding with zero violations (ADR 0003).
-//   (C) RELATIONAL NAMING FIRES — buildReadout on the home grip yields a 'relational' view
+//       card's home (all-open) shape passes checkGrounding with zero violations (ADR 0003).
+//   (C) RELATIONAL NAMING FIRES — buildReadout on the home shape yields a 'relational' view
 //       (the HOME frame), i.e. the differentiator fires in the readout for this tuning.
 //
 // Plus: the authored verifiedNote arithmetic is re-derived here (home pc-set; full-barre
@@ -16,7 +16,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GrammarCard } from '../../kb';
 import { loadGrammarCard } from '../../kb';
-import type { Grip, StringGrip } from '../../ui';
+import type { Shape, StringShape } from '../../ui';
 import { buildReadout } from '../../ui';
 import { tuning as makeTuning, type Tuning } from '../../core';
 import { TUNINGS } from '../../ui';
@@ -87,13 +87,13 @@ function expectSchemaValid(card: GrammarCard): void {
   }
 }
 
-/** Build the all-open (home) grip for a tuning. */
-const allOpenGrip = (t: Tuning): Grip => t.openStrings.map(() => ({ kind: 'open' }) as StringGrip);
+/** Build the all-open (home) shape for a tuning. */
+const allOpenShape = (t: Tuning): Shape => t.openStrings.map(() => ({ kind: 'open' }) as StringShape);
 
-/** Build a grip from a movable shape at a given anchor fret (offset relative to anchor). */
-function shapeGrip(card: GrammarCard, shapeId: string, anchorFret: number): Grip {
-  const shape = card.movableShapes!.find((s) => s.id === shapeId)!;
-  return shape.strings.map((s): StringGrip => {
+/** Realise a movable shape (by id) at a given anchor fret into a concrete Shape. */
+function realizeById(card: GrammarCard, shapeId: string, anchorFret: number): Shape {
+  const movable = card.movableShapes!.find((s) => s.id === shapeId)!;
+  return movable.strings.map((s): StringShape => {
     if (s.play === 'open') return { kind: 'open' };
     if (s.play === 'mute') return { kind: 'muted' };
     const fret = anchorFret + (s.offset ?? 0);
@@ -128,21 +128,21 @@ describe.each(CARDS)('grammar card $name ($id)', (expected) => {
     expect([...pcSet(card!.strings)].sort((a, b) => a - b)).toEqual(expected.homePcs);
   });
 
-  it('(B) the home grip is fully grounded through mcpIdentify (ok:true)', () => {
+  it('(B) the home shape is fully grounded through mcpIdentify (ok:true)', () => {
     const t = makeTuning(expected.id, [...card!.strings], card!.tonic);
-    const report = checkGrounding(mcpIdentify(allOpenGrip(t), t), kbIds);
+    const report = checkGrounding(mcpIdentify(allOpenShape(t), t), kbIds);
     expect(report.violations.map((v) => `${v.kind}: ${v.reason}`)).toEqual([]);
     expect(report.ok).toBe(true);
   });
 
-  it('(B) the home grip is fully grounded through functionOf (ok:true)', () => {
+  it('(B) the home shape is fully grounded through functionOf (ok:true)', () => {
     const t = makeTuning(expected.id, [...card!.strings], card!.tonic);
-    expect(checkGrounding(functionOf(allOpenGrip(t), t), kbIds).ok).toBe(true);
+    expect(checkGrounding(functionOf(allOpenShape(t), t), kbIds).ok).toBe(true);
   });
 
   it('(C) relational naming FIRES in the readout (HOME frame)', () => {
     const t = makeTuning(expected.id, [...card!.strings], card!.tonic);
-    const vm = buildReadout(allOpenGrip(t), t);
+    const vm = buildReadout(allOpenShape(t), t);
     expect(vm.empty).toBe(false);
     expect(vm.relational?.kind).toBe('relational');
     if (vm.relational?.kind === 'relational') {
@@ -152,10 +152,10 @@ describe.each(CARDS)('grammar card $name ($id)', (expected) => {
 
   it('every movable shape produces grounded output at a few anchors', () => {
     const t = makeTuning(expected.id, [...card!.strings], card!.tonic);
-    for (const shape of card!.movableShapes ?? []) {
+    for (const movable of card!.movableShapes ?? []) {
       for (const anchor of [0, 5, 7]) {
-        const report = checkGrounding(mcpIdentify(shapeGrip(card!, shape.id, anchor), t), kbIds);
-        expect(report.ok, `${shape.id} @${anchor}: ${report.violations.map((v) => v.kind).join(',')}`).toBe(true);
+        const report = checkGrounding(mcpIdentify(realizeById(card!, movable.id, anchor), t), kbIds);
+        expect(report.ok, `${movable.id} @${anchor}: ${report.violations.map((v) => v.kind).join(',')}`).toBe(true);
       }
     }
   });
@@ -163,19 +163,19 @@ describe.each(CARDS)('grammar card $name ($id)', (expected) => {
   it('full-barre shapes transpose the home sonority (home-transposed frame)', () => {
     const t = makeTuning(expected.id, [...card!.strings], card!.tonic);
     const barres = (card!.movableShapes ?? []).filter((s) => s.strings.every((x) => x.play === 'fret'));
-    for (const shape of barres) {
+    for (const movable of barres) {
       // At anchor 5, a full barre = the home pc-set shifted up 5 semitones.
-      const grip = shapeGrip(card!, shape.id, 5);
+      const shape = realizeById(card!, movable.id, 5);
       const r = nameTier1(
-        grip.flatMap((g, string) => (g.kind === 'fret' ? [{ string, fret: g.fret }] : g.kind === 'open' ? [{ string, fret: 0 }] : [])),
+        shape.flatMap((g, string) => (g.kind === 'fret' ? [{ string, fret: g.fret }] : g.kind === 'open' ? [{ string, fret: 0 }] : [])),
         t,
         card!,
         rules,
       );
-      expect(r.frame?.category, `${shape.id} should read as home-transposed at fret 5`).toBe('home-transposed');
+      expect(r.frame?.category, `${movable.id} should read as home-transposed at fret 5`).toBe('home-transposed');
       const shifted = new Set([...pcSet(card!.strings)].map((pc) => (pc + 5) % 12));
-      const gripPcs = pcSet(grip.map((g, s) => (g.kind === 'fret' ? (t.openStrings[s] as number) + g.fret : (t.openStrings[s] as number))));
-      expect([...gripPcs].sort((a, b) => a - b)).toEqual([...shifted].sort((a, b) => a - b));
+      const shapePcs = pcSet(shape.map((g, s) => (g.kind === 'fret' ? (t.openStrings[s] as number) + g.fret : (t.openStrings[s] as number))));
+      expect([...shapePcs].sort((a, b) => a - b)).toEqual([...shifted].sort((a, b) => a - b));
     }
   });
 });

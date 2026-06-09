@@ -6,9 +6,9 @@
 //   2. the full sounding MULTISET (octaves + doublings) is PRESERVED in each
 //      candidate voicing — never deduped, sorted, or collapsed to pitch classes.
 //   3. RANKED, never one forced answer (R5): score-descending, surface-capped,
-//      ambiguous grips return [] or >1 without throwing.
+//      ambiguous shapes return [] or >1 without throwing.
 //
-// These tests deliberately do NOT reuse the implementer's helpers or grips.
+// These tests deliberately do NOT reuse the implementer's helpers or shapes.
 
 import { describe, expect, it } from 'vitest';
 import { applyCapo, midi, tuning } from '../../core';
@@ -16,12 +16,12 @@ import type { PlacedPosition } from '../../core';
 import { SURFACE_POLICY } from '../ranking';
 import { identify } from '../identify';
 
-/** Build a grip from explicit (string, fret) pairs — the adversarial input shape. */
-function grip(pairs: ReadonlyArray<readonly [number, number]>): PlacedPosition[] {
+/** Build a shape from explicit (string, fret) pairs — the adversarial input shape. */
+function shape(pairs: ReadonlyArray<readonly [number, number]>): PlacedPosition[] {
   return pairs.map(([string, fret]) => ({ string, fret }));
 }
 
-/** Independent recomputation of the true sounding pitches for a grip + tuning,
+/** Independent recomputation of the true sounding pitches for a shape + tuning,
  *  so assertions about the bass do NOT trust identify()'s internal arithmetic. */
 function soundingPitches(
   pairs: ReadonlyArray<readonly [number, number]>,
@@ -34,7 +34,7 @@ describe('identify — adversarial: CLAIM 1 (bass = lowest PITCH, not lowest str
   it('re-entrant tuning: global minimum sits at a MIDDLE string index (neither 0 nor last)', () => {
     // Open strings (string 0..4): [71(B4), 64(E4), 48(C3), 67(G4), 72(C5)].
     // The MINIMUM open pitch (48, C3) is at index 2 — strictly interior.
-    // Grip all five open. True minimum stays at index 2 regardless of string order.
+    // Shape all five open. True minimum stays at index 2 regardless of string order.
     const reentrant = tuning('reentrant-mid', [71, 64, 48, 67, 72], 0);
     const pairs: Array<[number, number]> = [
       [0, 0],
@@ -47,7 +47,7 @@ describe('identify — adversarial: CLAIM 1 (bass = lowest PITCH, not lowest str
     const trueMin = Math.min(...expected); // 48
     const trueMinIndex = expected.indexOf(trueMin); // 2
 
-    const result = identify(grip(pairs), reentrant, {});
+    const result = identify(shape(pairs), reentrant, {});
     expect(result.length).toBeGreaterThanOrEqual(1);
 
     for (const cand of result) {
@@ -78,13 +78,13 @@ describe('identify — adversarial: CLAIM 1 (bass = lowest PITCH, not lowest str
     const trueMin = Math.min(...expected); // 50
     const trueMinIndex = expected.indexOf(trueMin); // 1
 
-    const result = identify(grip(pairs), t, {});
+    const result = identify(shape(pairs), t, {});
     expect(result.length).toBeGreaterThanOrEqual(1);
     for (const cand of result) {
       const v = cand.voicing;
       expect(v.pitches[v.bassIndex] as number).toBe(trueMin);
       expect(v.bassIndex).toBe(trueMinIndex);
-      // Multiset order matches the input grip's sounding pitches exactly.
+      // Multiset order matches the input shape's sounding pitches exactly.
       expect([...v.pitches].map((m) => m as number)).toEqual(expected);
     }
   });
@@ -117,7 +117,7 @@ describe('identify — adversarial: CLAIM 1 (bass = lowest PITCH, not lowest str
     const trueMinA = Math.min(...expectedA); // 52 (string 5) vs 55 string 2 -> 52
     const trueMinIndexA = expectedA.indexOf(trueMinA);
 
-    const resA = identify(grip(pairsA), virtualA, {});
+    const resA = identify(shape(pairsA), virtualA, {});
     expect(resA.length).toBeGreaterThanOrEqual(1);
     for (const cand of resA) {
       const v = cand.voicing;
@@ -137,7 +137,7 @@ describe('identify — adversarial: CLAIM 1 (bass = lowest PITCH, not lowest str
     const trueMinB = Math.min(...expectedB); // 40 at index 5
     const trueMinIndexB = expectedB.indexOf(trueMinB);
 
-    const resB = identify(grip(pairsB), virtualB, {});
+    const resB = identify(shape(pairsB), virtualB, {});
     expect(resB.length).toBeGreaterThanOrEqual(1);
     for (const cand of resB) {
       const v = cand.voicing;
@@ -164,7 +164,7 @@ describe('identify — adversarial: CLAIM 2 (multiset preserved, never collapsed
       [4, 0],
     ];
     const expected = soundingPitches(pairs, [48, 52, 55, 60, 67]); // [48,52,55,60,67]
-    const result = identify(grip(pairs), t, {});
+    const result = identify(shape(pairs), t, {});
     expect(result.length).toBeGreaterThanOrEqual(1);
 
     for (const cand of result) {
@@ -191,7 +191,7 @@ describe('identify — adversarial: CLAIM 2 (multiset preserved, never collapsed
       [2, 0],
       [3, 0],
     ];
-    const result = identify(grip(pairs), t, {});
+    const result = identify(shape(pairs), t, {});
     expect(result.length).toBeGreaterThanOrEqual(1);
     for (const cand of result) {
       const ps = [...cand.voicing.pitches].map((m) => m as number);
@@ -210,7 +210,7 @@ describe('identify — adversarial: CLAIM 2 (multiset preserved, never collapsed
       [3, 0],
       [4, 0],
     ];
-    const result = identify(grip(pairs), t, {});
+    const result = identify(shape(pairs), t, {});
     expect(result.length).toBeGreaterThanOrEqual(1);
     const first = [...result[0].voicing.pitches].map((m) => m as number);
     for (const cand of result) {
@@ -222,7 +222,7 @@ describe('identify — adversarial: CLAIM 2 (multiset preserved, never collapsed
 
 describe('identify — adversarial: CLAIM 3 (ranked, never one forced answer)', () => {
   it('results are strictly score-DESCENDING and capped at SURFACE_POLICY.maxCandidates', () => {
-    // A rich, ambiguous-ish grip likely to yield several readings: C E G B D
+    // A rich, ambiguous-ish shape likely to yield several readings: C E G B D
     // (Cmaj9 / Em7-over-C / G6 fragments). Don't over-specify which — just the policy.
     const t = tuning('rich', [60, 64, 67, 71, 74], 0);
     const pairs: Array<[number, number]> = [
@@ -232,7 +232,7 @@ describe('identify — adversarial: CLAIM 3 (ranked, never one forced answer)', 
       [3, 0],
       [4, 0],
     ];
-    const result = identify(grip(pairs), t, {});
+    const result = identify(shape(pairs), t, {});
     expect(Array.isArray(result)).toBe(true);
     // Descending by score.
     for (let i = 1; i < result.length; i++) {
@@ -254,18 +254,18 @@ describe('identify — adversarial: CLAIM 3 (ranked, never one forced answer)', 
     // Four-note chromatic cluster: no clean chord. Must not throw; must not invent
     // a single forced answer beyond what the surface policy allows.
     const t = tuning('chromatic', [60, 61, 62, 63], 0);
-    expect(() => identify(grip([[0, 0], [1, 0], [2, 0], [3, 0]]), t, {})).not.toThrow();
-    const result = identify(grip([[0, 0], [1, 0], [2, 0], [3, 0]]), t, {});
+    expect(() => identify(shape([[0, 0], [1, 0], [2, 0], [3, 0]]), t, {})).not.toThrow();
+    const result = identify(shape([[0, 0], [1, 0], [2, 0], [3, 0]]), t, {});
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBeLessThanOrEqual(SURFACE_POLICY.maxCandidates);
   });
 
-  it('a clearly ambiguous symmetric grip (augmented triad) yields multiple candidates', () => {
+  it('a clearly ambiguous symmetric shape (augmented triad) yields multiple candidates', () => {
     // Augmented triad C E G# (60,64,68) is maximally ambiguous: C+, E+, Ab+ are
     // enharmonically the same set. Expect MORE than one candidate (ranked), and no throw.
     const t = tuning('augmented', [60, 64, 68], 0);
-    expect(() => identify(grip([[0, 0], [1, 0], [2, 0]]), t, {})).not.toThrow();
-    const result = identify(grip([[0, 0], [1, 0], [2, 0]]), t, {});
+    expect(() => identify(shape([[0, 0], [1, 0], [2, 0]]), t, {})).not.toThrow();
+    const result = identify(shape([[0, 0], [1, 0], [2, 0]]), t, {});
     expect(result.length).toBeGreaterThanOrEqual(1);
     // If the engine surfaces alternates, they obey the cap and the gap.
     expect(result.length).toBeLessThanOrEqual(SURFACE_POLICY.maxCandidates);
@@ -274,10 +274,10 @@ describe('identify — adversarial: CLAIM 3 (ranked, never one forced answer)', 
     }
   });
 
-  it('single-note grip does not throw and returns an array (degenerate, not forced)', () => {
+  it('single-note shape does not throw and returns an array (degenerate, not forced)', () => {
     const t = tuning('single', [60, 64, 67], 0);
-    expect(() => identify(grip([[0, 0]]), t, {})).not.toThrow();
-    const result = identify(grip([[0, 0]]), t, {});
+    expect(() => identify(shape([[0, 0]]), t, {})).not.toThrow();
+    const result = identify(shape([[0, 0]]), t, {});
     expect(Array.isArray(result)).toBe(true);
   });
 

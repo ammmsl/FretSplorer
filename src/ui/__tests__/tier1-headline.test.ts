@@ -9,7 +9,7 @@ import { loadGrammarCard, loadRules } from '../../kb';
 import { nameTier1 } from '../../naming/tier1-relational';
 import { TUNINGS } from '../fixtures';
 import { buildReadout, buildTier1View, tonicToKeyString } from '../readout';
-import { emptyGrip, placeFret, type Grip } from '../grip';
+import { emptyShape, placeFret, type Shape } from '../shape';
 
 const openG = TUNINGS.find((t) => t.id === 'open-g')!;
 
@@ -75,22 +75,22 @@ describe('buildTier1View — handoff', () => {
 
 describe('buildReadout — relational wiring by tuning', () => {
   it('Open G all-open is a relational headline (has a card)', () => {
-    const allOpen: Grip = openG.openStrings.map(() => ({ kind: 'open' as const }));
+    const allOpen: Shape = openG.openStrings.map(() => ({ kind: 'open' as const }));
     const vm = buildReadout(allOpen, openG);
     expect(vm.relational?.kind).toBe('relational');
     expect(vm.keyString).toBe('G');
     expect(vm.primaryVoicing).not.toBeNull();
   });
 
-  it('§6 grip reads as the IV with a C-over-D subline', () => {
-    let grip: Grip = emptyGrip(openG.openStrings.length);
-    grip = placeFret(grip, 0, 5);
-    grip = placeFret(grip, 1, 5);
-    grip = placeFret(grip, 2, 5);
-    grip = placeFret(grip, 3, 5);
-    grip = placeFret(grip, 4, 5);
-    grip = placeFret(grip, 5, 0); // open low D
-    const vm = buildReadout(grip, openG);
+  it('§6 shape reads as the IV with a C-over-D subline', () => {
+    let shape: Shape = emptyShape(openG.openStrings.length);
+    shape = placeFret(shape, 0, 5);
+    shape = placeFret(shape, 1, 5);
+    shape = placeFret(shape, 2, 5);
+    shape = placeFret(shape, 3, 5);
+    shape = placeFret(shape, 4, 5);
+    shape = placeFret(shape, 5, 0); // open low D
+    const vm = buildReadout(shape, openG);
     expect(vm.relational?.kind).toBe('relational');
     if (vm.relational?.kind === 'relational') {
       expect(vm.relational.sentence).toContain('IV');
@@ -103,7 +103,7 @@ describe('buildReadout — relational wiring by tuning', () => {
 
   it('a tuning with no card shows the no-card note, not a faked name', () => {
     const eadgbe = TUNINGS.find((t) => t.id === 'eadgbe')!;
-    const allOpen: Grip = eadgbe.openStrings.map(() => ({ kind: 'open' as const }));
+    const allOpen: Shape = eadgbe.openStrings.map(() => ({ kind: 'open' as const }));
     const vm = buildReadout(allOpen, eadgbe);
     expect(vm.relational?.kind).toBe('no-card');
   });

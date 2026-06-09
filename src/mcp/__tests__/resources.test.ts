@@ -7,9 +7,9 @@ import {
   focusNeck,
   grammarCardResource,
   newBoard,
-  setGrip,
+  setShape,
 } from '../index';
-import type { Grip } from '../../ui';
+import type { Shape } from '../../ui';
 
 describe('grammarCardResource', () => {
   it('loads the open-g card and returns null for an unknown tuning', () => {
@@ -35,7 +35,7 @@ describe('grammarCardResource', () => {
 });
 
 describe('board / neck-collection model', () => {
-  it('seeds, adds, focuses, and sets grips (all ephemeral, immutable)', () => {
+  it('seeds, adds, focuses, and sets shapes (all ephemeral, immutable)', () => {
     let board = newBoard({ id: 'n1', label: 'A', tuningId: 'open-g' });
     expect(boardResource(board).focused?.id).toBe('n1');
     expect(boardResource(board).origin?.id).toBe('n1');
@@ -51,8 +51,8 @@ describe('board / neck-collection model', () => {
     // unknown focus id is a no-op.
     expect(focusNeck(board, 'nope').focusedId).toBe('n2');
 
-    const grip: Grip = [{ kind: 'open' }];
-    board = setGrip(board, 'n2', grip);
-    expect(board.necks.find((n) => n.id === 'n2')?.grip).toBe(grip);
+    const shape: Shape = [{ kind: 'open' }];
+    board = setShape(board, 'n2', shape);
+    expect(board.necks.find((n) => n.id === 'n2')?.shape).toBe(shape);
   });
 });

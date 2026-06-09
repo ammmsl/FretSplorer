@@ -11,7 +11,7 @@
 //
 // Pure functions, no hidden state. Search is a straight per-string cartesian product
 // over {muted} ∪ {frets whose pitch class ∈ chord.pitchClasses}, pruned to valid,
-// playable grips, then ranked by a small testable scoring function over features.
+// playable shapes, then ranked by a small testable scoring function over features.
 
 import type { Chord, Midi, Tuning, Voicing } from '../core';
 import { toPitchClass, voicing } from '../core';
@@ -32,7 +32,7 @@ export interface Playability {
 
 export interface RankedVoicing {
   readonly voicing: Voicing;
-  /** Per-string grip aligned to tuning.openStrings: fret number, 0 = open, null = muted. */
+  /** Per-string shape aligned to tuning.openStrings: fret number, 0 = open, null = muted. */
   readonly frets: readonly (number | null)[];
   readonly playability: Playability;
   readonly score: number;
@@ -59,7 +59,7 @@ export const PLAYABILITY_THRESHOLDS = {
   maxFingers: 4,
   /** Span considered "wide" when paired with too many fingers. */
   wideSpan: 4,
-  /** A grip whose span ≤ this and uses few fingers is "easy". */
+  /** A shape whose span ≤ this and uses few fingers is "easy". */
   easySpan: 2,
   easyFingers: 3,
 } as const;
@@ -72,7 +72,7 @@ export const SCORE_WEIGHTS = {
   hasSeventh: 2,
   /** Reward for sounding every chord pitch class (completeness). */
   complete: 2,
-  /** Playability bonus by flag. "impossible" grips are pruned before scoring. */
+  /** Playability bonus by flag. "impossible" shapes are pruned before scoring. */
   playability: { easy: 4, moderate: 2, hard: -2, impossible: -1000 },
   /** Penalty per muted string. */
   mutedPenalty: -0.5,
@@ -87,13 +87,13 @@ export const SCORE_WEIGHTS = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Classify a grip by the FRETTED (non-zero) fret numbers only — open (0) and muted
+ * Classify a shape by the FRETTED (non-zero) fret numbers only — open (0) and muted
  * strings cost no finger. `fretSpan` is max - min over the fretted positions (0 when
  * ≤1 fretted note). `fingerCount` approximates fingers as the count of DISTINCT
  * fretted positions (a barre across one fret ≈ one finger).
  *
  * Rules (docs/04 / R6): span > 4 → hard; span > 6, OR > maxFingers distinct fretted
- * positions across a wide (> wideSpan) span → impossible; a tight low-finger grip → easy.
+ * positions across a wide (> wideSpan) span → impossible; a tight low-finger shape → easy.
  */
 export function playability(frettedFrets: readonly number[]): Playability {
   const fretted = frettedFrets.filter((f) => f > 0);
@@ -162,7 +162,7 @@ export function scoreFeatures(f: VoicingFeatures): number {
 /**
  * Find fingerable voicings of `chord` on `tuning`. For each string the candidates
  * are "muted" plus every fret in 0..maxFret whose pitch class is in the chord. We
- * take the cartesian product across strings, keep grips that (a) sound only chord
+ * take the cartesian product across strings, keep shapes that (a) sound only chord
  * pitch classes, (b) contain the chord ROOT at least once, (c) use ≥ 3 sounding
  * strings, and (d) are not "impossible" to fret; then rank by score and cap.
  */
@@ -194,22 +194,22 @@ export function findVoicings(
   const results: RankedVoicing[] = [];
 
   const nStrings = perString.length;
-  const grip: StringOption[] = new Array(nStrings).fill(null);
+  const shape: StringOption[] = new Array(nStrings).fill(null);
 
   const recurse = (stringIdx: number): void => {
     if (stringIdx === nStrings) {
-      evaluateGrip();
+      evaluateShape();
       return;
     }
     for (const opt of perString[stringIdx]) {
-      grip[stringIdx] = opt;
+      shape[stringIdx] = opt;
       recurse(stringIdx + 1);
     }
-    grip[stringIdx] = null;
+    shape[stringIdx] = null;
   };
 
-  const evaluateGrip = (): void => {
-    const frets: (number | null)[] = grip.slice();
+  const evaluateShape = (): void => {
+    const frets: (number | null)[] = shape.slice();
     const soundingPitches: Midi[] = [];
     const soundingPcs = new Set<number>();
     let hasRoot = false;

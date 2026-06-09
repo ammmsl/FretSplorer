@@ -3,8 +3,8 @@
 // dots paint on every neck; switch a neck's tuning -> re-project (overlay moves);
 // the drone channel lights when a context is set; Clear removes the overlay.
 //
-// STATE is ephemeral (no persistence, docs/02). The shell now ALSO owns a GRIP for
-// the focused neck (docs/08 decision e) and runs the M1 hot loop: on any grip change
+// STATE is ephemeral (no persistence, docs/02). The shell now ALSO owns a SHAPE for
+// the focused neck (docs/08 decision e) and runs the M1 hot loop: on any shape change
 // it derives PlacedPosition[] and the live Readout view-model (docs/09 UI#4). Only
 // alphaTab stays out of the hot loop.
 
@@ -28,11 +28,11 @@ import { DEFAULT_LABEL_MODE, type LabelMode } from './labels';
 import { DEFAULT_THEME, nextTheme, type Theme } from './theme';
 import {
   cycleNutMarker,
-  emptyGrip,
+  emptyShape,
   placeFret,
   removeNote,
-  type Grip,
-} from './grip';
+  type Shape,
+} from './shape';
 import { buildReadout } from './readout';
 
 /** Build the active ProjectableEntity from a selection, or null if none. */
@@ -68,8 +68,8 @@ function effectiveTuning(base: Tuning, capo: CapoShift | undefined): Tuning {
   return { ...applyCapo(base, capo), id: base.id };
 }
 
-/** A voicing's per-string frets (fret, 0 = open, null = muted) -> a renderable Grip. */
-function fretsToGrip(frets: readonly (number | null)[]): Grip {
+/** A voicing's per-string frets (fret, 0 = open, null = muted) -> a renderable Shape. */
+function fretsToShape(frets: readonly (number | null)[]): Shape {
   return frets.map((f) =>
     f === null
       ? ({ kind: 'muted' as const })
@@ -87,8 +87,8 @@ interface NeckState {
   readonly isOrigin: boolean;
   /** Caption override (e.g. a spawned comparison option's chord symbol). */
   readonly caption?: string;
-  /** A pinned grip for a spawned comparison neck (rendered without being focused). */
-  readonly pinnedGrip?: Grip;
+  /** A pinned shape for a spawned comparison neck (rendered without being focused). */
+  readonly pinnedShape?: Shape;
 }
 
 const TAGS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -105,8 +105,8 @@ export function AppShell() {
   ]);
   const [focusedId, setFocusedId] = useState('neck-0');
 
-  // Per-neck GRIP (the held notes). Keyed by neck id; a neck with no entry is empty.
-  const [grips, setGrips] = useState<Readonly<Record<string, Grip>>>({});
+  // Per-neck SHAPE (the held notes). Keyed by neck id; a neck with no entry is empty.
+  const [shapes, setShapes] = useState<Readonly<Record<string, Shape>>>({});
 
   // Per-neck CAPO shift (provisional; set from the Lab). Keyed by neck id; no entry = uncapoed.
   const [capos, setCapos] = useState<Readonly<Record<string, CapoShift>>>({});
@@ -143,7 +143,7 @@ export function AppShell() {
         tag: n.tag,
         caption: n.caption ?? selectionLabel(selection),
         isOrigin: n.isOrigin,
-        grip: n.pinnedGrip,
+        shape: n.pinnedShape,
       };
     });
   }, [necks, entity, selection, tuningById, capos]);
@@ -153,9 +153,9 @@ export function AppShell() {
   const focusedTuning = effectiveTuning(focusedBaseTuning, capos[focusedNeck.id]);
   const contextSummary = selectionLabel(selection);
 
-  // The focused neck's grip (default empty for its string count).
-  const focusedGrip: Grip =
-    grips[focusedNeck.id] ?? emptyGrip(focusedTuning.openStrings.length);
+  // The focused neck's shape (default empty for its string count).
+  const focusedShape: Shape =
+    shapes[focusedNeck.id] ?? emptyShape(focusedTuning.openStrings.length);
 
   // Drone readings for the focused neck (the open-string drone channel, when a context
   // is selected) — fed to the Readout so OPEN strings report their drone tension.
@@ -164,33 +164,33 @@ export function AppShell() {
     [entity, focusedTuning],
   );
 
-  // ── M1 HOT LOOP ── derive the live Readout from (grip, tuning) synchronously. Also
+  // ── M1 HOT LOOP ── derive the live Readout from (shape, tuning) synchronously. Also
   // expose the bass (lowest-pitch) string+fret so the neck can draw its bass marker.
   const readout = useMemo(
-    () => buildReadout(focusedGrip, focusedTuning, focusedDrones),
-    [focusedGrip, focusedTuning, focusedDrones],
+    () => buildReadout(focusedShape, focusedTuning, focusedDrones),
+    [focusedShape, focusedTuning, focusedDrones],
   );
 
-  // Locate the bass note's string+fret in the grip (the lowest sounding pitch) so the
+  // Locate the bass note's string+fret in the shape (the lowest sounding pitch) so the
   // neck marker sits on the right cell. Mirrors identify()'s argmin-pitch bass (R10).
   const bass = useMemo(() => {
     let best: { string: number; fret: number; pitch: number } | null = null;
-    focusedGrip.forEach((sg, s) => {
+    focusedShape.forEach((sg, s) => {
       if (sg.kind !== 'open' && sg.kind !== 'fret') return;
       const fret = sg.kind === 'open' ? 0 : sg.fret;
       const pitch = (focusedTuning.openStrings[s] as number) + fret;
       if (!best || pitch < best.pitch) best = { string: s, fret, pitch };
     });
     return best as { string: number; fret: number; pitch: number } | null;
-  }, [focusedGrip, focusedTuning]);
+  }, [focusedShape, focusedTuning]);
 
   // Tuning selector retunes the FOCUSED neck (re-projection follows from useMemo).
-  // Retuning clears that neck's grip — the held frets mean different pitches now.
+  // Retuning clears that neck's shape — the held frets mean different pitches now.
   function handleTuningChange(id: string) {
     setNecks((prev) =>
       prev.map((n) => (n.id === focusedId ? { ...n, tuningId: id } : n)),
     );
-    setGrips((prev) => {
+    setShapes((prev) => {
       if (!prev[focusedId]) return prev;
       const next = { ...prev };
       delete next[focusedId];
@@ -215,11 +215,11 @@ export function AppShell() {
     [focusedId],
   );
 
-  // ── Grip mutations (the focused neck only) ──
+  // ── Shape mutations (the focused neck only) ──
   /** Click a fret cell: remove if that string already holds THIS exact fret, else place. */
   function handleFretClick(string: number, fret: number) {
-    setGrips((prev) => {
-      const cur = prev[focusedId] ?? emptyGrip(focusedTuning.openStrings.length);
+    setShapes((prev) => {
+      const cur = prev[focusedId] ?? emptyShape(focusedTuning.openStrings.length);
       const sg = cur[string];
       const holdsThis =
         (fret === 0 && sg?.kind === 'open') ||
@@ -231,16 +231,16 @@ export function AppShell() {
 
   /** Click the nut marker: cycle open -> muted -> off. */
   function handleNutClick(string: number) {
-    setGrips((prev) => {
-      const cur = prev[focusedId] ?? emptyGrip(focusedTuning.openStrings.length);
+    setShapes((prev) => {
+      const cur = prev[focusedId] ?? emptyShape(focusedTuning.openStrings.length);
       return { ...prev, [focusedId]: cycleNutMarker(cur, string) };
     });
   }
 
   // Preview a movable shape (from the Lab's shape discovery) on the FOCUSED neck. Like any
-  // grip mutation it replaces the focused neck's held grip; the readout re-derives for free.
-  function handlePreviewGrip(grip: Grip) {
-    setGrips((prev) => ({ ...prev, [focusedId]: grip }));
+  // shape mutation it replaces the focused neck's held shape; the readout re-derives for free.
+  function handlePreviewShape(shape: Shape) {
+    setShapes((prev) => ({ ...prev, [focusedId]: shape }));
   }
 
   function handleAddNeck() {
@@ -260,7 +260,7 @@ export function AppShell() {
   /**
    * Spawn the conversation's option voicings as comparison necks BESIDE the focused neck
    * (docs/04 flow 2 — comparison is the teaching act). Each option becomes a new neck on
-   * the focused tuning, pinned to the option's grip + captioned with its symbol. We do NOT
+   * the focused tuning, pinned to the option's shape + captioned with its symbol. We do NOT
    * touch the user's own neck or change focus (the focus pointer stays on theirs).
    */
   function handleSpawnOptions(options: readonly SpawnOption[]) {
@@ -272,7 +272,7 @@ export function AppShell() {
         tag: TAGS[(prev.length + i) % TAGS.length],
         isOrigin: false,
         caption: `option · ${o.symbol}`,
-        pinnedGrip: fretsToGrip(o.frets),
+        pinnedShape: fretsToShape(o.frets),
       }));
       return [...prev, ...spawned];
     });
@@ -314,7 +314,7 @@ export function AppShell() {
             necks={neckInstances}
             focusedId={focusedId}
             labelMode={labelMode}
-            focusedGrip={focusedGrip}
+            focusedShape={focusedShape}
             bassString={bass ? bass.string : null}
             bassFret={bass ? bass.fret : null}
             onFocus={setFocusedId}
@@ -327,14 +327,14 @@ export function AppShell() {
             collapsed={notationCollapsed}
             onToggle={() => setNotationCollapsed((c) => !c)}
             tuning={focusedTuning}
-            grip={focusedGrip}
+            shape={focusedShape}
           />
         </main>
 
         <div className="right-region">
           <ReadoutPanel readout={readout} contextSummary={contextSummary} />
           <ConversationPanel
-            grip={focusedGrip}
+            shape={focusedShape}
             tuning={focusedTuning}
             onSpawnOptions={handleSpawnOptions}
           />
@@ -346,10 +346,10 @@ export function AppShell() {
       <Lab
         focusedTuning={focusedTuning}
         baseTuning={focusedBaseTuning}
-        focusedGrip={focusedGrip}
+        focusedShape={focusedShape}
         morphTargets={TUNINGS}
         onCapoChange={handleCapoChange}
-        onPreviewGrip={handlePreviewGrip}
+        onPreviewShape={handlePreviewShape}
       />
     </div>
   );

@@ -64,8 +64,8 @@ function homePcSet(card: GrammarCard): ReadonlySet<number> {
   return new Set(card.strings.map((m) => ((m % 12) + 12) % 12));
 }
 
-/** Is this grip a flat FULL barre (every string fretted at the same fret N>0)? Such a
- *  grip transposes the home chord up N (the og-major-barre movable shape). */
+/** Is this shape a flat FULL barre (every string fretted at the same fret N>0)? Such a
+ *  shape transposes the home chord up N (the og-major-barre movable shape). */
 function fullBarreFret(
   positions: readonly PlacedPosition[],
   stringCount: number,
@@ -83,9 +83,9 @@ function tonicName(tonicPc: number): string {
 }
 
 /**
- * nameTier1 — compute the relational reading of a grip and join it to the global rules.
+ * nameTier1 — compute the relational reading of a shape and join it to the global rules.
  *
- * @param positions  the placed grip (string + fret). Fret 0 = open (a ringing drone).
+ * @param positions  the placed shape (string + fret). Fret 0 = open (a ringing drone).
  * @param tuning     the tuning (open-string pitches; index carries no order meaning).
  * @param card       the grammar card for this tuning (home chord, movable shapes).
  * @param rules      the global rule bundle (relational vocabulary + tension + tendencies).
@@ -128,7 +128,7 @@ export function nameTier1(
     return true;
   };
 
-  // 1. HOME — the grip's pitch-classes equal the open-string sonority (the I).
+  // 1. HOME — the shape's pitch-classes equal the open-string sonority (the I).
   if (positions.length > 0 && setsEqual(allPcs, home)) {
     const rule = ruleById(rules.relationalVocabulary, 'frame-home');
     chordRootPc = tonicPc;
@@ -269,7 +269,7 @@ export function nameTier1(
     frame === null
       ? {
           toTier2: true,
-          reason: 'no home / transposed / diatonic frame fits this grip; needs absolute (Tier-2) naming',
+          reason: 'no home / transposed / diatonic frame fits this shape; needs absolute (Tier-2) naming',
         }
       : { toTier2: false, reason: 'a relational frame was found' };
 
@@ -288,7 +288,7 @@ function assembleSentence(
   tension: readonly TensionVsPedal[],
 ): string {
   if (frame === null) {
-    return "this grip doesn't sit as a relational frame -- read it as an absolute chord name instead";
+    return "this shape doesn't sit as a relational frame -- read it as an absolute chord name instead";
   }
   const parts: string[] = [frame.phrase];
 

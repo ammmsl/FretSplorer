@@ -1,6 +1,6 @@
 // /naming/tier1-relational — the Tier-1 RELATIONAL namer output contract.
 //
-// Tier-1 names a grip as a FUNCTION OF THE TUNING'S DRONES, anchored to the home
+// Tier-1 names a shape as a FUNCTION OF THE TUNING'S DRONES, anchored to the home
 // context, and names dissonance-against-the-pedal as a first-class textural device
 // (kb/TIER1-VOCABULARY-SPEC.md; ADR 0002/0003/0004). The A-E taxonomy in the spec
 // (§2) is reported here as: a decomposition (drones vs active voices), a frame (A-C),
@@ -29,7 +29,7 @@ export interface ActiveVoice {
   readonly pitchClass: PitchClass;
 }
 
-/** The grip split into its two channels (spec §1): ringing drones vs active voices. */
+/** The shape split into its two channels (spec §1): ringing drones vs active voices. */
 export interface Decomposition {
   readonly drones: readonly DroneVoice[];
   readonly activeVoices: readonly ActiveVoice[];
@@ -98,7 +98,7 @@ export interface Handoff {
   readonly reason: string;
 }
 
-/** The full Tier-1 relational reading of a grip. */
+/** The full Tier-1 relational reading of a shape. */
 export interface Tier1Result {
   readonly decomposition: Decomposition;
   readonly frame: Frame | null;

@@ -14,7 +14,7 @@ import {
 } from '../../mcp';
 import { checkGrounding, collectKbIds } from '../../grounding';
 import { TUNINGS } from '../fixtures';
-import { emptyGrip, placeFret, type Grip } from '../grip';
+import { emptyShape, placeFret, type Shape } from '../shape';
 import {
   buildTurnView,
   findTargetTuning,
@@ -25,8 +25,8 @@ import {
 
 const openG = TUNINGS.find((t) => t.id === 'open-g')!;
 const dadgad = TUNINGS.find((t) => t.id === 'dadgad')!;
-/** Open-G home grip (all six strings open) — the M-series gate grip. */
-const allOpen: Grip = openG.openStrings.map(() => ({ kind: 'open' as const }));
+/** Open-G home shape (all six strings open) — the M-series gate shape. */
+const allOpen: Shape = openG.openStrings.map(() => ({ kind: 'open' as const }));
 
 describe('route — affective vibe path (the editorial seam)', () => {
   it('"make it dreamier" -> feeling, vibe dreamier', () => {
@@ -153,10 +153,10 @@ describe('buildTurnView — fold a ToolResult into a render-ready turn', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // End-to-end seam: route a real "make it dreamier" turn against the live MCP tool
-// on the Open-G home grip and confirm the TurnView is grounded + hedged + spawnable.
+// on the Open-G home shape and confirm the TurnView is grounded + hedged + spawnable.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('end to end — "make it dreamier" on the Open-G home grip', () => {
+describe('end to end — "make it dreamier" on the Open-G home shape', () => {
   const intent = route('make it dreamier');
   const result = feelingToOptions(allOpen, openG, intent.vibe!);
   const optionViews: OptionView[] = result.truth.options.map((o) => ({
@@ -195,14 +195,14 @@ describe('end to end — "make it dreamier" on the Open-G home grip', () => {
 describe('end to end — the newly-routed tools produce grounded turns', () => {
   const kbIds = collectKbIds();
 
-  it('neighbors("where can this go?") on the Open-G home grip is grounded', () => {
+  it('neighbors("where can this go?") on the Open-G home shape is grounded', () => {
     expect(route('where can this go?').kind).toBe('neighbors');
     const result = neighbors(allOpen, openG);
     expect(checkGrounding(result, kbIds).ok).toBe(true);
     expect(buildTurnView(result).modelLine.length).toBeGreaterThan(0);
   });
 
-  it('translate("…in DADGAD?") morphs the Open-G home grip onto DADGAD, grounded', () => {
+  it('translate("…in DADGAD?") morphs the Open-G home shape onto DADGAD, grounded', () => {
     const intent = route('what about in DADGAD?');
     expect(intent.target).toBe('dadgad');
     const result = translate(allOpen, openG, dadgad);
@@ -218,15 +218,15 @@ describe('end to end — the newly-routed tools produce grounded turns', () => {
   });
 });
 
-describe('buildTurnView — an empty grip still produces a valid (if thin) turn', () => {
-  it('feeling on an empty grip routes but yields a defined view', () => {
-    const r = feelingToOptions(emptyGrip(6), openG, 'dreamier');
+describe('buildTurnView — an empty shape still produces a valid (if thin) turn', () => {
+  it('feeling on an empty shape routes but yields a defined view', () => {
+    const r = feelingToOptions(emptyShape(6), openG, 'dreamier');
     const v = buildTurnView(r);
     expect(v.modelLine.length).toBeGreaterThan(0);
     expect(v.hasEditorial).toBe(true); // the editorial vibe claim is always present
   });
   it('a single fretted note is routable for identify', () => {
-    const g = placeFret(emptyGrip(6), 5, 3);
+    const g = placeFret(emptyShape(6), 5, 3);
     expect(route('what is this').kind).toBe('identify');
     expect(g[5]).toEqual({ kind: 'fret', fret: 3 });
   });

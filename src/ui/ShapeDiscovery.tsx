@@ -1,21 +1,21 @@
 // ShapeDiscovery (/ui) — render the focused tuning's HAND-AUTHORED movable shapes as
-// selectable grips that PREVIEW on the neck (item 8; R3 auto-derivation stays deferred).
+// selectable shapes that PREVIEW on the neck (item 8; R3 auto-derivation stays deferred).
 // Each card shape is listed with its invariant quality + its slide anchors; clicking an
-// anchor realises the shape as a concrete Grip (shapeToGrip) and hands it up via
-// onPreviewGrip so the focused neck shows it. Card-less tunings say so honestly.
+// anchor realises the shape as a concrete Shape (realizeShape) and hands it up via
+// onPreviewShape so the focused neck shows it. Card-less tunings say so honestly.
 // PROVISIONAL: mounted in the Lab, not placed.
 
 import type { Tuning } from '../core';
 import { grammarCardResource } from '../mcp';
-import type { Grip } from './grip';
-import { shapeAnchors, shapeToGrip } from './shapes';
+import type { Shape } from './shape';
+import { shapeAnchors, realizeShape } from './shapes';
 
 export function ShapeDiscovery({
   tuning,
-  onPreviewGrip,
+  onPreviewShape,
 }: {
   tuning: Tuning;
-  onPreviewGrip: (grip: Grip) => void;
+  onPreviewShape: (shape: Shape) => void;
 }) {
   const { card } = grammarCardResource(tuning.id);
 
@@ -45,7 +45,7 @@ export function ShapeDiscovery({
                   type="button"
                   className="shape-anchor-btn"
                   title={ex ? ex.function : `anchor fret ${anchor}`}
-                  onClick={() => onPreviewGrip(shapeToGrip(shape, anchor))}
+                  onClick={() => onPreviewShape(realizeShape(shape, anchor))}
                 >
                   fret {anchor}
                 </button>

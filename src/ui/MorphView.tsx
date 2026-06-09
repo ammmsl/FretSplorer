@@ -1,5 +1,5 @@
 // MorphView (/ui, item 9 stretch) — a SELF-CONTAINED morph/translate view: take the
-// focused grip's SOUNDING PITCHES (the invariant) and re-place them on a chosen target
+// focused shape's SOUNDING PITCHES (the invariant) and re-place them on a chosen target
 // tuning via the MCP translate() tool, showing the retune (source vs target open strings)
 // and, per pitch, where it lands (string/fret) or that it falls off the neck. This is the
 // data spine of the "…in DADGAD?" flow made visual, side by side. Full neck animation is
@@ -9,18 +9,18 @@ import { useState } from 'react';
 import type { Tuning } from '../core';
 import { translate } from '../mcp';
 import { tuningLabel } from './fixtures';
-import type { Grip } from './grip';
-import { isGripEmpty } from './grip';
+import type { Shape } from './shape';
+import { isShapeEmpty } from './shape';
 
 const SHARP_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const midiName = (m: number): string => `${SHARP_NAMES[((m % 12) + 12) % 12]}${Math.floor(m / 12) - 1}`;
 
 export function MorphView({
-  grip,
+  shape,
   fromTuning,
   targets,
 }: {
-  grip: Grip;
+  shape: Shape;
   fromTuning: Tuning;
   targets: readonly Tuning[];
 }) {
@@ -28,14 +28,14 @@ export function MorphView({
   const [targetId, setTargetId] = useState<string>(options[0]?.id ?? '');
   const target = options.find((t) => t.id === targetId) ?? options[0];
 
-  if (isGripEmpty(grip)) {
-    return <p className="panel-note">Place a grip on the focused neck, then morph it to another tuning.</p>;
+  if (isShapeEmpty(shape)) {
+    return <p className="panel-note">Place a shape on the focused neck, then morph it to another tuning.</p>;
   }
   if (!target) {
     return <p className="panel-note">No other tuning to morph to.</p>;
   }
 
-  const result = translate(grip, fromTuning, target);
+  const result = translate(shape, fromTuning, target);
 
   return (
     <div className="morph-view" aria-label="Morph to another tuning">

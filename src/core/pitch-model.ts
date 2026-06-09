@@ -287,7 +287,7 @@ export interface ProjectedPosition {
 }
 
 /**
- * A placed note the user actually clicked (the /board grip → pitches), the input
+ * A placed note the user actually clicked (the /board shape → pitches), the input
  * to identify(). Carries enough to recover the pitch via the tuning + capo.
  */
 export interface PlacedPosition {

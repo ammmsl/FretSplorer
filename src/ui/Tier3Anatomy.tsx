@@ -36,7 +36,7 @@ export function Tier3Anatomy({ voicing, keyString }: Tier3AnatomyProps) {
   const [expanded, setExpanded] = useState(false);
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
 
-  // Track the voicing identity we last analysed so a grip change invalidates the result
+  // Track the voicing identity we last analysed so a shape change invalidates the result
   // (re-analyses on next expand). Compare by the realised pitch multiset.
   const analysedKeyRef = useRef<string | null>(null);
   const voicingKey =

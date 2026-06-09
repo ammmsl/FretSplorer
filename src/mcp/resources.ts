@@ -11,19 +11,19 @@
 
 import type { GrammarCard } from '../kb';
 import { loadGrammarCard } from '../kb';
-import type { Grip } from '../ui';
+import type { Shape } from '../ui';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Board / neck-collection model (ephemeral; owned by the MCP layer)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** One neck in the stack: a tuning + an optional held grip. */
+/** One neck in the stack: a tuning + an optional held shape. */
 export interface Neck {
   readonly id: string;
   readonly label: string;
   readonly tuningId: string;
-  /** The grip currently held on this neck (undefined = no grip placed yet). */
-  readonly grip?: Grip;
+  /** The shape currently held on this neck (undefined = no shape placed yet). */
+  readonly shape?: Shape;
 }
 
 /**
@@ -94,14 +94,14 @@ export function focusNeck(board: NeckCollection, id: string): NeckCollection {
   return { ...board, focusedId: id };
 }
 
-/** Replace the grip held on a neck (returns a new collection). */
-export function setGrip(
+/** Replace the shape held on a neck (returns a new collection). */
+export function setShape(
   board: NeckCollection,
   id: string,
-  grip: Grip,
+  shape: Shape,
 ): NeckCollection {
   return {
     ...board,
-    necks: board.necks.map((n) => (n.id === id ? { ...n, grip } : n)),
+    necks: board.necks.map((n) => (n.id === id ? { ...n, shape } : n)),
   };
 }

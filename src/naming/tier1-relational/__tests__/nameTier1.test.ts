@@ -15,7 +15,7 @@ const rules = loadRules();
 describe('nameTier1 — spec §6 worked example (Open G, full barre at fret 5 over open low D)', () => {
   // Strings 0..4 barred at fret 5, string 5 (low D) left OPEN (fret 0).
   // Sounding pitches: [67,64,60,55,48, 38]  -> C major triad over the open low D.
-  const grip: PlacedPosition[] = [
+  const shape: PlacedPosition[] = [
     { string: 0, fret: 5 },
     { string: 1, fret: 5 },
     { string: 2, fret: 5 },
@@ -23,7 +23,7 @@ describe('nameTier1 — spec §6 worked example (Open G, full barre at fret 5 ov
     { string: 4, fret: 5 },
     { string: 5, fret: 0 },
   ];
-  const r = nameTier1(grip, openG, card, rules);
+  const r = nameTier1(shape, openG, card, rules);
 
   it('decomposes into the open low-D drone + the five barred active voices', () => {
     expect(r.decomposition.drones).toHaveLength(1);
@@ -80,8 +80,8 @@ describe('nameTier1 — spec §6 worked example (Open G, full barre at fret 5 ov
   });
 });
 
-describe('nameTier1 — all-open grip frames as home (the I in G)', () => {
-  const grip: PlacedPosition[] = [
+describe('nameTier1 — all-open shape frames as home (the I in G)', () => {
+  const shape: PlacedPosition[] = [
     { string: 0, fret: 0 },
     { string: 1, fret: 0 },
     { string: 2, fret: 0 },
@@ -89,7 +89,7 @@ describe('nameTier1 — all-open grip frames as home (the I in G)', () => {
     { string: 4, fret: 0 },
     { string: 5, fret: 0 },
   ];
-  const r = nameTier1(grip, openG, card, rules);
+  const r = nameTier1(shape, openG, card, rules);
 
   it('is the home frame, roman numeral I', () => {
     expect(r.frame?.category).toBe('home');
@@ -105,8 +105,8 @@ describe('nameTier1 — all-open grip frames as home (the I in G)', () => {
 });
 
 describe('nameTier1 — full barre at fret 7 frames as home-transposed (V, D major)', () => {
-  const grip: PlacedPosition[] = [0, 1, 2, 3, 4, 5].map((string) => ({ string, fret: 7 }));
-  const r = nameTier1(grip, openG, card, rules);
+  const shape: PlacedPosition[] = [0, 1, 2, 3, 4, 5].map((string) => ({ string, fret: 7 }));
+  const r = nameTier1(shape, openG, card, rules);
 
   it('is home-transposed up to the V', () => {
     expect(r.frame?.category).toBe('home-transposed');
@@ -118,12 +118,12 @@ describe('nameTier1 — full barre at fret 7 frames as home-transposed (V, D maj
 describe('nameTier1 — an unframeable cluster hands off to Tier-2', () => {
   // A deliberately non-chordal semitone cluster on the upper strings, no open drone:
   // pitches 67, 68, 69 (G, G#, A) — Tonal detects no chord -> no A-C frame.
-  const grip: PlacedPosition[] = [
+  const shape: PlacedPosition[] = [
     { string: 0, fret: 5 }, // 67
     { string: 1, fret: 9 }, // 68
     { string: 2, fret: 14 }, // 69
   ];
-  const r = nameTier1(grip, openG, card, rules);
+  const r = nameTier1(shape, openG, card, rules);
 
   it('produces a null frame and handoff.toTier2 = true', () => {
     expect(r.frame).toBeNull();

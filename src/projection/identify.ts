@@ -1,6 +1,6 @@
 // Reverse identification (/projection) — the spine's REVERSE node (M1).
 //
-// placed positions (a /board grip) + tuning + context -> RANKED theory candidates.
+// placed positions (a /board shape) + tuning + context -> RANKED theory candidates.
 // Implements the `Identify` contract pinned in src/core/pitch-model.ts §8 (see the
 // compile-time assertion in index.ts). docs/03-architecture.md; docs/06 R5 + R10.
 //
@@ -14,7 +14,7 @@
 //
 // SYMBOL detection is borrowed from Tonal's bass-aware Chord.detect (the same tool
 // /naming/tier2-tonal uses for absolute labels). We additionally run the
-// `assumePerfectFifth` variant so omitted-5th grips (C-E-Bb -> C7, C-E-B -> Cmaj7)
+// `assumePerfectFifth` variant so omitted-5th shapes (C-E-Bb -> C7, C-E-B -> Cmaj7)
 // surface a candidate the scorer can then lightly penalise — Tonal returns nothing
 // for those without the flag (verified against tonal@current).
 //
@@ -142,8 +142,8 @@ function scoreCandidate(
 }
 
 /**
- * identify(positions, tuning, context) — reverse-identify a grip into ranked
- * candidates. Never throws on an empty/ambiguous grip; returns [] or a best effort.
+ * identify(positions, tuning, context) — reverse-identify a shape into ranked
+ * candidates. Never throws on an empty/ambiguous shape; returns [] or a best effort.
  */
 export const identify: Identify = (
   positions: readonly PlacedPosition[],
@@ -163,7 +163,7 @@ export const identify: Identify = (
 
   // 2. Candidate symbols via Tonal's bass-aware detect, ordered BASS-FIRST so slash
   //    chords report the right bass. Merge the plain + assumePerfectFifth variants so
-  //    omitted-5th grips surface a candidate (the scorer then penalises the omission).
+  //    omitted-5th shapes surface a candidate (the scorer then penalises the omission).
   const namesWithOctave = v.pitches.map((m) => Note.fromMidiSharps(m));
   const pcNames = namesWithOctave.map((n) => Note.pitchClass(n));
   const bassFirst: string[] = [pcNames[v.bassIndex]];

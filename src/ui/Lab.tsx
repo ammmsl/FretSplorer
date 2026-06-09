@@ -12,21 +12,21 @@ import { CapoControl } from './CapoControl';
 import { TensionPanel } from './TensionPanel';
 import { ShapeDiscovery } from './ShapeDiscovery';
 import { MorphView } from './MorphView';
-import type { Grip } from './grip';
+import type { Shape } from './shape';
 
 export interface LabProps {
   /** The focused neck's EFFECTIVE tuning (after any capo) — tension + morph read this. */
   readonly focusedTuning: Tuning;
   /** The focused neck's BASE tuning (before capo) — capo + shapes operate on this. */
   readonly baseTuning: Tuning;
-  /** The focused neck's held grip — morph translates its sounding pitches. */
-  readonly focusedGrip: Grip;
+  /** The focused neck's held shape — morph translates its sounding pitches. */
+  readonly focusedShape: Shape;
   /** Other tunings to offer as morph targets. */
   readonly morphTargets: readonly Tuning[];
   /** Emit a CapoShift for the focused neck (the shell applies it via applyCapo). */
   readonly onCapoChange: (capo: CapoShift) => void;
-  /** Preview a movable-shape grip on the focused neck (shape discovery). */
-  readonly onPreviewGrip: (grip: Grip) => void;
+  /** Preview a movable-shape shape on the focused neck (shape discovery). */
+  readonly onPreviewShape: (shape: Shape) => void;
 }
 
 /** One labelled provisional sub-section of the Lab. */
@@ -58,10 +58,10 @@ export function LabSection({
 export function Lab({
   focusedTuning,
   baseTuning,
-  focusedGrip,
+  focusedShape,
   morphTargets,
   onCapoChange,
-  onPreviewGrip,
+  onPreviewShape,
 }: LabProps) {
   return (
     <section className="lab-region" aria-label="Lab (provisional)">
@@ -87,11 +87,11 @@ export function Lab({
         </LabSection>
 
         <LabSection title="Shape discovery (movable shapes)">
-          <ShapeDiscovery tuning={baseTuning} onPreviewGrip={onPreviewGrip} />
+          <ShapeDiscovery tuning={baseTuning} onPreviewShape={onPreviewShape} />
         </LabSection>
 
         <LabSection title="Morph / translate to another tuning">
-          <MorphView grip={focusedGrip} fromTuning={focusedTuning} targets={morphTargets} />
+          <MorphView shape={focusedShape} fromTuning={focusedTuning} targets={morphTargets} />
         </LabSection>
       </div>
     </section>

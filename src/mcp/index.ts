@@ -48,7 +48,7 @@ export {
   newBoard,
   addNeck,
   focusNeck,
-  setGrip,
+  setShape,
 } from './resources';
 
 export type {

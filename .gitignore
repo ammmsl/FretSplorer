@@ -25,6 +25,8 @@ coverage
 # Scratch research artifacts + browser-automation output (orthogonal-lane spike)
 .research
 .playwright-mcp
+# Chromium CDP temp profiles dropped in cwd by the Playwright MCP browser
+.cdptmp*
 
 # Spine-build orchestration scripts + milestone screenshot evidence (tooling, not app source)
 build-workflows

@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { TUNINGS } from '../../ui/fixtures';
-import type { Grip } from '../../ui';
+import type { Shape } from '../../ui';
 import { loadAffective, loadGrammarCard, loadRules } from '../../kb';
 import {
   adviseSetupTool,
@@ -28,8 +28,8 @@ const openG = TUNINGS.find((t) => t.id === 'open-g')!;
 const eadgbe = TUNINGS.find((t) => t.id === 'eadgbe')!;
 const dadgad = TUNINGS.find((t) => t.id === 'dadgad')!;
 
-/** The Open-G home chord grip: all six strings open (the I in G). */
-const allOpenGrip: Grip = openG.openStrings.map(() => ({ kind: 'open' }) as const);
+/** The Open-G home chord shape: all six strings open (the I in G). */
+const allOpenShape: Shape = openG.openStrings.map(() => ({ kind: 'open' }) as const);
 
 /** Build the set of ALL valid KB ids a trace may point at (the harness contract). */
 function allValidKbIds(tuningId: string): Set<string> {
@@ -76,7 +76,7 @@ describe('mcpIdentify — Open-G home chord', () => {
   const validIds = allValidKbIds('open-g');
 
   it('returns a grounded ToolResult with the computed bass D2', () => {
-    const result = mcpIdentify(allOpenGrip, openG);
+    const result = mcpIdentify(allOpenShape, openG);
     assertGrounded(result, validIds);
 
     // Bass = lowest pitch = midi 38 = D2 (R10 argmin, not lowest string).
@@ -88,7 +88,7 @@ describe('mcpIdentify — Open-G home chord', () => {
   });
 
   it('includes a Tier-1 frame claim traced to a KB rule id', () => {
-    const result = mcpIdentify(allOpenGrip, openG);
+    const result = mcpIdentify(allOpenShape, openG);
     expect(result.truth.tier1.frame).not.toBeNull();
     // The frame headline claim's trace must be a relational-vocabulary rule id.
     const frameClaim = result.claims.find((c) => c.trace.startsWith('frame-'));
@@ -102,7 +102,7 @@ describe('mcpIdentify — Open-G home chord', () => {
 describe('functionOf', () => {
   it('returns a grounded ToolResult for the home chord (frame = home)', () => {
     const validIds = allValidKbIds('open-g');
-    const result = functionOf(allOpenGrip, openG);
+    const result = functionOf(allOpenShape, openG);
     assertGrounded(result, validIds);
     expect(result.truth.frameCategory).toBe('home');
   });
@@ -111,7 +111,7 @@ describe('functionOf', () => {
 describe('neighbors', () => {
   it('computes a few single-step voice-leading moves, all computed-traced', () => {
     const validIds = allValidKbIds('open-g');
-    const result = neighbors(allOpenGrip, openG);
+    const result = neighbors(allOpenShape, openG);
     assertGrounded(result, validIds);
     expect(result.truth.moves.length).toBeGreaterThan(0);
     for (const c of result.claims) expect(c.trace).toBe('computed');
@@ -132,7 +132,7 @@ describe('translate — flags a note below the open string', () => {
     const validIds = allValidKbIds('eadgbe');
     // Open-G's low string is D2 (midi 38). Standard EADGBE's lowest open string is
     // E2 (midi 40). The open-G low D (38) cannot be reached on EADGBE -> belowOpenString.
-    const result = translate(allOpenGrip, openG, eadgbe);
+    const result = translate(allOpenShape, openG, eadgbe);
     assertGrounded(result, validIds);
     const flagged = result.truth.unreachable.find((n) => n.belowOpenString);
     expect(flagged).toBeDefined();
@@ -146,7 +146,7 @@ describe('translate — flags a note below the open string', () => {
 
   it('reachable notes expose toString/toFret (the fields MorphView renders)', () => {
     // Open-G -> DADGAD: the upper voices re-place; every reachable note carries a landing.
-    const result = translate(allOpenGrip, openG, dadgad);
+    const result = translate(allOpenShape, openG, dadgad);
     const reachable = result.truth.notes.filter((n) => !n.belowOpenString && !n.offNeck);
     expect(reachable.length).toBeGreaterThan(0);
     for (const n of reachable) {
@@ -161,7 +161,7 @@ describe('feelingToOptions — the editorial honesty seam', () => {
   const validIds = allValidKbIds('open-g');
 
   it('mixes a hedged editorial vibe claim with grounded computed options', () => {
-    const result = feelingToOptions(allOpenGrip, openG, 'dreamier');
+    const result = feelingToOptions(allOpenShape, openG, 'dreamier');
     assertGrounded(result, validIds);
 
     // The vibe maps to "dreamier".
@@ -182,7 +182,7 @@ describe('feelingToOptions — the editorial honesty seam', () => {
   });
 
   it('resolves an alias to the canonical vibe', () => {
-    const result = feelingToOptions(allOpenGrip, openG, 'ethereal');
+    const result = feelingToOptions(allOpenShape, openG, 'ethereal');
     expect(result.truth.vibeId).toBe('dreamier');
   });
 });
