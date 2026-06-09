@@ -64,9 +64,54 @@ export interface NeckProps {
 
 const DOT_R = 9;
 const GRIP_R = 10;
-const NUT_W = 15; // width of the nut bar (a chunky bone-nut look)
-const NUT_MARGIN_Y = 6; // gap from the top/bottom of the neck to the nut bar's ends
+const NUT_W = 18; // thickness of the nut bar (a chunky bone-nut bar)
+// The nut is a rounded-corner TRAPEZOID, NOT a vertical pill (a pill reads wrong and,
+// sized to overhang the strings, floats past the neck — jarring under WYSIWYG). Its two
+// vertical sides are parallel but unequal: the HEADSTOCK-side (short) edge bounds the
+// STRING SPREAD, tapering out to the FRET-side (long) edge which is the full NECK WIDTH —
+// the same width as the fretboard underlay it butts against. Centred on nutX so an open
+// note still lands ON it (noteX(fret 0) === nutX), and the strings run through its full
+// thickness (the string layer starts at the nut's outer edge, not its midline).
+const NUT_CORNER_R = 4; // rounding of the headstock-side nut corners (the fret-side corners are square so the nut butts flush to the neck)
+const NUT_SHORT_REACH = 0.5; // the headstock-side edge reaches this fraction of the way from the outer string out to the neck edge
 const NUT_SLOT_R = 11; // radius of the per-string open-string hit + hover ring
+// The neck is WIDER than the strings (like a real fretboard): a background underlay
+// extends NECK_SHOULDER past each outer string. This is purely an underlay — string and
+// fret geometry is unchanged; the strings simply sit inset from the neck edge. The neck
+// has SQUARE corners (a fretboard isn't a rounded card).
+const NECK_SHOULDER_FRAC = 0.45; // neck overhang past each outer string, as a fraction of a string-spacing
+const FRET_NUM_GAP = 14; // gap from the neck's bottom edge to the fret-number baseline
+
+/**
+ * Path for a quadrilateral with rounded corners. `pts` are the four corners in order
+ * (clockwise); each corner is replaced by a quadratic fillet whose radius is `r` (a single
+ * radius for all corners, or one per corner), clamped to half the shorter adjacent edge so
+ * thin shapes don't self-overlap. A radius of 0 leaves that corner square.
+ */
+function roundedQuadPath(
+  pts: ReadonlyArray<readonly [number, number]>,
+  r: number | readonly number[],
+): string {
+  const n = pts.length;
+  const radii = typeof r === 'number' ? pts.map(() => r) : r;
+  const parts: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const [px, py] = pts[(i - 1 + n) % n];
+    const [cx, cy] = pts[i];
+    const [nx, ny] = pts[(i + 1) % n];
+    const d1 = Math.hypot(cx - px, cy - py);
+    const d2 = Math.hypot(nx - cx, ny - cy);
+    const rr = Math.min(radii[i], d1 / 2, d2 / 2);
+    const ax = cx + ((px - cx) / d1) * rr;
+    const ay = cy + ((py - cy) / d1) * rr;
+    const bx = cx + ((nx - cx) / d2) * rr;
+    const by = cy + ((ny - cy) / d2) * rr;
+    parts.push(`${i === 0 ? 'M' : 'L'} ${ax.toFixed(2)} ${ay.toFixed(2)}`);
+    parts.push(`Q ${cx.toFixed(2)} ${cy.toFixed(2)} ${bx.toFixed(2)} ${by.toFixed(2)}`);
+  }
+  parts.push('Z');
+  return parts.join(' ');
+}
 
 export function Neck({
   tuning,
@@ -88,15 +133,56 @@ export function Neck({
   const ctx: KeyContext = { tonic: tuning.tonic };
   const interactive = Boolean(onFretClick || onNutClick);
 
+  // Neck + nut geometry. The fretboard underlay is the full NECK WIDTH — the string span
+  // plus a shoulder past each outer string — and runs from the nut to the last fret.
+  const nutCy = (stringY(g, 0) + stringY(g, strings - 1)) / 2;
+  const stringSpan = stringY(g, strings - 1) - stringY(g, 0);
+  const neckHalf = stringSpan / 2 + NECK_SHOULDER_FRAC * g.stringSpacing; // half the neck width
+  const nutLeft = nutX(g) - NUT_W / 2;
+  const nutRight = nutX(g) + NUT_W / 2;
+  // Nut TRAPEZOID: the fret-side (right) edge is the full neck width and butts flush
+  // against the underlay (square corners so it touches the neck line). The headstock-side
+  // (left) edge reaches NUT_SHORT_REACH of the way from the outer string out to the neck
+  // edge (rounded corners). Both centred on nutCy.
+  const nutShortHalf = stringSpan / 2 + NUT_SHORT_REACH * (neckHalf - stringSpan / 2);
+  const nutPath = roundedQuadPath(
+    [
+      [nutLeft, nutCy - nutShortHalf], // headstock top (rounded)
+      [nutRight, nutCy - neckHalf], // fret top — neck width (square)
+      [nutRight, nutCy + neckHalf], // fret bottom — neck width (square)
+      [nutLeft, nutCy + nutShortHalf], // headstock bottom (rounded)
+    ],
+    [NUT_CORNER_R, 0, 0, NUT_CORNER_R],
+  );
+  // The neck now reaches below the bottom string, so the fret-number captions hang a fixed
+  // gap below the NECK edge (not the old `h - 4`, which assumed the neck ended at the
+  // string). Extend the viewBox to make room for them.
+  const neckBottom = nutCy + neckHalf;
+  const fretNumberY = neckBottom + FRET_NUM_GAP;
+  const svgH = Math.max(h, fretNumberY + 5);
+
   return (
     <svg
       className="neck-svg"
-      viewBox={`0 0 ${w} ${h}`}
+      viewBox={`0 0 ${w} ${svgH}`}
       width="100%"
       role="img"
       aria-label={`Fretboard for ${tuning.id}`}
       preserveAspectRatio="xMinYMid meet"
     >
+      {/* Fretboard underlay — the NECK surface, wider than the strings (a shoulder past
+          each outer string). It begins at the nut's fret-side edge (where the nut reaches
+          full neck width) and runs to the last fret, so the nut's tapered head sits at the
+          headstock boundary. Backmost layer. */}
+      <rect
+        className="fretboard-underlay"
+        x={nutRight}
+        y={nutCy - neckHalf}
+        width={fretLineX(g, g.fretCount) - nutRight}
+        height={neckHalf * 2}
+        aria-hidden="true"
+      />
+
       {/* Inlay markers — navigational, behind everything, distinct from degree dots. */}
       <g className="neck-inlays" aria-hidden="true">
         {SINGLE_INLAY_FRETS.filter((f) => f <= g.fretCount).map((f) => (
@@ -122,9 +208,9 @@ export function Neck({
           <line
             key={`fret-${f}`}
             x1={fretLineX(g, f)}
-            y1={stringY(g, 0)}
+            y1={nutCy - neckHalf}
             x2={fretLineX(g, f)}
-            y2={stringY(g, strings - 1)}
+            y2={nutCy + neckHalf}
             className="fret-line"
           />
         ))}
@@ -135,7 +221,7 @@ export function Neck({
             <text
               key={`fretnum-${f}`}
               x={noteX(g, f)}
-              y={h - 4}
+              y={fretNumberY}
               className="fret-number"
               textAnchor="middle"
             >
@@ -144,19 +230,12 @@ export function Neck({
           ))}
       </g>
 
-      {/* The nut — a chunky rounded BAR (like a real bone nut) spanning the full neck
-          height, not a thin line, so it reads as a physical element and, when
-          interactive, as a strip you can click to ring strings open (docs/09 UI#4).
-          Open notes land ON this bar (noteX(fret 0) === nutX). */}
-      <rect
-        x={nutX(g) - NUT_W / 2}
-        y={NUT_MARGIN_Y}
-        width={NUT_W}
-        height={h - NUT_MARGIN_Y * 2}
-        rx={NUT_W / 2}
-        className="nut-bar"
-        aria-hidden="true"
-      />
+      {/* The nut — a rounded-corner TRAPEZOID (headstock edge = string spread, fret edge =
+          full neck width), like a real bone nut sitting across the strings, not a thin
+          line, so it reads as a physical element and, when interactive, as a strip you can
+          click to ring strings open (docs/09 UI#4). Open notes land ON it (noteX(fret 0)
+          === nutX); the strings run through its full thickness. */}
+      <path d={nutPath} className="nut-bar" aria-hidden="true" />
 
       {/* String lines — carry the DRONE channel when a context is active. */}
       <g className="neck-strings">
@@ -167,7 +246,7 @@ export function Neck({
           return (
             <line
               key={`string-${s}`}
-              x1={nutX(g)}
+              x1={nutLeft}
               y1={y}
               x2={fretLineX(g, g.fretCount)}
               y2={y}

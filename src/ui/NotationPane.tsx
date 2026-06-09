@@ -39,14 +39,20 @@ export function NotationPane({
 }: CollapsibleProps & { tuning: Tuning; grip: Grip }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const apiRef = useRef<AlphaTabApiLike | null>(null);
+  const startedRef = useRef(false);
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string>('');
   const [soundReady, setSoundReady] = useState(false);
   const [tempo] = useState(60);
 
   // LAZY boot: on first expand, dynamic-import the engine + assets and create the api.
+  // Guard with a ref (not `phase`) so that calling setPhase('loading') below does NOT
+  // re-trigger this effect — doing so would fire the cleanup, flip `cancelled` on the
+  // in-flight boot, and the async closure would bail right before setPhase('ready'),
+  // leaving the pane stuck on "loading alphaTab…" forever.
   useEffect(() => {
-    if (collapsed || phase !== 'idle' || containerRef.current === null) return;
+    if (collapsed || startedRef.current || containerRef.current === null) return;
+    startedRef.current = true;
     let cancelled = false;
     setPhase('loading');
 
@@ -87,8 +93,9 @@ export function NotationPane({
       cancelled = true;
     };
     // Only the first expand boots the engine; grip/tuning re-render is a separate effect.
+    // `phase` is intentionally NOT a dep (see comment above); startedRef makes this run once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collapsed, phase]);
+  }, [collapsed]);
 
   // Destroy the api on unmount (it owns a worker + audio context).
   useEffect(() => {

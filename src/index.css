@@ -46,6 +46,7 @@
   --origin: #c08a3e;
   --origin-soft: rgba(192, 138, 62, 0.18);
   --neck-bg: #f6f8fa;
+  --fretboard: #ffffff;
   --string: #aeb6bf;
   --fret: #d2d8de;
   --nut: #5f6772;
@@ -118,6 +119,7 @@
   --origin: #d6a04e;
   --origin-soft: rgba(214, 160, 78, 0.2);
   --neck-bg: #1b1f24;
+  --fretboard: #20262d;
   --string: #4d545d;
   --fret: #333a42;
   --nut: #8b939d;

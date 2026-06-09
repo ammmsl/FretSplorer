@@ -411,6 +411,11 @@
 .neck-svg {
   display: block;
 }
+.fretboard-underlay {
+  fill: var(--fretboard);
+  stroke: var(--border);
+  stroke-width: 1;
+}
 .fret-line {
   stroke: var(--fret);
   stroke-width: 1.5;
